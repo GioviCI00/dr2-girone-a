@@ -158,7 +158,6 @@ def render_standings(girone: str, rows: list[dict], thirds_board: list[dict]) ->
         }
         .zone-promo { background: #16a34a; color: #ffffff; }
         .zone-po { background: #d97706; color: #ffffff; }
-        .zone-third { background: #0284c7; color: #ffffff; border: 1px solid rgba(255,255,255,0.35); }
         .zone-pout { background: #dc2626; color: #ffffff; }
         .board-row {
             display: grid;
@@ -174,7 +173,6 @@ def render_standings(girone: str, rows: list[dict], thirds_board: list[dict]) ->
         }
         .board-row.row-promo { border-left: 6px solid #22c55e; }
         .board-row.row-po { border-left: 6px solid #f59e0b; }
-        .board-row.row-third { border-left: 6px solid #38bdf8; }
         .board-row.row-pout { border-left: 6px solid #ef4444; }
         .board-row.row-qual { border-left: 6px solid #22c55e; }
         .board-row.row-out { border-left: 6px solid #ef4444; }
@@ -255,17 +253,20 @@ def render_standings(girone: str, rows: list[dict], thirds_board: list[dict]) ->
 
     for pos, r in enumerate(rows, start=1):
         row_cls = ""
+        is_best_third = (
+            pos == 3
+            and best_third is not None
+            and best_third["squadra"] == r["squadra"]
+            and best_third["girone"] == girone
+        )
+
         if pos == 1:
             html.append('<div class="zone-tag zone-promo">Promozione Diretta (1° Posto)</div>')
             row_cls = "row-promo"
-        elif pos == 2:
-            html.append('<div class="zone-tag zone-po">Play-off (2° Posto)</div>')
+        elif pos == 2 or is_best_third:
+            label_po = "Play-off (Migliore Terza)" if is_best_third else "Play-off (2° Posto)"
+            html.append(f'<div class="zone-tag zone-po">{label_po}</div>')
             row_cls = "row-po"
-        elif pos == 3:
-            is_best = best_third is not None and best_third["squadra"] == r["squadra"] and best_third["girone"] == girone
-            tag_txt = "3° Posto — Migliore Terza (Play-off)" if is_best else "3° Posto — Corsa Migliore Terza"
-            html.append(f'<div class="zone-tag zone-third">{tag_txt}</div>')
-            row_cls = "row-third"
         elif pos == playout_start:
             html.append('<div class="zone-tag zone-pout">Play-out (Ultime 4)</div>')
 
