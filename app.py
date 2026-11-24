@@ -316,4 +316,53 @@ def render_standings(girone: str, rows: list[dict], thirds_board: list[dict]) ->
                 f'<div class="b-sub">{t["girone"]}{badge}</div>'
                 f'</div>'
                 f'<div class="b-val">{t["p"]}</div>'
-                f'<div
+                f'<div class="b-val">{t["w"]}</div>'
+                f'<div class="b-val">{t["l"]}</div>'
+                f'<div class="b-val">{t["diff"]}</div>'
+                f'<div class="b-val">{t["streak"]}</div>'
+                f'<div class="b-pts">{t["pts"]}</div>'
+                '</div>'
+            )
+        t_html.append("</div>")
+        st.markdown("".join(t_html), unsafe_allow_html=True)
+
+
+# ==========================================
+# LOGIN
+# ==========================================
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+
+if not st.session_state.authenticated:
+    st.title("🏀 DR2 Puglia — Login Staff")
+    pwd = st.text_input("Password", type="password")
+    if st.button("Accedi"):
+        if pwd == STAFF_PASSWORD:
+            st.session_state.authenticated = True
+            st.rerun()
+        else:
+            st.error("Password non valida.")
+    st.stop()
+
+
+# ==========================================
+# VISTA CLASSIFICHE
+# ==========================================
+top_col1, top_col2 = st.columns([6, 1])
+with top_col1:
+    st.title("🏀 DR2 Puglia — Classifiche")
+with top_col2:
+    if st.button("Esci"):
+        st.session_state.authenticated = False
+        st.rerun()
+
+if not GITHUB_RAW_BASE:
+    st.info(
+        "Suggerimento: imposta la variabile d'ambiente `DR2_GITHUB_RAW_BASE` "
+        "(es. `https://raw.githubusercontent.com/<utente>/<repo>/main/loghi`) per caricare i loghi direttamente da GitHub."
+    )
+
+girone_selezionato = st.selectbox("Seleziona Girone", ["Girone A", "Girone B", "Girone C"])
+classifica = compute_standings(girone_selezionato)
+terze_classificate = compute_thirds_standings()
+render_standings(girone_selezionato, classifica, terze_classificate)
