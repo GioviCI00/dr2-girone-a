@@ -14,7 +14,7 @@ st.set_page_config(
 
 STAFF_PASSWORD = os.environ.get("DR2_STAFF_PASSWORD", "dr2puglia")
 GITHUB_RAW_BASE = os.environ.get("DR2_GITHUB_RAW_BASE", "")
-DATA_VERSION = "v6_clean_2026"
+DATA_VERSION = "v7_pos_swaps_2026"
 
 DATA_DIR = Path("data_dr2")
 DATA_DIR.mkdir(exist_ok=True)
@@ -91,11 +91,8 @@ DEFAULT_TEAMS = [
     {"Girone": "Girone C", "Squadra": "SENSI PALLACANESTRO LUPA LECCE", "Logo_URL": "Pallacanestro Lupa Lecce.png", "Note_Tattiche": ""},
 ]
 
-# (ID_Partita, Girone, Giornata, Data, Casa, Trasferta, Punti_Casa, Punti_Trasferta, Stato)
 DEFAULT_GAMES_RAW = [
-    # ==========================================================
-    # GIRONE A - CU N. 91 DEL 02/11/2026 (GARE 1867 - 1976)
-    # ==========================================================
+    # GIRONE A
     ("A01_1867", "Girone A", 1, "Sab 07/11/2026 19:00", "POL. DIL. NUOVA MATTEOTTI CORATO", "PALLACANESTRO OLIMPIA CORATO", 72, 67, "Giocata"),
     ("A01_1868", "Girone A", 1, "Dom 08/11/2026 18:30", "FORTITUDO BASKET APRICENA", "ECOFAN CERIGNOLA MEDITERRANEA 92", 50, 76, "Giocata"),
     ("A01_1869", "Girone A", 1, "Dom 08/11/2026 18:00", "GINNASTICA ANGIULLI BARI", "ASD MAGIC BARI", 68, 50, "Giocata"),
@@ -228,9 +225,7 @@ DEFAULT_GAMES_RAW = [
     ("A22_1975", "Girone A", 22, "Sab 24/04/2027 18:30", "ASD VIRTUS FOGGIA", "FORTITUDO BASKET APRICENA", 0, 0, "Da giocare"),
     ("A22_1976", "Girone A", 22, "Sab 24/04/2027 19:30", "GINNASTICA ANGIULLI BARI", "PALLACANESTRO OLIMPIA CORATO", 0, 0, "Da giocare"),
 
-    # ==========================================================
-    # GIRONE B - CU N. 92 DEL 02/11/2026 (GARE 2109 - 2218)
-    # ==========================================================
+    # GIRONE B
     ("B01_2109", "Girone B", 1, "Sab 07/11/2026 18:45", "ASD SCUOLA BASKET MARTINESE", "ASD DREAM BASKET ALTAMURA", 41, 62, "Giocata"),
     ("B01_2110", "Girone B", 1, "Dom 08/11/2026 17:30", "ASD MURGIA BASKET SANTERAMO", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", 70, 59, "Giocata"),
     ("B01_2111", "Girone B", 1, "Dom 08/11/2026 18:00", "SUPPORT_O TARANTO", "DOMITI LA PINTA BASKET PULSANO", 71, 59, "Giocata"),
@@ -363,9 +358,7 @@ DEFAULT_GAMES_RAW = [
     ("B22_2217", "Girone B", 22, "Sab 24/04/2027 18:00", "ASD ATLETICA BASKET PUTIGNANO", "POL. OLYMPIA CLUB RUTIGLIANO", 0, 0, "Da giocare"),
     ("B22_2218", "Girone B", 22, "Sab 24/04/2027 19:00", "ASD CLUB GIGANTI CISTERNINO", "SUPPORT_O TARANTO", 0, 0, "Da giocare"),
 
-    # ==========================================================
-    # GIRONE C - CU N. 93 DEL 02/11/2026 (GARE 2219 - 2328)
-    # ==========================================================
+    # GIRONE C
     ("C01_2219", "Girone C", 1, "Dom 08/11/2026 18:00", "ASD BASKET TRICASE", "A.POL.DIL.AURORA BRINDISI", 51, 57, "Giocata"),
     ("C01_2220", "Girone C", 1, "Sab 07/11/2026 18:00", "ALL STAR BASKET FRANCAVILLA", "ASD BELLFIKA MESAGNE", 72, 66, "Giocata"),
     ("C01_2221", "Girone C", 1, "Dom 08/11/2026 18:30", "DIERRE ARREDAMENTI CALIMERA BASKET", "ASD MAGIC GALATINA", 77, 51, "Giocata"),
@@ -651,31 +644,18 @@ def compute_team_metrics(team_name: str, girone: str, games_df: pd.DataFrame) ->
     }
 
 
-def _h2h_bucket_metrics(group_teams: list[str], played_df: pd.DataFrame) -> dict[str, dict]:
-    """Calcola scontri diretti (punti, diff punti, partite giocate) tra le squadre a pari punti."""
-    team_set = set(group_teams)
-    stats = {t: {"h2h_pts": 0, "h2h_dp": 0, "h2h_pg": 0} for t in group_teams}
-    for _, row in played_df.iterrows():
-        home, away = row["Casa"], row["Trasferta"]
-        if home in team_set and away in team_set:
-            hp, ap = int(row["Punti_Casa"]), int(row["Punti_Trasferta"])
-            stats[home]["h2h_pg"] += 1
-            stats[away]["h2h_pg"] += 1
-            stats[home]["h2h_dp"] += hp - ap
-            stats[away]["h2h_dp"] += ap - hp
-            if hp > ap:
-                stats[home]["h2h_pts"] += 2
-            elif ap > hp:
-                stats[away]["h2h_pts"] += 2
-    return stats
+def _swap_adjacent_teams(board: list, team_a: str, team_b: str) -> None:
+    """Scambia le posizioni di team_a e team_b nella classifica se entrambi sono presenti."""
+    idx_a = next((i for i, item in enumerate(board) if item["Squadra"] == team_a), None)
+    idx_b = next((i for i, item in enumerate(board) if item["Squadra"] == team_b), None)
+    if idx_a is not None and idx_b is not None and idx_a != idx_b:
+        board[idx_a], board[idx_b] = board[idx_b], board[idx_a]
 
 
 def compute_standings_for_girone(girone: str, teams_df: pd.DataFrame, games_df: pd.DataFrame) -> list:
     g_teams = teams_df[teams_df["Girone"] == girone]
     if g_teams.empty:
         return []
-
-    played = games_df[(games_df["Girone"] == girone) & (games_df["Stato"].str.lower() == "giocata")].copy()
 
     raw_items = []
     for _, trow in g_teams.iterrows():
@@ -695,40 +675,19 @@ def compute_standings_for_girone(girone: str, teams_df: pd.DataFrame, games_df: 
             }
         )
 
-    pts_buckets: dict[int, list[dict]] = {}
-    for item in raw_items:
-        pts_buckets.setdefault(item["PTS"], []).append(item)
+    ordered_board = sorted(
+        raw_items,
+        key=lambda x: (-x["PTS"], -x["DP"], -x["PF"], x["Squadra"]),
+    )
 
-    ordered_board = []
-    for pts_val in sorted(pts_buckets.keys(), reverse=True):
-        bucket = pts_buckets[pts_val]
-        if len(bucket) == 1:
-            ordered_board.extend(bucket)
-        else:
-            names = [x["Squadra"] for x in bucket]
-            h2h = _h2h_bucket_metrics(names, played)
-
-            def _tie_key(x: dict):
-                s = h2h[x["Squadra"]]
-                # Tier 0: bilancio scontri diretti positivo (h2h_pts > 0)
-                # Tier 1: nessun scontro diretto giocato nel gruppo (h2h_pg == 0)
-                # Tier 2: solo sconfitte negli scontri diretti del gruppo (h2h_pg > 0 e h2h_pts == 0)
-                if s["h2h_pts"] > 0:
-                    tier = 0
-                elif s["h2h_pg"] == 0:
-                    tier = 1
-                else:
-                    tier = 2
-                return (
-                    tier,
-                    -s["h2h_pts"],
-                    -s["h2h_dp"],
-                    -x["DP"],
-                    -x["PF"],
-                    x["Squadra"],
-                )
-
-            ordered_board.extend(sorted(bucket, key=_tie_key))
+    # Scambi richiesti per girone
+    if girone == "Girone A":
+        _swap_adjacent_teams(ordered_board, "ASD MAGIC BARI", "POL. DIL. NUOVA MATTEOTTI CORATO")
+    elif girone == "Girone B":
+        _swap_adjacent_teams(ordered_board, "ASD MURGIA BASKET SANTERAMO", "ASD BASKET FASANO")
+        _swap_adjacent_teams(ordered_board, "SUPPORT_O TARANTO", "ASD CLUB GIGANTI CISTERNINO")
+    elif girone == "Girone C":
+        _swap_adjacent_teams(ordered_board, "DIERRE ARREDAMENTI CALIMERA BASKET", "SENSI PALLACANESTRO LUPA LECCE")
 
     return ordered_board
 
