@@ -1,3 +1,4 @@
+import base64
 import os
 from pathlib import Path
 from urllib.parse import quote
@@ -12,6 +13,7 @@ st.set_page_config(
 )
 
 STAFF_PASSWORD = os.environ.get("DR2_STAFF_PASSWORD", "dr2puglia")
+GITHUB_RAW_BASE = os.environ.get("DR2_GITHUB_RAW_BASE", "")
 
 DATA_DIR = Path("data_dr2")
 DATA_DIR.mkdir(exist_ok=True)
@@ -21,47 +23,70 @@ GAMES_FILE = DATA_DIR / "partite.csv"
 BOX_FILE = DATA_DIR / "tabellini.csv"
 
 
-def _logo_path(filename: str) -> str:
-    return quote(filename, safe="/._-")
+@st.cache_data(show_spinner=False)
+def resolve_logo_src(logo_ref: str) -> str:
+    """Restituisce un src immagine valido per HTML (data URI base64 se il file esiste in repo)."""
+    ref = (logo_ref or "").strip()
+    if not ref:
+        return ""
+    if ref.startswith("data:image/") or ref.startswith("http://") or ref.startswith("https://"):
+        return ref
+
+    candidates = [
+        Path(ref),
+        Path("loghi") / ref,
+        Path("assets") / ref,
+        Path("static") / ref,
+    ]
+    for p in candidates:
+        if p.exists() and p.is_file():
+            ext = p.suffix.lower().lstrip(".")
+            mime = "image/jpeg" if ext in ("jpg", "jpeg") else f"image/{ext or 'png'}"
+            encoded = base64.b64encode(p.read_bytes()).decode("ascii")
+            return f"data:{mime};base64,{encoded}"
+
+    if GITHUB_RAW_BASE:
+        return f"{GITHUB_RAW_BASE.rstrip('/')}/{quote(ref, safe='/._-')}"
+    return ""
 
 
 DEFAULT_TEAMS = [
     # Girone A (11 squadre)
-    {"Girone": "Girone A", "Squadra": "ASD MAGIC BARI", "Logo_URL": _logo_path("Magic Bari.png"), "Note_Tattiche": ""},
-    {"Girone": "Girone A", "Squadra": "ASD POL. BASKET BITRITTO", "Logo_URL": _logo_path("basket bitritto.png"), "Note_Tattiche": ""},
-    {"Girone": "Girone A", "Squadra": "ASD VI.G.OR BASKET SAN SEVERO", "Logo_URL": _logo_path("Vigor San Severo.png"), "Note_Tattiche": ""},
-    {"Girone": "Girone A", "Squadra": "ASD VIRTUS FOGGIA", "Logo_URL": _logo_path("Virtus Foggia.png"), "Note_Tattiche": ""},
-    {"Girone": "Girone A", "Squadra": "ECOFAN CERIGNOLA MEDITERRANEA 92", "Logo_URL": _logo_path("Mediterranea Cerignola.png"), "Note_Tattiche": ""},
-    {"Girone": "Girone A", "Squadra": "FORTITUDO BASKET APRICENA", "Logo_URL": _logo_path("Fortitudo Basket Apricena.png"), "Note_Tattiche": ""},
-    {"Girone": "Girone A", "Squadra": "GINNASTICA ANGIULLI BARI", "Logo_URL": _logo_path("Angiulli Basket Bari.png"), "Note_Tattiche": ""},
-    {"Girone": "Girone A", "Squadra": "PALLACANESTRO OLIMPIA CORATO", "Logo_URL": _logo_path("Olimpia Corato.png"), "Note_Tattiche": ""},
-    {"Girone": "Girone A", "Squadra": "POL. DIL. NUOVA MATTEOTTI CORATO", "Logo_URL": _logo_path("Nuova Matteotti Corato.png"), "Note_Tattiche": ""},
-    {"Girone": "Girone A", "Squadra": "POLISPORTIVA ORSA CAPURSO SSD ARL", "Logo_URL": _logo_path("orsa capurso.png"), "Note_Tattiche": ""},
-    {"Girone": "Girone A", "Squadra": "AGS DIL. TORITTO", "Logo_URL": _logo_path("A.G.S.D. TORITTO.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "ASD MAGIC BARI", "Logo_URL": "Magic Bari.png", "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "ASD POL. BASKET BITRITTO", "Logo_URL": "basket bitritto.png", "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "ASD VI.G.OR BASKET SAN SEVERO", "Logo_URL": "Vigor San Severo.png", "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "ASD VIRTUS FOGGIA", "Logo_URL": "Virtus Foggia.png", "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "ECOFAN CERIGNOLA MEDITERRANEA 92", "Logo_URL": "Mediterranea Cerignola.png", "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "FORTITUDO BASKET APRICENA", "Logo_URL": "Fortitudo Basket Apricena.png", "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "GINNASTICA ANGIULLI BARI", "Logo_URL": "Angiulli Basket Bari.png", "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "PALLACANESTRO OLIMPIA CORATO", "Logo_URL": "Olimpia Corato.png", "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "POL. DIL. NUOVA MATTEOTTI CORATO", "Logo_URL": "Nuova Matteotti Corato.png", "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "POLISPORTIVA ORSA CAPURSO SSD ARL", "Logo_URL": "orsa capurso.png", "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "AGS DIL. TORITTO", "Logo_URL": "A.G.S.D. TORITTO.png", "Note_Tattiche": ""},
     # Girone B (11 squadre)
-    {"Girone": "Girone B", "Squadra": "ASD ATLETICA BASKET PUTIGNANO", "Logo_URL": _logo_path("Atletica Basket Putignano.png"), "Note_Tattiche": ""},
-    {"Girone": "Girone B", "Squadra": "ASD BASKET FASANO", "Logo_URL": _logo_path("ASD Basket Fasano.png"), "Note_Tattiche": ""},
-    {"Girone": "Girone B", "Squadra": "ASD CLUB GIGANTI CISTERNINO", "Logo_URL": _logo_path("Club Giganti Cisternino.png"), "Note_Tattiche": ""},
-    {"Girone": "Girone B", "Squadra": "ASD DREAM BASKET ALTAMURA", "Logo_URL": _logo_path("Dream Basket Altamura.png"), "Note_Tattiche": ""},
-    {"Girone": "Girone B", "Squadra": "ASD MESSAPICA BASKET CEGLIE", "Logo_URL": _logo_path("Messapica Bk Ceglie.png"), "Note_Tattiche": ""},
-    {"Girone": "Girone B", "Squadra": "ASD MURGIA BASKET SANTERAMO", "Logo_URL": _logo_path("Murgia Basket Santeramo.png"), "Note_Tattiche": ""},
-    {"Girone": "Girone B", "Squadra": "ASD SCUOLA BASKET MARTINESE", "Logo_URL": _logo_path("SBM Martina Franca.png"), "Note_Tattiche": ""},
-    {"Girone": "Girone B", "Squadra": "DOMITI LA PINTA BASKET PULSANO", "Logo_URL": _logo_path("Domiti La Pinta ASD Pulsano.png"), "Note_Tattiche": ""},
-    {"Girone": "Girone B", "Squadra": "MASSERIA SEMERARO NEW SPORTING MOTTOLA", "Logo_URL": _logo_path("New Sporting Mottola.png"), "Note_Tattiche": ""},
-    {"Girone": "Girone B", "Squadra": "POL. OLYMPIA CLUB RUTIGLIANO", "Logo_URL": _logo_path("olympia rutigliano.png"), "Note_Tattiche": ""},
-    {"Girone": "Girone B", "Squadra": "SUPPORT_O TARANTO", "Logo_URL": _logo_path("Support_o Taranto.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "ASD ATLETICA BASKET PUTIGNANO", "Logo_URL": "Atletica Basket Putignano.png", "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "ASD BASKET FASANO", "Logo_URL": "ASD Basket Fasano.png", "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "ASD CLUB GIGANTI CISTERNINO", "Logo_URL": "Club Giganti Cisternino.png", "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "ASD DREAM BASKET ALTAMURA", "Logo_URL": "Dream Basket Altamura.png", "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "ASD MESSAPICA BASKET CEGLIE", "Logo_URL": "Messapica Bk Ceglie.png", "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "ASD MURGIA BASKET SANTERAMO", "Logo_URL": "Murgia Basket Santeramo.png", "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "ASD SCUOLA BASKET MARTINESE", "Logo_URL": "SBM Martina Franca.png", "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "DOMITI LA PINTA BASKET PULSANO", "Logo_URL": "Domiti La Pinta ASD Pulsano.png", "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "MASSERIA SEMERARO NEW SPORTING MOTTOLA", "Logo_URL": "New Sporting Mottola.png", "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "POL. OLYMPIA CLUB RUTIGLIANO", "Logo_URL": "olympia rutigliano.png", "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "SUPPORT_O TARANTO", "Logo_URL": "Support_o Taranto.png", "Note_Tattiche": ""},
     # Girone C (11 squadre)
-    {"Girone": "Girone C", "Squadra": "A.POL.DIL.AURORA BRINDISI", "Logo_URL": _logo_path("Aurora Brindisi.png"), "Note_Tattiche": ""},
-    {"Girone": "Girone C", "Squadra": "ALL STAR BASKET FRANCAVILLA", "Logo_URL": _logo_path("All Star Francavilla.png"), "Note_Tattiche": ""},
-    {"Girone": "Girone C", "Squadra": "ASD ASSI BASKET BRINDISI", "Logo_URL": _logo_path("ASSI Brindisi.png"), "Note_Tattiche": ""},
-    {"Girone": "Girone C", "Squadra": "ASD BASKET TRICASE", "Logo_URL": _logo_path("Basket Tricase.png"), "Note_Tattiche": ""},
-    {"Girone": "Girone C", "Squadra": "ASD BELLFIKA MESAGNE", "Logo_URL": _logo_path("Bellfika Mesagne.png"), "Note_Tattiche": ""},
-    {"Girone": "Girone C", "Squadra": "ASD MAGIC GALATINA", "Logo_URL": _logo_path("Magic Galatina.png"), "Note_Tattiche": ""},
-    {"Girone": "Girone C", "Squadra": "ASD NEW BASKET CARMIANO", "Logo_URL": _logo_path("New Basket Carmiano.png"), "Note_Tattiche": ""},
-    {"Girone": "Girone C", "Squadra": "ASD POLISPORTIVA MANDURIA", "Logo_URL": _logo_path("Basket Manduria.png"), "Note_Tattiche": ""},
-    {"Girone": "Girone C", "Squadra": "AZ DISINFESTAZIONI SRL VIRTUS BRINDISI", "Logo_URL": _logo_path("Virtus Brindisi.png"), "Note_Tattiche": ""},
-    {"Girone": "Girone C", "Squadra": "DIERRE ARREDAMENTI CALIMERA BASKET", "Logo_URL": _logo_path("Calimera Zero21.png"), "Note_Tattiche": ""},
-    {"Girone": "Girone C", "Squadra": "SENSI PALLACANESTRO LUPA LECCE", "Logo_URL": _logo_path("Pallacanestro Lupa Lecce.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "A.POL.DIL.AURORA BRINDISI", "Logo_URL": "Aurora Brindisi.png", "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "ALL STAR BASKET FRANCAVILLA", "Logo_URL": "All Star Francavilla.png", "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "ASD ASSI BASKET BRINDISI", "Logo_URL": "ASSI Brindisi.png", "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "ASD BASKET TRICASE", "Logo_URL": "Basket Tricase.png", "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "ASD BELLFIKA MESAGNE", "Logo_URL": "Bellfika Mesagne.png", "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "ASD MAGIC GALATINA", "Logo_URL": "Magic Galatina.png", "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "ASD NEW BASKET CARMIANO", "Logo_URL": "New Basket Carmiano.png", "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "ASD POLISPORTIVA MANDURIA", "Logo_URL": "Basket Manduria.png", "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "AZ DISINFESTAZIONI SRL VIRTUS BRINDISI", "Logo_URL": "Virtus Brindisi.png", "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "DIERRE ARREDAMENTI CALIMERA BASKET", "Logo_URL": "Calimera Zero21.png", "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "SENSI PALLACANESTRO LUPA LECCE", "Logo_URL": "Pallacanestro Lupa Lecce.png", "Note_Tattiche": ""},
 ]
 
 # (ID_Partita, Girone, Giornata, Data, Casa, Trasferta, Punti_Casa, Punti_Trasferta, Stato)
@@ -615,7 +640,6 @@ def save_box(df):
 
 
 def format_streak_text(streak: str) -> str:
-    """Formatta le ultime partite come 'W W W' (mai '3 W' o '3W')."""
     if not streak or str(streak).strip() in ["", "—", "-"]:
         return "—"
     tokens = [tok.upper() for tok in str(streak).replace(",", " ").split() if tok.strip()]
@@ -681,13 +705,17 @@ def compute_team_metrics(team_name: str, girone: str, games_df: pd.DataFrame) ->
     }
 
 
-def _head_to_head_metrics(group_teams: list[str], played_df: pd.DataFrame) -> dict[str, dict]:
+def _complete_h2h_available(group_teams: list[str], played_df: pd.DataFrame) -> tuple[bool, dict[str, dict]]:
+    """Usa gli scontri diretti solo se tutte le squadre a pari punti hanno già giocato tra loro."""
     team_set = set(group_teams)
     stats = {t: {"h2h_pts": 0, "h2h_pf": 0, "h2h_dp": 0} for t in group_teams}
+    played_pairs = set()
+
     for _, row in played_df.iterrows():
         home = row["Casa"]
         away = row["Trasferta"]
         if home in team_set and away in team_set:
+            played_pairs.add((home, away))
             hp = int(row["Punti_Casa"])
             ap = int(row["Punti_Trasferta"])
             stats[home]["h2h_pf"] += hp
@@ -698,7 +726,13 @@ def _head_to_head_metrics(group_teams: list[str], played_df: pd.DataFrame) -> di
                 stats[home]["h2h_pts"] += 2
             elif ap > hp:
                 stats[away]["h2h_pts"] += 2
-    return stats
+
+    all_played = all(
+        (a, b) in played_pairs or (b, a) in played_pairs
+        for i, a in enumerate(group_teams)
+        for b in group_teams[i + 1 :]
+    )
+    return all_played, stats
 
 
 def compute_standings_for_girone(girone: str, teams_df: pd.DataFrame, games_df: pd.DataFrame) -> list:
@@ -737,18 +771,28 @@ def compute_standings_for_girone(girone: str, teams_df: pd.DataFrame, games_df: 
             ordered_board.extend(bucket)
         else:
             names = [x["Squadra"] for x in bucket]
-            h2h = _head_to_head_metrics(names, played)
-            bucket_sorted = sorted(
-                bucket,
-                key=lambda x: (
-                    -h2h[x["Squadra"]]["h2h_pts"],
-                    -h2h[x["Squadra"]]["h2h_dp"],
-                    -h2h[x["Squadra"]]["h2h_pf"],
-                    -x["DP"],
-                    -x["PF"],
-                    x["Squadra"],
-                ),
-            )
+            h2h_ready, h2h = _complete_h2h_available(names, played)
+            if h2h_ready:
+                bucket_sorted = sorted(
+                    bucket,
+                    key=lambda x: (
+                        -h2h[x["Squadra"]]["h2h_pts"],
+                        -h2h[x["Squadra"]]["h2h_dp"],
+                        -h2h[x["Squadra"]]["h2h_pf"],
+                        -x["DP"],
+                        -x["PF"],
+                        x["Squadra"],
+                    ),
+                )
+            else:
+                bucket_sorted = sorted(
+                    bucket,
+                    key=lambda x: (
+                        -x["DP"],
+                        -x["PF"],
+                        x["Squadra"],
+                    ),
+                )
             ordered_board.extend(bucket_sorted)
 
     return ordered_board
@@ -978,9 +1022,10 @@ def render_standings_board(board: list, girone_sel: str, best_third_team: dict |
         if idx >= playout_start_pos:
             row_class = "pos-playout"
 
+        logo_src = resolve_logo_src(item["Logo_URL"])
         logo_html = (
-            f'<img class="s-logo" src="{item["Logo_URL"]}" alt="{item["Squadra"]}" />'
-            if item["Logo_URL"].strip()
+            f'<img class="s-logo" src="{logo_src}" alt="{item["Squadra"]}" />'
+            if logo_src
             else '<div class="s-pos">🏀</div>'
         )
         dp_str = format_dp(item["DP"])
@@ -1168,8 +1213,8 @@ def render_round_card(round_num: int, round_games: pd.DataFrame, logo_map: dict,
             home_win = is_played and home_pts > away_pts
             away_win = is_played and away_pts > home_pts
 
-            home_logo = logo_map.get(home_name, "")
-            away_logo = logo_map.get(away_name, "")
+            home_logo = resolve_logo_src(logo_map.get(home_name, ""))
+            away_logo = resolve_logo_src(logo_map.get(away_name, ""))
             h_logo_tag = f'<img class="m-logo" src="{home_logo}" alt="" />' if home_logo else "🏀"
             a_logo_tag = f'<img class="m-logo" src="{away_logo}" alt="" />' if away_logo else "🏀"
 
@@ -1216,8 +1261,8 @@ def render_match_center(game_id: str, teams_df: pd.DataFrame, games_df: pd.DataF
 
     home_name = g["Casa"]
     away_name = g["Trasferta"]
-    home_logo = logo_map.get(home_name, "")
-    away_logo = logo_map.get(away_name, "")
+    home_logo = resolve_logo_src(logo_map.get(home_name, ""))
+    away_logo = resolve_logo_src(logo_map.get(away_name, ""))
     is_played = str(g["Stato"]).lower() == "giocata"
     status_label = "FINALE" if is_played else "DA GIOCARE"
 
@@ -1590,8 +1635,9 @@ if page == "Gironi":
 
         col1, col2 = st.columns([1, 4])
         with col1:
-            if team_info["Logo_URL"].strip():
-                st.image(team_info["Logo_URL"].strip(), width=100)
+            resolved_detail_logo = resolve_logo_src(team_info["Logo_URL"])
+            if resolved_detail_logo:
+                st.image(resolved_detail_logo, width=100)
             else:
                 st.markdown("### 🏀")
         with col2:
@@ -1746,6 +1792,7 @@ elif page == "Gestione Squadre":
         other_teams = teams_df[teams_df["Girone"] != girone_edit]
         updated_all = pd.concat([other_teams, edited_df], ignore_index=True)
         save_teams(updated_all)
+        resolve_logo_src.clear()
         st.success("Squadre salvate.")
         st.rerun()
 
@@ -1753,6 +1800,7 @@ elif page == "Gestione Squadre":
     st.subheader("Ripristino Dati Ufficiali (Gironi A, B e C)")
     if st.button("🔄 Ripristina Tutti i Gironi e Calendari Ufficiali (A, B, C)"):
         reset_official_data()
+        resolve_logo_src.clear()
         st.success("33 squadre con loghi, risultati prime 3 giornate e calendari completi (G1–G22) ripristinati.")
         st.rerun()
 
