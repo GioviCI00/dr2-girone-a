@@ -652,6 +652,14 @@ def _swap_adjacent_teams(board: list, team_a: str, team_b: str) -> None:
         board[idx_a], board[idx_b] = board[idx_b], board[idx_a]
 
 
+def _swap_teams(board: list, team_a: str, team_b: str) -> None:
+    """Scambia le posizioni di team_a e team_b nella classifica se entrambi sono presenti."""
+    idx_a = next((i for i, item in enumerate(board) if item["Squadra"] == team_a), None)
+    idx_b = next((i for i, item in enumerate(board) if item["Squadra"] == team_b), None)
+    if idx_a is not None and idx_b is not None and idx_a != idx_b:
+        board[idx_a], board[idx_b] = board[idx_b], board[idx_a]
+
+
 def compute_standings_for_girone(girone: str, teams_df: pd.DataFrame, games_df: pd.DataFrame) -> list:
     g_teams = teams_df[teams_df["Girone"] == girone]
     if g_teams.empty:
@@ -680,14 +688,8 @@ def compute_standings_for_girone(girone: str, teams_df: pd.DataFrame, games_df: 
         key=lambda x: (-x["PTS"], -x["DP"], -x["PF"], x["Squadra"]),
     )
 
-    # Scambi richiesti per girone
     if girone == "Girone A":
-        _swap_adjacent_teams(ordered_board, "ASD MAGIC BARI", "POL. DIL. NUOVA MATTEOTTI CORATO")
-    elif girone == "Girone B":
-        _swap_adjacent_teams(ordered_board, "ASD MURGIA BASKET SANTERAMO", "ASD BASKET FASANO")
-        _swap_adjacent_teams(ordered_board, "SUPPORT_O TARANTO", "ASD CLUB GIGANTI CISTERNINO")
-    elif girone == "Girone C":
-        _swap_adjacent_teams(ordered_board, "DIERRE ARREDAMENTI CALIMERA BASKET", "SENSI PALLACANESTRO LUPA LECCE")
+        _swap_teams(ordered_board, "ASD MAGIC BARI", "POL. DIL. NUOVA MATTEOTTI CORATO")
 
     return ordered_board
 
