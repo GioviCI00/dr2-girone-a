@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from urllib.parse import quote
 import pandas as pd
 import streamlit as st
 
@@ -13,6 +14,7 @@ st.set_page_config(
 # IMPOSTAZIONI ACCESSO STAFF
 # ==========================================
 STAFF_PASSWORD = os.environ.get("DR2_STAFF_PASSWORD", "dr2puglia2026")
+RAW_BASE_URL = "https://raw.githubusercontent.com/GioviCI00/dr2-girone-a/main/"
 
 DATA_DIR = Path("data")
 DATA_DIR.mkdir(exist_ok=True)
@@ -20,10 +22,256 @@ TEAMS_FILE = DATA_DIR / "squadre.csv"
 GAMES_FILE = DATA_DIR / "partite.csv"
 BOX_FILE = DATA_DIR / "tabellini.csv"
 
+
+def logo_url(filename: str) -> str:
+    return RAW_BASE_URL + quote(filename)
+
+
 DEFAULT_TEAMS = [
-    {"Girone": "Girone A", "Squadra": f"Squadra {i:02d} (Girone A)", "Logo_URL": "", "Note_Tattiche": ""}
-    for i in range(1, 12)
+    {
+        "Girone": "Girone A",
+        "Squadra": "Angiulli Bari",
+        "Logo_URL": logo_url("Angiulli Basket Bari.png"),
+        "Note_Tattiche": "",
+    },
+    {
+        "Girone": "Girone A",
+        "Squadra": "A.G.S.D. Toritto",
+        "Logo_URL": logo_url("A.G.S.D. TORITTO.png"),
+        "Note_Tattiche": "",
+    },
+    {
+        "Girone": "Girone A",
+        "Squadra": "Orsa Capurso",
+        "Logo_URL": logo_url("orsa capurso.png"),
+        "Note_Tattiche": "",
+    },
+    {
+        "Girone": "Girone A",
+        "Squadra": "Nuova Matteotti Corato",
+        "Logo_URL": logo_url("Nuova Matteotti Corato.png"),
+        "Note_Tattiche": "",
+    },
+    {
+        "Girone": "Girone A",
+        "Squadra": "Magic Bari",
+        "Logo_URL": logo_url("Magic Bari.png"),
+        "Note_Tattiche": "",
+    },
+    {
+        "Girone": "Girone A",
+        "Squadra": "Mediterranea Cerignola",
+        "Logo_URL": logo_url("Mediterranea Cerignola.png"),
+        "Note_Tattiche": "",
+    },
+    {
+        "Girone": "Girone A",
+        "Squadra": "Vigor San Severo",
+        "Logo_URL": logo_url("Vigor San Severo.png"),
+        "Note_Tattiche": "",
+    },
+    {
+        "Girone": "Girone A",
+        "Squadra": "Basket Bitritto",
+        "Logo_URL": logo_url("basket bitritto.png"),
+        "Note_Tattiche": "",
+    },
+    {
+        "Girone": "Girone A",
+        "Squadra": "Fortitudo BK Apricena",
+        "Logo_URL": logo_url("Fortitudo Basket Apricena.png"),
+        "Note_Tattiche": "",
+    },
+    {
+        "Girone": "Girone A",
+        "Squadra": "Olimpia Corato",
+        "Logo_URL": logo_url("Olimpia Corato.png"),
+        "Note_Tattiche": "",
+    },
+    {
+        "Girone": "Girone A",
+        "Squadra": "Virtus Foggia",
+        "Logo_URL": logo_url("Virtus Foggia.png"),
+        "Note_Tattiche": "",
+    },
 ]
+
+# Calendario ufficiale CU n. 91 (Squadra A = Casa, Squadra B = Trasferta)
+# Campi: (ID_Partita, Giornata, Data_Ora, Casa, Trasferta, Punti_Casa, Punti_Trasferta, Stato)
+DEFAULT_GAMES_RAW = [
+    # 1ª Giornata di andata
+    ("G01_1867", 1, "Sab 07/11/2026 19:00", "Nuova Matteotti Corato", "Olimpia Corato", 72, 67, "Giocata"),
+    ("G01_1868", 1, "Dom 08/11/2026 18:30", "Fortitudo BK Apricena", "Mediterranea Cerignola", 50, 76, "Giocata"),
+    ("G01_1869", 1, "Dom 08/11/2026 18:00", "Angiulli Bari", "Magic Bari", 68, 50, "Giocata"),
+    ("G01_1870", 1, "Sab 07/11/2026 18:30", "Virtus Foggia", "Orsa Capurso", 78, 87, "Giocata"),
+    ("G01_1871", 1, "Dom 08/11/2026 18:30", "Basket Bitritto", "A.G.S.D. Toritto", 62, 81, "Giocata"),
+
+    # 2ª Giornata di andata
+    ("G02_1872", 2, "Sab 14/11/2026 18:00", "Virtus Foggia", "Vigor San Severo", 65, 69, "Giocata"),
+    ("G02_1873", 2, "Dom 15/11/2026 20:15", "Olimpia Corato", "Fortitudo BK Apricena", 50, 56, "Giocata"),
+    ("G02_1874", 2, "Dom 15/11/2026 19:00", "Mediterranea Cerignola", "Nuova Matteotti Corato", 49, 59, "Giocata"),
+    ("G02_1875", 2, "Dom 15/11/2026 19:00", "A.G.S.D. Toritto", "Angiulli Bari", 85, 96, "Giocata"),
+    ("G02_1876", 2, "Dom 15/11/2026 17:30", "Magic Bari", "Basket Bitritto", 56, 48, "Giocata"),
+
+    # 3ª Giornata di andata
+    ("G03_1877", 3, "Sab 21/11/2026 19:30", "Angiulli Bari", "Mediterranea Cerignola", 86, 75, "Giocata"),
+    ("G03_1878", 3, "Dom 22/11/2026 18:30", "Fortitudo BK Apricena", "Magic Bari", 69, 79, "Giocata"),
+    ("G03_1879", 3, "Dom 22/11/2026 18:00", "Orsa Capurso", "Vigor San Severo", 78, 75, "Giocata"),
+    ("G03_1880", 3, "Sab 21/11/2026 19:00", "Nuova Matteotti Corato", "A.G.S.D. Toritto", 64, 72, "Giocata"),
+    ("G03_1881", 3, "Dom 22/11/2026 18:30", "Basket Bitritto", "Olimpia Corato", 51, 50, "Giocata"),
+
+    # 4ª Giornata di andata
+    ("G04_1882", 4, "Dom 29/11/2026 17:30", "Magic Bari", "Nuova Matteotti Corato", 0, 0, "Da giocare"),
+    ("G04_1883", 4, "Dom 29/11/2026 19:00", "A.G.S.D. Toritto", "Fortitudo BK Apricena", 0, 0, "Da giocare"),
+    ("G04_1884", 4, "Sab 28/11/2026 18:30", "Virtus Foggia", "Angiulli Bari", 0, 0, "Da giocare"),
+    ("G04_1885", 4, "Dom 29/11/2026 18:00", "Orsa Capurso", "Olimpia Corato", 0, 0, "Da giocare"),
+    ("G04_1886", 4, "Sab 28/11/2026 19:45", "Vigor San Severo", "Basket Bitritto", 0, 0, "Da giocare"),
+
+    # 5ª Giornata di andata
+    ("G05_1887", 5, "Dom 06/12/2026 17:30", "Magic Bari", "Orsa Capurso", 0, 0, "Da giocare"),
+    ("G05_1888", 5, "Dom 06/12/2026 19:00", "Mediterranea Cerignola", "A.G.S.D. Toritto", 0, 0, "Da giocare"),
+    ("G05_1889", 5, "Dom 06/12/2026 20:15", "Olimpia Corato", "Vigor San Severo", 0, 0, "Da giocare"),
+    ("G05_1890", 5, "Dom 06/12/2026 18:30", "Basket Bitritto", "Virtus Foggia", 0, 0, "Da giocare"),
+    ("G05_1891", 5, "Sab 05/12/2026 19:30", "Angiulli Bari", "Nuova Matteotti Corato", 0, 0, "Da giocare"),
+
+    # 6ª Giornata di andata
+    ("G06_1892", 6, "Dom 13/12/2026 18:30", "Fortitudo BK Apricena", "Basket Bitritto", 0, 0, "Da giocare"),
+    ("G06_1893", 6, "Dom 13/12/2026 20:15", "Olimpia Corato", "Magic Bari", 0, 0, "Da giocare"),
+    ("G06_1894", 6, "Sab 12/12/2026 19:00", "Nuova Matteotti Corato", "Vigor San Severo", 0, 0, "Da giocare"),
+    ("G06_1895", 6, "Dom 13/12/2026 18:00", "Orsa Capurso", "Angiulli Bari", 0, 0, "Da giocare"),
+    ("G06_1896", 6, "Gio 17/12/2026 20:00", "Virtus Foggia", "Mediterranea Cerignola", 0, 0, "Da giocare"),
+
+    # 7ª Giornata di andata
+    ("G07_1897", 7, "Sab 19/12/2026 18:00", "Vigor San Severo", "Fortitudo BK Apricena", 0, 0, "Da giocare"),
+    ("G07_1898", 7, "Dom 20/12/2026 19:00", "Mediterranea Cerignola", "Olimpia Corato", 0, 0, "Da giocare"),
+    ("G07_1899", 7, "Dom 20/12/2026 18:30", "Basket Bitritto", "Nuova Matteotti Corato", 0, 0, "Da giocare"),
+    ("G07_1900", 7, "Dom 20/12/2026 19:00", "A.G.S.D. Toritto", "Orsa Capurso", 0, 0, "Da giocare"),
+    ("G07_1901", 7, "Dom 20/12/2026 17:30", "Magic Bari", "Virtus Foggia", 0, 0, "Da giocare"),
+
+    # 8ª Giornata di andata
+    ("G08_1902", 8, "Dom 10/01/2027 18:30", "Fortitudo BK Apricena", "Angiulli Bari", 0, 0, "Da giocare"),
+    ("G08_1903", 8, "Dom 10/01/2027 19:00", "A.G.S.D. Toritto", "Vigor San Severo", 0, 0, "Da giocare"),
+    ("G08_1904", 8, "Dom 10/01/2027 19:00", "Mediterranea Cerignola", "Magic Bari", 0, 0, "Da giocare"),
+    ("G08_1905", 8, "Sab 09/01/2027 19:00", "Nuova Matteotti Corato", "Orsa Capurso", 0, 0, "Da giocare"),
+    ("G08_1906", 8, "Dom 10/01/2027 20:15", "Olimpia Corato", "Virtus Foggia", 0, 0, "Da giocare"),
+
+    # 9ª Giornata di andata
+    ("G09_1907", 9, "Sab 16/01/2027 18:00", "Vigor San Severo", "Magic Bari", 0, 0, "Da giocare"),
+    ("G09_1908", 9, "Sab 16/01/2027 18:30", "Virtus Foggia", "A.G.S.D. Toritto", 0, 0, "Da giocare"),
+    ("G09_1909", 9, "Dom 17/01/2027 18:00", "Orsa Capurso", "Mediterranea Cerignola", 0, 0, "Da giocare"),
+    ("G09_1910", 9, "Sab 16/01/2027 19:30", "Angiulli Bari", "Basket Bitritto", 0, 0, "Da giocare"),
+    ("G09_1911", 9, "Sab 16/01/2027 17:00", "Nuova Matteotti Corato", "Fortitudo BK Apricena", 0, 0, "Da giocare"),
+
+    # 10ª Giornata di andata
+    ("G10_1912", 10, "Dom 24/01/2027 19:00", "A.G.S.D. Toritto", "Olimpia Corato", 0, 0, "Da giocare"),
+    ("G10_1913", 10, "Dom 24/01/2027 19:00", "Mediterranea Cerignola", "Basket Bitritto", 0, 0, "Da giocare"),
+    ("G10_1914", 10, "Dom 24/01/2027 18:00", "Orsa Capurso", "Fortitudo BK Apricena", 0, 0, "Da giocare"),
+    ("G10_1915", 10, "Sab 23/01/2027 19:30", "Angiulli Bari", "Vigor San Severo", 0, 0, "Da giocare"),
+    ("G10_1916", 10, "Sab 23/01/2027 18:30", "Virtus Foggia", "Nuova Matteotti Corato", 0, 0, "Da giocare"),
+
+    # 11ª Giornata di andata
+    ("G11_1917", 11, "Dom 31/01/2027 17:30", "Magic Bari", "A.G.S.D. Toritto", 0, 0, "Da giocare"),
+    ("G11_1918", 11, "Dom 31/01/2027 18:30", "Basket Bitritto", "Orsa Capurso", 0, 0, "Da giocare"),
+    ("G11_1919", 11, "Dom 31/01/2027 18:30", "Fortitudo BK Apricena", "Virtus Foggia", 0, 0, "Da giocare"),
+    ("G11_1920", 11, "Dom 31/01/2027 20:15", "Olimpia Corato", "Angiulli Bari", 0, 0, "Da giocare"),
+    ("G11_1921", 11, "Sab 30/01/2027 18:00", "Vigor San Severo", "Mediterranea Cerignola", 0, 0, "Da giocare"),
+
+    # 1ª Giornata di ritorno
+    ("G12_1922", 12, "Dom 07/02/2027 18:00", "Orsa Capurso", "Virtus Foggia", 0, 0, "Da giocare"),
+    ("G12_1923", 12, "Dom 07/02/2027 19:00", "Mediterranea Cerignola", "Fortitudo BK Apricena", 0, 0, "Da giocare"),
+    ("G12_1924", 12, "Dom 07/02/2027 17:30", "Magic Bari", "Angiulli Bari", 0, 0, "Da giocare"),
+    ("G12_1925", 12, "Sab 06/02/2027 19:00", "A.G.S.D. Toritto", "Basket Bitritto", 0, 0, "Da giocare"),
+    ("G12_1926", 12, "Dom 07/02/2027 20:15", "Olimpia Corato", "Nuova Matteotti Corato", 0, 0, "Da giocare"),
+
+    # 2ª Giornata di ritorno
+    ("G13_1927", 13, "Sab 13/02/2027 18:30", "Virtus Foggia", "Vigor San Severo", 0, 0, "Da giocare"),
+    ("G13_1928", 13, "Sab 13/02/2027 19:30", "Angiulli Bari", "A.G.S.D. Toritto", 0, 0, "Da giocare"),
+    ("G13_1929", 13, "Sab 13/02/2027 19:00", "Nuova Matteotti Corato", "Mediterranea Cerignola", 0, 0, "Da giocare"),
+    ("G13_1930", 13, "Dom 14/02/2027 20:15", "Basket Bitritto", "Magic Bari", 0, 0, "Da giocare"),
+    ("G13_1931", 13, "Dom 14/02/2027 18:30", "Fortitudo BK Apricena", "Olimpia Corato", 0, 0, "Da giocare"),
+
+    # 3ª Giornata di ritorno
+    ("G14_1932", 14, "Sab 20/02/2027 18:00", "Orsa Capurso", "Vigor San Severo", 0, 0, "Da giocare"),
+    ("G14_1933", 14, "Dom 21/02/2027 19:00", "A.G.S.D. Toritto", "Nuova Matteotti Corato", 0, 0, "Da giocare"),
+    ("G14_1934", 14, "Dom 21/02/2027 20:15", "Olimpia Corato", "Basket Bitritto", 0, 0, "Da giocare"),
+    ("G14_1935", 14, "Dom 21/02/2027 19:00", "Mediterranea Cerignola", "Angiulli Bari", 0, 0, "Da giocare"),
+    ("G14_1936", 14, "Dom 21/02/2027 17:30", "Magic Bari", "Fortitudo BK Apricena", 0, 0, "Da giocare"),
+
+    # 4ª Giornata di ritorno
+    ("G15_1937", 15, "Sab 27/02/2027 20:00", "Nuova Matteotti Corato", "Magic Bari", 0, 0, "Da giocare"),
+    ("G15_1938", 15, "Dom 28/02/2027 18:30", "Fortitudo BK Apricena", "A.G.S.D. Toritto", 0, 0, "Da giocare"),
+    ("G15_1939", 15, "Dom 28/02/2027 20:15", "Basket Bitritto", "Vigor San Severo", 0, 0, "Da giocare"),
+    ("G15_1940", 15, "Dom 28/02/2027 20:15", "Olimpia Corato", "Orsa Capurso", 0, 0, "Da giocare"),
+    ("G15_1941", 15, "Sab 27/02/2027 19:30", "Angiulli Bari", "Virtus Foggia", 0, 0, "Da giocare"),
+
+    # 5ª Giornata di ritorno
+    ("G16_1942", 16, "Sab 06/03/2027 18:00", "Vigor San Severo", "Olimpia Corato", 0, 0, "Da giocare"),
+    ("G16_1943", 16, "Dom 07/03/2027 18:00", "Orsa Capurso", "Magic Bari", 0, 0, "Da giocare"),
+    ("G16_1944", 16, "Dom 07/03/2027 19:00", "A.G.S.D. Toritto", "Mediterranea Cerignola", 0, 0, "Da giocare"),
+    ("G16_1945", 16, "Sab 06/03/2027 17:00", "Nuova Matteotti Corato", "Angiulli Bari", 0, 0, "Da giocare"),
+    ("G16_1946", 16, "Sab 06/03/2027 18:30", "Virtus Foggia", "Basket Bitritto", 0, 0, "Da giocare"),
+
+    # 6ª Giornata di ritorno
+    ("G17_1947", 17, "Sab 13/03/2027 19:30", "Angiulli Bari", "Orsa Capurso", 0, 0, "Da giocare"),
+    ("G17_1948", 17, "Dom 14/03/2027 19:00", "Mediterranea Cerignola", "Virtus Foggia", 0, 0, "Da giocare"),
+    ("G17_1949", 17, "Sab 13/03/2027 18:00", "Vigor San Severo", "Nuova Matteotti Corato", 0, 0, "Da giocare"),
+    ("G17_1950", 17, "Dom 14/03/2027 17:30", "Magic Bari", "Olimpia Corato", 0, 0, "Da giocare"),
+    ("G17_1951", 17, "Dom 14/03/2027 18:30", "Basket Bitritto", "Fortitudo BK Apricena", 0, 0, "Da giocare"),
+
+    # 7ª Giornata di ritorno
+    ("G18_1952", 18, "Dom 21/03/2027 18:30", "Virtus Foggia", "Magic Bari", 0, 0, "Da giocare"),
+    ("G18_1953", 18, "Dom 21/03/2027 18:00", "Orsa Capurso", "A.G.S.D. Toritto", 0, 0, "Da giocare"),
+    ("G18_1954", 18, "Dom 21/03/2027 18:30", "Fortitudo BK Apricena", "Vigor San Severo", 0, 0, "Da giocare"),
+    ("G18_1955", 18, "Sab 20/03/2027 19:00", "Nuova Matteotti Corato", "Basket Bitritto", 0, 0, "Da giocare"),
+    ("G18_1956", 18, "Dom 21/03/2027 20:15", "Olimpia Corato", "Mediterranea Cerignola", 0, 0, "Da giocare"),
+
+    # 8ª Giornata di ritorno
+    ("G19_1957", 19, "Sab 03/04/2027 18:30", "Olimpia Corato", "Virtus Foggia", 0, 0, "Da giocare"),
+    ("G19_1958", 19, "Sab 03/04/2027 18:00", "Vigor San Severo", "A.G.S.D. Toritto", 0, 0, "Da giocare"),
+    ("G19_1959", 19, "Dom 04/04/2027 17:30", "Magic Bari", "Mediterranea Cerignola", 0, 0, "Da giocare"),
+    ("G19_1960", 19, "Sab 03/04/2027 19:30", "Angiulli Bari", "Fortitudo BK Apricena", 0, 0, "Da giocare"),
+    ("G19_1961", 19, "Dom 04/04/2027 18:00", "Orsa Capurso", "Nuova Matteotti Corato", 0, 0, "Da giocare"),
+
+    # 9ª Giornata di ritorno
+    ("G20_1962", 20, "Dom 11/04/2027 19:00", "Mediterranea Cerignola", "Orsa Capurso", 0, 0, "Da giocare"),
+    ("G20_1963", 20, "Dom 11/04/2027 17:30", "Magic Bari", "Vigor San Severo", 0, 0, "Da giocare"),
+    ("G20_1964", 20, "Dom 11/04/2027 18:30", "Fortitudo BK Apricena", "Nuova Matteotti Corato", 0, 0, "Da giocare"),
+    ("G20_1965", 20, "Dom 11/04/2027 19:00", "A.G.S.D. Toritto", "Virtus Foggia", 0, 0, "Da giocare"),
+    ("G20_1966", 20, "Dom 11/04/2027 18:30", "Basket Bitritto", "Angiulli Bari", 0, 0, "Da giocare"),
+
+    # 10ª Giornata di ritorno
+    ("G21_1967", 21, "Dom 18/04/2027 20:15", "Olimpia Corato", "A.G.S.D. Toritto", 0, 0, "Da giocare"),
+    ("G21_1968", 21, "Dom 18/04/2027 18:30", "Basket Bitritto", "Mediterranea Cerignola", 0, 0, "Da giocare"),
+    ("G21_1969", 21, "Sab 17/04/2027 18:00", "Vigor San Severo", "Angiulli Bari", 0, 0, "Da giocare"),
+    ("G21_1970", 21, "Dom 18/04/2027 18:30", "Fortitudo BK Apricena", "Orsa Capurso", 0, 0, "Da giocare"),
+    ("G21_1971", 21, "Sab 17/04/2027 19:00", "Nuova Matteotti Corato", "Virtus Foggia", 0, 0, "Da giocare"),
+
+    # 11ª Giornata di ritorno
+    ("G22_1972", 22, "Sab 24/04/2027 18:00", "Orsa Capurso", "Basket Bitritto", 0, 0, "Da giocare"),
+    ("G22_1973", 22, "Dom 25/04/2027 19:00", "A.G.S.D. Toritto", "Magic Bari", 0, 0, "Da giocare"),
+    ("G22_1974", 22, "Dom 25/04/2027 19:00", "Mediterranea Cerignola", "Vigor San Severo", 0, 0, "Da giocare"),
+    ("G22_1975", 22, "Sab 24/04/2027 18:30", "Virtus Foggia", "Fortitudo BK Apricena", 0, 0, "Da giocare"),
+    ("G22_1976", 22, "Sab 24/04/2027 19:30", "Angiulli Bari", "Olimpia Corato", 0, 0, "Da giocare"),
+]
+
+
+def build_default_games_df() -> pd.DataFrame:
+    return pd.DataFrame(
+        [
+            {
+                "ID_Partita": gid,
+                "Girone": "Girone A",
+                "Giornata": giornata,
+                "Data": data_ora,
+                "Casa": casa,
+                "Trasferta": trasferta,
+                "Punti_Casa": pts_casa,
+                "Punti_Trasferta": pts_trasf,
+                "Stato": stato,
+            }
+            for gid, giornata, data_ora, casa, trasferta, pts_casa, pts_trasf, stato in DEFAULT_GAMES_RAW
+        ]
+    )
 
 
 def init_data():
@@ -31,19 +279,7 @@ def init_data():
         pd.DataFrame(DEFAULT_TEAMS).to_csv(TEAMS_FILE, index=False)
 
     if not GAMES_FILE.exists():
-        pd.DataFrame(
-            columns=[
-                "ID_Partita",
-                "Girone",
-                "Giornata",
-                "Data",
-                "Casa",
-                "Trasferta",
-                "Punti_Casa",
-                "Punti_Trasferta",
-                "Stato",
-            ]
-        ).to_csv(GAMES_FILE, index=False)
+        build_default_games_df().to_csv(GAMES_FILE, index=False)
 
     if not BOX_FILE.exists():
         pd.DataFrame(
@@ -79,7 +315,9 @@ def load_data():
             box_df[col] = pd.to_numeric(box_df[col], errors="coerce").fillna(0).astype(int)
 
     if "Quintetto_Base" in box_df.columns:
-        box_df["Quintetto_Base"] = box_df["Quintetto_Base"].astype(str).str.lower().isin(["true", "1", "si", "sì", "yes"])
+        box_df["Quintetto_Base"] = (
+            box_df["Quintetto_Base"].astype(str).str.lower().isin(["true", "1", "si", "sì", "yes"])
+        )
 
     return teams_df, games_df, box_df
 
@@ -233,7 +471,10 @@ if page == "Gironi":
 
         st.divider()
         st.subheader("Dettaglio Squadra e Roster")
-        selected_team = st.selectbox("Clicca o seleziona una squadra per vedere roster e statistiche", g_teams["Squadra"].tolist())
+        selected_team = st.selectbox(
+            "Seleziona una squadra per vedere logo, record, roster e statistiche",
+            g_teams["Squadra"].tolist(),
+        )
 
         team_info = g_teams[g_teams["Squadra"] == selected_team].iloc[0]
         w, l = compute_record(selected_team, girone_sel, games_df)
@@ -241,12 +482,12 @@ if page == "Gironi":
         col1, col2 = st.columns([1, 4])
         with col1:
             if team_info["Logo_URL"].strip():
-                st.image(team_info["Logo_URL"].strip(), width=90)
+                st.image(team_info["Logo_URL"].strip(), width=100)
             else:
                 st.markdown("### 🏀")
         with col2:
             st.markdown(f"### {selected_team}")
-            st.markdown(f"**Record:** {w} Vittorie - {l} Sconfitte")
+            st.markdown(f"**Record (V-S):** {w} Vittorie - {l} Sconfitte ({w}-{l})")
             if team_info["Note_Tattiche"].strip():
                 st.info(f"**Note tattiche:** {team_info['Note_Tattiche']}")
 
@@ -270,7 +511,7 @@ elif page == "Calendario & Tabellini":
         with st.form("add_game_form"):
             c1, c2, c3 = st.columns(3)
             giornata = c1.number_input("Giornata", min_value=1, max_value=40, value=1, step=1)
-            data_gara = c2.text_input("Data (es. 29/11/2026)", value="")
+            data_gara = c2.text_input("Data e Ora (es. Dom 29/11/2026 18:00)", value="")
             stato = c3.selectbox("Stato", ["Da giocare", "Giocata"])
 
             c4, c5, c6, c7 = st.columns([3, 1, 1, 3])
@@ -328,7 +569,7 @@ elif page == "Calendario & Tabellini":
         )
 
         st.divider()
-        st.subheader("Inserisci / Aggiorna Tabellino Giocatore")
+        st.subheader("Inserisci / Aggiorna Risultato e Tabellino Giocatore")
 
         game_labels = {
             f"G{r['Giornata']} | {r['Casa']} vs {r['Trasferta']} ({r['Stato']})": r["ID_Partita"]
@@ -424,7 +665,7 @@ elif page == "Calendario & Tabellini":
 # ==========================================
 elif page == "Gestione Squadre":
     st.title("Gestione Squadre e Dati")
-    st.caption("Rinomina le 11 squadre del Girone A, aggiungi loghi/note o aggiungi squadre per eventuale post-season.")
+    st.caption("Modifica squadre/loghi/note del Girone A o aggiungi squadre per eventuale post-season.")
 
     girone_edit = st.selectbox("Girone da modificare", ["Girone A", "Girone B", "Girone C"], key="edit_girone")
     sub_teams = teams_df[teams_df["Girone"] == girone_edit].reset_index(drop=True)
