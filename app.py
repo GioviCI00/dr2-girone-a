@@ -15,7 +15,6 @@ st.set_page_config(
 # CONFIGURAZIONE
 # ==========================================
 STAFF_PASSWORD = os.environ.get("DR2_STAFF_PASSWORD", "dr2puglia")
-# Esempio: https://raw.githubusercontent.com/<utente>/<repo>/<branch>/loghi
 GITHUB_RAW_BASE = os.environ.get("DR2_GITHUB_RAW_BASE", "").strip()
 
 GIRONI_TEAMS: dict[str, list[dict[str, str]]] = {
@@ -90,13 +89,14 @@ def get_logo_src(logo_filename: str) -> str:
 
 
 # ==========================================
-# CALCOLO CLASSIFICA SENZA PARTITE
+# CALCOLO CLASSIFICHE E MIGLIORE TERZA
 # ==========================================
 def compute_standings(girone: str) -> list[dict]:
-    """Calcola la classifica iniziale (0 partite giocate) ordinata per punti, diff e nome."""
+    """Calcola la classifica di un girone (0 partite giocate)."""
     teams = GIRONI_TEAMS.get(girone, [])
     rows = [
         {
+            "girone": girone,
             "squadra": item["squadra"],
             "logo": item["logo"],
             "p": 0,
@@ -111,10 +111,20 @@ def compute_standings(girone: str) -> list[dict]:
     return sorted(rows, key=lambda r: (-r["pts"], -r["diff"], r["squadra"]))
 
 
+def compute_thirds_standings() -> list[dict]:
+    """Estrae le 3e classificate di ciascun girone e le ordina per punti e differenza canestri."""
+    thirds = []
+    for g_name in ["Girone A", "Girone B", "Girone C"]:
+        board = compute_standings(g_name)
+        if len(board) >= 3:
+            thirds.append(board[2])
+    return sorted(thirds, key=lambda r: (-r["pts"], -r["diff"], r["squadra"]))
+
+
 # ==========================================
-# RENDER CLASSIFICA
+# RENDER CLASSIFICHE
 # ==========================================
-def render_standings(girone: str, rows: list[dict]) -> None:
+def render_standings(girone: str, rows: list[dict], thirds_board: list[dict]) -> None:
     st.markdown(
         """
         <style>
@@ -123,6 +133,7 @@ def render_standings(girone: str, rows: list[dict]) -> None:
             padding: 16px;
             border-radius: 14px;
             border: 1px solid rgba(255,255,255,0.16);
+            margin-bottom: 18px;
         }
         .board-head {
             display: grid;
@@ -135,6 +146,20 @@ def render_standings(girone: str, rows: list[dict]) -> None:
             text-align: center;
         }
         .board-head .left { text-align: left; }
+        .zone-tag {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.7px;
+            text-transform: uppercase;
+            margin: 10px 0 5px 4px;
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 6px;
+        }
+        .zone-promo { background: #16a34a; color: #ffffff; }
+        .zone-po { background: #d97706; color: #ffffff; }
+        .zone-third { background: #0284c7; color: #ffffff; border: 1px solid rgba(255,255,255,0.35); }
+        .zone-pout { background: #dc2626; color: #ffffff; }
         .board-row {
             display: grid;
             grid-template-columns: 54px 52px 1fr 52px 52px 52px 68px 110px 64px;
@@ -147,6 +172,12 @@ def render_standings(girone: str, rows: list[dict]) -> None:
             margin-bottom: 6px;
             color: #ffffff;
         }
+        .board-row.row-promo { border-left: 6px solid #22c55e; }
+        .board-row.row-po { border-left: 6px solid #f59e0b; }
+        .board-row.row-third { border-left: 6px solid #38bdf8; }
+        .board-row.row-pout { border-left: 6px solid #ef4444; }
+        .board-row.row-qual { border-left: 6px solid #22c55e; }
+        .board-row.row-out { border-left: 6px solid #ef4444; }
         .b-pos {
             font-size: 18px;
             font-weight: 900;
@@ -168,6 +199,11 @@ def render_standings(girone: str, rows: list[dict]) -> None:
             font-size: 14px;
             text-transform: uppercase;
         }
+        .b-sub {
+            font-size: 11px;
+            font-weight: 700;
+            color: #bae6fd;
+        }
         .b-val {
             text-align: center;
             font-weight: 700;
@@ -179,10 +215,34 @@ def render_standings(girone: str, rows: list[dict]) -> None:
             font-size: 16px;
             color: #ffd43b;
         }
+        .badge-ok {
+            display: inline-block;
+            background: #16a34a;
+            color: #ffffff;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 7px;
+            border-radius: 5px;
+            margin-left: 6px;
+        }
+        .badge-no {
+            display: inline-block;
+            background: rgba(239,68,68,0.25);
+            border: 1px solid #ef4444;
+            color: #fecaca;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 7px;
+            border-radius: 5px;
+            margin-left: 6px;
+        }
         </style>
         """,
         unsafe_allow_html=True,
     )
+
+    playout_start = max(len(rows) - 3, 5)
+    best_third = thirds_board[0] if thirds_board else None
 
     st.subheader(f"Classifica — {girone}")
     html = [
@@ -194,10 +254,28 @@ def render_standings(girone: str, rows: list[dict]) -> None:
     ]
 
     for pos, r in enumerate(rows, start=1):
+        row_cls = ""
+        if pos == 1:
+            html.append('<div class="zone-tag zone-promo">Promozione Diretta (1° Posto)</div>')
+            row_cls = "row-promo"
+        elif pos == 2:
+            html.append('<div class="zone-tag zone-po">Play-off (2° Posto)</div>')
+            row_cls = "row-po"
+        elif pos == 3:
+            is_best = best_third is not None and best_third["squadra"] == r["squadra"] and best_third["girone"] == girone
+            tag_txt = "3° Posto — Migliore Terza (Play-off)" if is_best else "3° Posto — Corsa Migliore Terza"
+            html.append(f'<div class="zone-tag zone-third">{tag_txt}</div>')
+            row_cls = "row-third"
+        elif pos == playout_start:
+            html.append('<div class="zone-tag zone-pout">Play-out (Ultime 4)</div>')
+
+        if pos >= playout_start:
+            row_cls = "row-pout"
+
         src = get_logo_src(r["logo"])
         logo_tag = f'<img class="b-logo" src="{src}" alt="{r["squadra"]}" />' if src else '<div class="b-pos">🏀</div>'
         html.append(
-            f'<div class="board-row">'
+            f'<div class="board-row {row_cls}">'
             f'<div class="b-pos">{pos}</div>'
             f'<div>{logo_tag}</div>'
             f'<div><div class="b-team">{r["squadra"]}</div></div>'
@@ -213,42 +291,29 @@ def render_standings(girone: str, rows: list[dict]) -> None:
     html.append("</div>")
     st.markdown("".join(html), unsafe_allow_html=True)
 
-
-# ==========================================
-# LOGIN
-# ==========================================
-if "authenticated" not in st.session_state:
-    st.session_state.authenticated = False
-
-if not st.session_state.authenticated:
-    st.title("🏀 DR2 Puglia — Login Staff")
-    pwd = st.text_input("Password", type="password")
-    if st.button("Accedi"):
-        if pwd == STAFF_PASSWORD:
-            st.session_state.authenticated = True
-            st.rerun()
-        else:
-            st.error("Password non valida.")
-    st.stop()
-
-
-# ==========================================
-# VISTA CLASSIFICHE
-# ==========================================
-top_col1, top_col2 = st.columns([6, 1])
-with top_col1:
-    st.title("🏀 DR2 Puglia — Classifiche")
-with top_col2:
-    if st.button("Esci"):
-        st.session_state.authenticated = False
-        st.rerun()
-
-if not GITHUB_RAW_BASE:
-    st.info(
-        "Suggerimento: imposta la variabile d'ambiente `DR2_GITHUB_RAW_BASE` "
-        "(es. `https://raw.githubusercontent.com/<utente>/<repo>/main/loghi`) per caricare i loghi direttamente da GitHub."
-    )
-
-girone_selezionato = st.selectbox("Seleziona Girone", ["Girone A", "Girone B", "Girone C"])
-classifica = compute_standings(girone_selezionato)
-render_standings(girone_selezionato, classifica)
+    # Mini-classifica tra le terze classificate
+    if thirds_board:
+        st.subheader("Mini-Classifica Terze Classificate (Migliore Terza ai Play-off)")
+        t_html = [
+            '<div class="board-box">',
+            '<div class="board-head">'
+            '<div>#</div><div>LOGO</div><div class="left">TERZA CLASSIFICATA</div>'
+            '<div>P</div><div>W</div><div>L</div><div>DIFF</div><div>STREAK</div><div>PTS</div>'
+            '</div>',
+        ]
+        for idx, t in enumerate(thirds_board, start=1):
+            qual = idx == 1
+            r_cls = "row-qual" if qual else "row-out"
+            badge = '<span class="badge-ok">PLAY-OFF</span>' if qual else '<span class="badge-no">FUORI</span>'
+            src = get_logo_src(t["logo"])
+            logo_tag = f'<img class="b-logo" src="{src}" alt="{t["squadra"]}" />' if src else '<div class="b-pos">🏀</div>'
+            t_html.append(
+                f'<div class="board-row {r_cls}">'
+                f'<div class="b-pos">{idx}</div>'
+                f'<div>{logo_tag}</div>'
+                f'<div>'
+                f'<div class="b-team">{t["squadra"]}</div>'
+                f'<div class="b-sub">{t["girone"]}{badge}</div>'
+                f'</div>'
+                f'<div class="b-val">{t["p"]}</div>'
+                f'<div
