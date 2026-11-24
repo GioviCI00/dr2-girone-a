@@ -74,7 +74,7 @@ DEFAULT_TEAMS = [
     {"Girone": "Girone B", "Squadra": "ASD MURGIA BASKET SANTERAMO", "Logo_URL": "Murgia Basket Santeramo.png", "Note_Tattiche": ""},
     {"Girone": "Girone B", "Squadra": "ASD SCUOLA BASKET MARTINESE", "Logo_URL": "SBM Martina Franca.png", "Note_Tattiche": ""},
     {"Girone": "Girone B", "Squadra": "DOMITI LA PINTA BASKET PULSANO", "Logo_URL": "Domiti La Pinta ASD Pulsano.png", "Note_Tattiche": ""},
-    {"Girone B", "Squadra": "MASSERIA SEMERARO NEW SPORTING MOTTOLA", "Logo_URL": "New Sporting Mottola.png", "Note_Tattiche": ""},
+   {"Girone": "Girone B", "Squadra": "MASSERIA SEMERARO NEW SPORTING MOTTOLA", "Logo_URL": "New Sporting Mottola.png", "Note_Tattiche": ""},
     {"Girone": "Girone B", "Squadra": "POL. OLYMPIA CLUB RUTIGLIANO", "Logo_URL": "olympia rutigliano.png", "Note_Tattiche": ""},
     {"Girone B", "Squadra": "SUPPORT_O TARANTO", "Logo_URL": "Support_o Taranto.png", "Note_Tattiche": ""},
     # Girone C (11 squadre)
