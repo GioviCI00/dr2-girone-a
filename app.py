@@ -20,43 +20,48 @@ TEAMS_FILE = DATA_DIR / "squadre.csv"
 GAMES_FILE = DATA_DIR / "partite.csv"
 BOX_FILE = DATA_DIR / "tabellini.csv"
 
+
+def _logo_path(filename: str) -> str:
+    return quote(filename, safe="/._-")
+
+
 DEFAULT_TEAMS = [
     # Girone A (11 squadre)
-    {"Girone": "Girone A", "Squadra": "ASD MAGIC BARI", "Logo_URL": "", "Note_Tattiche": ""},
-    {"Girone": "Girone A", "Squadra": "ASD POL. BASKET BITRITTO", "Logo_URL": "", "Note_Tattiche": ""},
-    {"Girone": "Girone A", "Squadra": "ASD VI.G.OR BASKET SAN SEVERO", "Logo_URL": "", "Note_Tattiche": ""},
-    {"Girone": "Girone A", "Squadra": "ASD VIRTUS FOGGIA", "Logo_URL": "", "Note_Tattiche": ""},
-    {"Girone": "Girone A", "Squadra": "ECOFAN CERIGNOLA MEDITERRANEA 92", "Logo_URL": "", "Note_Tattiche": ""},
-    {"Girone": "Girone A", "Squadra": "FORTITUDO BASKET APRICENA", "Logo_URL": "", "Note_Tattiche": ""},
-    {"Girone": "Girone A", "Squadra": "GINNASTICA ANGIULLI BARI", "Logo_URL": "", "Note_Tattiche": ""},
-    {"Girone": "Girone A", "Squadra": "PALLACANESTRO OLIMPIA CORATO", "Logo_URL": "", "Note_Tattiche": ""},
-    {"Girone": "Girone A", "Squadra": "POL. DIL. NUOVA MATTEOTTI CORATO", "Logo_URL": "", "Note_Tattiche": ""},
-    {"Girone": "Girone A", "Squadra": "POLISPORTIVA ORSA CAPURSO SSD ARL", "Logo_URL": "", "Note_Tattiche": ""},
-    {"Girone": "Girone A", "Squadra": "AGS DIL. TORITTO", "Logo_URL": "", "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "ASD MAGIC BARI", "Logo_URL": _logo_path("Magic Bari.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "ASD POL. BASKET BITRITTO", "Logo_URL": _logo_path("basket bitritto.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "ASD VI.G.OR BASKET SAN SEVERO", "Logo_URL": _logo_path("Vigor San Severo.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "ASD VIRTUS FOGGIA", "Logo_URL": _logo_path("Virtus Foggia.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "ECOFAN CERIGNOLA MEDITERRANEA 92", "Logo_URL": _logo_path("Mediterranea Cerignola.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "FORTITUDO BASKET APRICENA", "Logo_URL": _logo_path("Fortitudo Basket Apricena.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "GINNASTICA ANGIULLI BARI", "Logo_URL": _logo_path("Angiulli Basket Bari.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "PALLACANESTRO OLIMPIA CORATO", "Logo_URL": _logo_path("Olimpia Corato.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "POL. DIL. NUOVA MATTEOTTI CORATO", "Logo_URL": _logo_path("Nuova Matteotti Corato.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "POLISPORTIVA ORSA CAPURSO SSD ARL", "Logo_URL": _logo_path("orsa capurso.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "AGS DIL. TORITTO", "Logo_URL": _logo_path("A.G.S.D. TORITTO.png"), "Note_Tattiche": ""},
     # Girone B (11 squadre)
-    {"Girone": "Girone B", "Squadra": "ASD ATLETICA BASKET PUTIGNANO", "Logo_URL": "", "Note_Tattiche": ""},
-    {"Girone": "Girone B", "Squadra": "ASD BASKET FASANO", "Logo_URL": "", "Note_Tattiche": ""},
-    {"Girone": "Girone B", "Squadra": "ASD CLUB GIGANTI CISTERNINO", "Logo_URL": "", "Note_Tattiche": ""},
-    {"Girone": "Girone B", "Squadra": "ASD DREAM BASKET ALTAMURA", "Logo_URL": "", "Note_Tattiche": ""},
-    {"Girone": "Girone B", "Squadra": "ASD MESSAPICA BASKET CEGLIE", "Logo_URL": "", "Note_Tattiche": ""},
-    {"Girone": "Girone B", "Squadra": "ASD MURGIA BASKET SANTERAMO", "Logo_URL": "", "Note_Tattiche": ""},
-    {"Girone": "Girone B", "Squadra": "ASD SCUOLA BASKET MARTINESE", "Logo_URL": "", "Note_Tattiche": ""},
-    {"Girone": "Girone B", "Squadra": "DOMITI LA PINTA BASKET PULSANO", "Logo_URL": "", "Note_Tattiche": ""},
-    {"Girone": "Girone B", "Squadra": "MASSERIA SEMERARO NEW SPORTING MOTTOLA", "Logo_URL": "", "Note_Tattiche": ""},
-    {"Girone": "Girone B", "Squadra": "POL. OLYMPIA CLUB RUTIGLIANO", "Logo_URL": "", "Note_Tattiche": ""},
-    {"Girone": "Girone B", "Squadra": "SUPPORT_O TARANTO", "Logo_URL": "", "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "ASD ATLETICA BASKET PUTIGNANO", "Logo_URL": _logo_path("Atletica Basket Putignano.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "ASD BASKET FASANO", "Logo_URL": _logo_path("ASD Basket Fasano.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "ASD CLUB GIGANTI CISTERNINO", "Logo_URL": _logo_path("Club Giganti Cisternino.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "ASD DREAM BASKET ALTAMURA", "Logo_URL": _logo_path("Dream Basket Altamura.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "ASD MESSAPICA BASKET CEGLIE", "Logo_URL": _logo_path("Messapica Bk Ceglie.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "ASD MURGIA BASKET SANTERAMO", "Logo_URL": _logo_path("Murgia Basket Santeramo.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "ASD SCUOLA BASKET MARTINESE", "Logo_URL": _logo_path("SBM Martina Franca.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "DOMITI LA PINTA BASKET PULSANO", "Logo_URL": _logo_path("Domiti La Pinta ASD Pulsano.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "MASSERIA SEMERARO NEW SPORTING MOTTOLA", "Logo_URL": _logo_path("New Sporting Mottola.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "POL. OLYMPIA CLUB RUTIGLIANO", "Logo_URL": _logo_path("olympia rutigliano.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "SUPPORT_O TARANTO", "Logo_URL": _logo_path("Support_o Taranto.png"), "Note_Tattiche": ""},
     # Girone C (11 squadre)
-    {"Girone": "Girone C", "Squadra": "A.POL.DIL.AURORA BRINDISI", "Logo_URL": "", "Note_Tattiche": ""},
-    {"Girone": "Girone C", "Squadra": "ALL STAR BASKET FRANCAVILLA", "Logo_URL": "", "Note_Tattiche": ""},
-    {"Girone": "Girone C", "Squadra": "ASD ASSI BASKET BRINDISI", "Logo_URL": "", "Note_Tattiche": ""},
-    {"Girone": "Girone C", "Squadra": "ASD BASKET TRICASE", "Logo_URL": "", "Note_Tattiche": ""},
-    {"Girone": "Girone C", "Squadra": "ASD BELLFIKA MESAGNE", "Logo_URL": "", "Note_Tattiche": ""},
-    {"Girone": "Girone C", "Squadra": "ASD MAGIC GALATINA", "Logo_URL": "", "Note_Tattiche": ""},
-    {"Girone": "Girone C", "Squadra": "ASD NEW BASKET CARMIANO", "Logo_URL": "", "Note_Tattiche": ""},
-    {"Girone": "Girone C", "Squadra": "ASD POLISPORTIVA MANDURIA", "Logo_URL": "", "Note_Tattiche": ""},
-    {"Girone": "Girone C", "Squadra": "AZ DISINFESTAZIONI SRL VIRTUS BRINDISI", "Logo_URL": "", "Note_Tattiche": ""},
-    {"Girone": "Girone C", "Squadra": "DIERRE ARREDAMENTI CALIMERA BASKET", "Logo_URL": "", "Note_Tattiche": ""},
-    {"Girone": "Girone C", "Squadra": "SENSI PALLACANESTRO LUPA LECCE", "Logo_URL": "", "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "A.POL.DIL.AURORA BRINDISI", "Logo_URL": _logo_path("Aurora Brindisi.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "ALL STAR BASKET FRANCAVILLA", "Logo_URL": _logo_path("All Star Francavilla.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "ASD ASSI BASKET BRINDISI", "Logo_URL": _logo_path("ASSI Brindisi.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "ASD BASKET TRICASE", "Logo_URL": _logo_path("Basket Tricase.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "ASD BELLFIKA MESAGNE", "Logo_URL": _logo_path("Bellfika Mesagne.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "ASD MAGIC GALATINA", "Logo_URL": _logo_path("Magic Galatina.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "ASD NEW BASKET CARMIANO", "Logo_URL": _logo_path("New Basket Carmiano.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "ASD POLISPORTIVA MANDURIA", "Logo_URL": _logo_path("Basket Manduria.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "AZ DISINFESTAZIONI SRL VIRTUS BRINDISI", "Logo_URL": _logo_path("Virtus Brindisi.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "DIERRE ARREDAMENTI CALIMERA BASKET", "Logo_URL": _logo_path("Calimera Zero21.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "SENSI PALLACANESTRO LUPA LECCE", "Logo_URL": _logo_path("Pallacanestro Lupa Lecce.png"), "Note_Tattiche": ""},
 ]
 
 # (ID_Partita, Girone, Giornata, Data, Casa, Trasferta, Punti_Casa, Punti_Trasferta, Stato)
@@ -64,23 +69,23 @@ DEFAULT_GAMES_RAW = [
     # ==========================================================
     # GIRONE A - CU N. 91 DEL 02/11/2026 (GARE 1867 - 1976)
     # ==========================================================
-    ("A01_1867", "Girone A", 1, "Sab 07/11/2026 19:00", "POL. DIL. NUOVA MATTEOTTI CORATO", "PALLACANESTRO OLIMPIA CORATO", 0, 0, "Da giocare"),
-    ("A01_1868", "Girone A", 1, "Dom 08/11/2026 18:30", "FORTITUDO BASKET APRICENA", "ECOFAN CERIGNOLA MEDITERRANEA 92", 0, 0, "Da giocare"),
-    ("A01_1869", "Girone A", 1, "Dom 08/11/2026 18:00", "GINNASTICA ANGIULLI BARI", "ASD MAGIC BARI", 0, 0, "Da giocare"),
-    ("A01_1870", "Girone A", 1, "Sab 07/11/2026 18:30", "ASD VIRTUS FOGGIA", "POLISPORTIVA ORSA CAPURSO SSD ARL", 0, 0, "Da giocare"),
-    ("A01_1871", "Girone A", 1, "Dom 08/11/2026 18:30", "ASD POL. BASKET BITRITTO", "AGS DIL. TORITTO", 0, 0, "Da giocare"),
+    ("A01_1867", "Girone A", 1, "Sab 07/11/2026 19:00", "POL. DIL. NUOVA MATTEOTTI CORATO", "PALLACANESTRO OLIMPIA CORATO", 72, 67, "Giocata"),
+    ("A01_1868", "Girone A", 1, "Dom 08/11/2026 18:30", "FORTITUDO BASKET APRICENA", "ECOFAN CERIGNOLA MEDITERRANEA 92", 50, 76, "Giocata"),
+    ("A01_1869", "Girone A", 1, "Dom 08/11/2026 18:00", "GINNASTICA ANGIULLI BARI", "ASD MAGIC BARI", 68, 50, "Giocata"),
+    ("A01_1870", "Girone A", 1, "Sab 07/11/2026 18:30", "ASD VIRTUS FOGGIA", "POLISPORTIVA ORSA CAPURSO SSD ARL", 78, 87, "Giocata"),
+    ("A01_1871", "Girone A", 1, "Dom 08/11/2026 18:30", "ASD POL. BASKET BITRITTO", "AGS DIL. TORITTO", 62, 81, "Giocata"),
 
-    ("A02_1872", "Girone A", 2, "Sab 14/11/2026 18:00", "ASD VI.G.OR BASKET SAN SEVERO", "ASD VIRTUS FOGGIA", 0, 0, "Da giocare"),
-    ("A02_1873", "Girone A", 2, "Dom 15/11/2026 20:15", "PALLACANESTRO OLIMPIA CORATO", "FORTITUDO BASKET APRICENA", 0, 0, "Da giocare"),
-    ("A02_1874", "Girone A", 2, "Dom 15/11/2026 19:00", "ECOFAN CERIGNOLA MEDITERRANEA 92", "POL. DIL. NUOVA MATTEOTTI CORATO", 0, 0, "Da giocare"),
-    ("A02_1875", "Girone A", 2, "Dom 15/11/2026 19:00", "AGS DIL. TORITTO", "GINNASTICA ANGIULLI BARI", 0, 0, "Da giocare"),
-    ("A02_1876", "Girone A", 2, "Dom 15/11/2026 17:30", "ASD MAGIC BARI", "ASD POL. BASKET BITRITTO", 0, 0, "Da giocare"),
+    ("A02_1872", "Girone A", 2, "Sab 14/11/2026 18:00", "ASD VI.G.OR BASKET SAN SEVERO", "ASD VIRTUS FOGGIA", 69, 65, "Giocata"),
+    ("A02_1873", "Girone A", 2, "Dom 15/11/2026 20:15", "PALLACANESTRO OLIMPIA CORATO", "FORTITUDO BASKET APRICENA", 50, 56, "Giocata"),
+    ("A02_1874", "Girone A", 2, "Dom 15/11/2026 19:00", "ECOFAN CERIGNOLA MEDITERRANEA 92", "POL. DIL. NUOVA MATTEOTTI CORATO", 49, 59, "Giocata"),
+    ("A02_1875", "Girone A", 2, "Dom 15/11/2026 19:00", "AGS DIL. TORITTO", "GINNASTICA ANGIULLI BARI", 85, 96, "Giocata"),
+    ("A02_1876", "Girone A", 2, "Dom 15/11/2026 17:30", "ASD MAGIC BARI", "ASD POL. BASKET BITRITTO", 56, 48, "Giocata"),
 
-    ("A03_1877", "Girone A", 3, "Sab 21/11/2026 19:30", "GINNASTICA ANGIULLI BARI", "ECOFAN CERIGNOLA MEDITERRANEA 92", 0, 0, "Da giocare"),
-    ("A03_1878", "Girone A", 3, "Dom 22/11/2026 18:30", "FORTITUDO BASKET APRICENA", "ASD MAGIC BARI", 0, 0, "Da giocare"),
-    ("A03_1879", "Girone A", 3, "Dom 22/11/2026 18:00", "POLISPORTIVA ORSA CAPURSO SSD ARL", "ASD VI.G.OR BASKET SAN SEVERO", 0, 0, "Da giocare"),
-    ("A03_1880", "Girone A", 3, "Sab 21/11/2026 19:00", "POL. DIL. NUOVA MATTEOTTI CORATO", "AGS DIL. TORITTO", 0, 0, "Da giocare"),
-    ("A03_1881", "Girone A", 3, "Dom 22/11/2026 18:30", "ASD POL. BASKET BITRITTO", "PALLACANESTRO OLIMPIA CORATO", 0, 0, "Da giocare"),
+    ("A03_1877", "Girone A", 3, "Sab 21/11/2026 19:30", "GINNASTICA ANGIULLI BARI", "ECOFAN CERIGNOLA MEDITERRANEA 92", 86, 75, "Giocata"),
+    ("A03_1878", "Girone A", 3, "Dom 22/11/2026 18:30", "FORTITUDO BASKET APRICENA", "ASD MAGIC BARI", 69, 79, "Giocata"),
+    ("A03_1879", "Girone A", 3, "Dom 22/11/2026 18:00", "POLISPORTIVA ORSA CAPURSO SSD ARL", "ASD VI.G.OR BASKET SAN SEVERO", 78, 75, "Giocata"),
+    ("A03_1880", "Girone A", 3, "Sab 21/11/2026 19:00", "POL. DIL. NUOVA MATTEOTTI CORATO", "AGS DIL. TORITTO", 64, 77, "Giocata"),
+    ("A03_1881", "Girone A", 3, "Dom 22/11/2026 18:30", "ASD POL. BASKET BITRITTO", "PALLACANESTRO OLIMPIA CORATO", 51, 50, "Giocata"),
 
     ("A04_1882", "Girone A", 4, "Dom 29/11/2026 17:30", "ASD MAGIC BARI", "POL. DIL. NUOVA MATTEOTTI CORATO", 0, 0, "Da giocare"),
     ("A04_1883", "Girone A", 4, "Dom 29/11/2026 19:00", "AGS DIL. TORITTO", "FORTITUDO BASKET APRICENA", 0, 0, "Da giocare"),
@@ -199,23 +204,23 @@ DEFAULT_GAMES_RAW = [
     # ==========================================================
     # GIRONE B - CU N. 92 DEL 02/11/2026 (GARE 2109 - 2218)
     # ==========================================================
-    ("B01_2109", "Girone B", 1, "Sab 07/11/2026 18:45", "ASD SCUOLA BASKET MARTINESE", "ASD DREAM BASKET ALTAMURA", 0, 0, "Da giocare"),
-    ("B01_2110", "Girone B", 1, "Dom 08/11/2026 17:30", "ASD MURGIA BASKET SANTERAMO", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", 0, 0, "Da giocare"),
-    ("B01_2111", "Girone B", 1, "Dom 08/11/2026 18:00", "SUPPORT_O TARANTO", "DOMITI LA PINTA BASKET PULSANO", 0, 0, "Da giocare"),
-    ("B01_2112", "Girone B", 1, "Sab 07/11/2026 19:00", "ASD BASKET FASANO", "ASD ATLETICA BASKET PUTIGNANO", 0, 0, "Da giocare"),
-    ("B01_2113", "Girone B", 1, "Sab 07/11/2026 19:00", "ASD CLUB GIGANTI CISTERNINO", "ASD MESSAPICA BASKET CEGLIE", 0, 0, "Da giocare"),
+    ("B01_2109", "Girone B", 1, "Sab 07/11/2026 18:45", "ASD SCUOLA BASKET MARTINESE", "ASD DREAM BASKET ALTAMURA", 41, 62, "Giocata"),
+    ("B01_2110", "Girone B", 1, "Dom 08/11/2026 17:30", "ASD MURGIA BASKET SANTERAMO", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", 70, 59, "Giocata"),
+    ("B01_2111", "Girone B", 1, "Dom 08/11/2026 18:00", "SUPPORT_O TARANTO", "DOMITI LA PINTA BASKET PULSANO", 71, 59, "Giocata"),
+    ("B01_2112", "Girone B", 1, "Sab 07/11/2026 19:00", "ASD BASKET FASANO", "ASD ATLETICA BASKET PUTIGNANO", 49, 63, "Giocata"),
+    ("B01_2113", "Girone B", 1, "Sab 07/11/2026 19:00", "ASD CLUB GIGANTI CISTERNINO", "ASD MESSAPICA BASKET CEGLIE", 69, 57, "Giocata"),
 
-    ("B02_2114", "Girone B", 2, "Sab 14/11/2026 20:00", "ASD MESSAPICA BASKET CEGLIE", "POL. OLYMPIA CLUB RUTIGLIANO", 0, 0, "Da giocare"),
-    ("B02_2115", "Girone B", 2, "Dom 15/11/2026 18:00", "ASD DREAM BASKET ALTAMURA", "ASD BASKET FASANO", 0, 0, "Da giocare"),
-    ("B02_2116", "Girone B", 2, "Sab 14/11/2026 18:00", "ASD ATLETICA BASKET PUTIGNANO", "ASD SCUOLA BASKET MARTINESE", 0, 0, "Da giocare"),
-    ("B02_2117", "Girone B", 2, "Dom 15/11/2026 18:30", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", "SUPPORT_O TARANTO", 0, 0, "Da giocare"),
-    ("B02_2118", "Girone B", 2, "Dom 15/11/2026 18:00", "DOMITI LA PINTA BASKET PULSANO", "ASD MURGIA BASKET SANTERAMO", 0, 0, "Da giocare"),
+    ("B02_2114", "Girone B", 2, "Sab 14/11/2026 20:00", "ASD MESSAPICA BASKET CEGLIE", "POL. OLYMPIA CLUB RUTIGLIANO", 65, 85, "Giocata"),
+    ("B02_2115", "Girone B", 2, "Dom 15/11/2026 18:00", "ASD DREAM BASKET ALTAMURA", "ASD BASKET FASANO", 66, 59, "Giocata"),
+    ("B02_2116", "Girone B", 2, "Sab 14/11/2026 18:00", "ASD ATLETICA BASKET PUTIGNANO", "ASD SCUOLA BASKET MARTINESE", 55, 34, "Giocata"),
+    ("B02_2117", "Girone B", 2, "Dom 15/11/2026 18:30", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", "SUPPORT_O TARANTO", 64, 55, "Giocata"),
+    ("B02_2118", "Girone B", 2, "Dom 15/11/2026 18:00", "DOMITI LA PINTA BASKET PULSANO", "ASD MURGIA BASKET SANTERAMO", 59, 56, "Giocata"),
 
-    ("B03_2119", "Girone B", 3, "Dom 22/11/2026 18:00", "ASD BASKET FASANO", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", 0, 0, "Da giocare"),
-    ("B03_2120", "Girone B", 3, "Sab 21/11/2026 18:45", "ASD SCUOLA BASKET MARTINESE", "DOMITI LA PINTA BASKET PULSANO", 0, 0, "Da giocare"),
-    ("B03_2121", "Girone B", 3, "Dom 22/11/2026 18:00", "POL. OLYMPIA CLUB RUTIGLIANO", "ASD CLUB GIGANTI CISTERNINO", 0, 0, "Da giocare"),
-    ("B03_2122", "Girone B", 3, "Dom 22/11/2026 18:00", "SUPPORT_O TARANTO", "ASD DREAM BASKET ALTAMURA", 0, 0, "Da giocare"),
-    ("B03_2123", "Girone B", 3, "Dom 22/11/2026 17:30", "ASD MURGIA BASKET SANTERAMO", "ASD ATLETICA BASKET PUTIGNANO", 0, 0, "Da giocare"),
+    ("B03_2119", "Girone B", 3, "Dom 22/11/2026 18:00", "ASD BASKET FASANO", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", 75, 61, "Giocata"),
+    ("B03_2120", "Girone B", 3, "Sab 21/11/2026 18:45", "ASD SCUOLA BASKET MARTINESE", "DOMITI LA PINTA BASKET PULSANO", 54, 57, "Giocata"),
+    ("B03_2121", "Girone B", 3, "Dom 22/11/2026 18:00", "POL. OLYMPIA CLUB RUTIGLIANO", "ASD CLUB GIGANTI CISTERNINO", 76, 54, "Giocata"),
+    ("B03_2122", "Girone B", 3, "Dom 22/11/2026 18:00", "SUPPORT_O TARANTO", "ASD DREAM BASKET ALTAMURA", 65, 70, "Giocata"),
+    ("B03_2123", "Girone B", 3, "Dom 22/11/2026 17:30", "ASD MURGIA BASKET SANTERAMO", "ASD ATLETICA BASKET PUTIGNANO", 54, 57, "Giocata"),
 
     ("B04_2124", "Girone B", 4, "Sab 28/11/2026 19:00", "ASD CLUB GIGANTI CISTERNINO", "ASD DREAM BASKET ALTAMURA", 0, 0, "Da giocare"),
     ("B04_2125", "Girone B", 4, "Sab 28/11/2026 20:00", "ASD MESSAPICA BASKET CEGLIE", "ASD MURGIA BASKET SANTERAMO", 0, 0, "Da giocare"),
@@ -334,23 +339,23 @@ DEFAULT_GAMES_RAW = [
     # ==========================================================
     # GIRONE C - CU N. 93 DEL 02/11/2026 (GARE 2219 - 2328)
     # ==========================================================
-    ("C01_2219", "Girone C", 1, "Dom 08/11/2026 18:00", "ASD BASKET TRICASE", "A.POL.DIL.AURORA BRINDISI", 0, 0, "Da giocare"),
-    ("C01_2220", "Girone C", 1, "Sab 07/11/2026 18:00", "ALL STAR BASKET FRANCAVILLA", "ASD BELLFIKA MESAGNE", 0, 0, "Da giocare"),
-    ("C01_2221", "Girone C", 1, "Dom 08/11/2026 18:30", "DIERRE ARREDAMENTI CALIMERA BASKET", "ASD MAGIC GALATINA", 0, 0, "Da giocare"),
-    ("C01_2222", "Girone C", 1, "Dom 08/11/2026 18:00", "ASD ASSI BASKET BRINDISI", "ASD NEW BASKET CARMIANO", 0, 0, "Da giocare"),
-    ("C01_2223", "Girone C", 1, "Dom 08/11/2026 18:30", "SENSI PALLACANESTRO LUPA LECCE", "AZ DISINFESTAZIONI SRL VIRTUS BRINDISI", 0, 0, "Da giocare"),
+    ("C01_2219", "Girone C", 1, "Dom 08/11/2026 18:00", "ASD BASKET TRICASE", "A.POL.DIL.AURORA BRINDISI", 51, 57, "Giocata"),
+    ("C01_2220", "Girone C", 1, "Sab 07/11/2026 18:00", "ALL STAR BASKET FRANCAVILLA", "ASD BELLFIKA MESAGNE", 72, 67, "Giocata"),
+    ("C01_2221", "Girone C", 1, "Dom 08/11/2026 18:30", "DIERRE ARREDAMENTI CALIMERA BASKET", "ASD MAGIC GALATINA", 77, 51, "Giocata"),
+    ("C01_2222", "Girone C", 1, "Dom 08/11/2026 18:00", "ASD ASSI BASKET BRINDISI", "ASD NEW BASKET CARMIANO", 73, 47, "Giocata"),
+    ("C01_2223", "Girone C", 1, "Dom 08/11/2026 18:30", "SENSI PALLACANESTRO LUPA LECCE", "AZ DISINFESTAZIONI SRL VIRTUS BRINDISI", 91, 75, "Giocata"),
 
-    ("C02_2224", "Girone C", 2, "Sab 14/11/2026 18:00", "ASD NEW BASKET CARMIANO", "ALL STAR BASKET FRANCAVILLA", 0, 0, "Da giocare"),
-    ("C02_2225", "Girone C", 2, "Sab 14/11/2026 18:30", "ASD MAGIC GALATINA", "ASD BASKET TRICASE", 0, 0, "Da giocare"),
-    ("C02_2226", "Girone C", 2, "Sab 14/11/2026 16:30", "AZ DISINFESTAZIONI SRL VIRTUS BRINDISI", "ASD POLISPORTIVA MANDURIA", 0, 0, "Da giocare"),
-    ("C02_2227", "Girone C", 2, "Dom 15/11/2026 18:00", "ASD BELLFIKA MESAGNE", "ASD ASSI BASKET BRINDISI", 0, 0, "Da giocare"),
-    ("C02_2228", "Girone C", 2, "Sab 14/11/2026 18:00", "A.POL.DIL.AURORA BRINDISI", "DIERRE ARREDAMENTI CALIMERA BASKET", 0, 0, "Da giocare"),
+    ("C02_2224", "Girone C", 2, "Sab 14/11/2026 18:00", "ASD NEW BASKET CARMIANO", "ALL STAR BASKET FRANCAVILLA", 89, 70, "Giocata"),
+    ("C02_2225", "Girone C", 2, "Sab 14/11/2026 18:30", "ASD MAGIC GALATINA", "ASD BASKET TRICASE", 100, 58, "Giocata"),
+    ("C02_2226", "Girone C", 2, "Sab 14/11/2026 16:30", "AZ DISINFESTAZIONI SRL VIRTUS BRINDISI", "ASD POLISPORTIVA MANDURIA", 57, 63, "Giocata"),
+    ("C02_2227", "Girone C", 2, "Dom 15/11/2026 18:00", "ASD BELLFIKA MESAGNE", "ASD ASSI BASKET BRINDISI", 75, 71, "Giocata"),
+    ("C02_2228", "Girone C", 2, "Sab 14/11/2026 18:00", "A.POL.DIL.AURORA BRINDISI", "DIERRE ARREDAMENTI CALIMERA BASKET", 37, 60, "Giocata"),
 
-    ("C03_2229", "Girone C", 3, "Sab 21/11/2026 18:00", "ALL STAR BASKET FRANCAVILLA", "ASD MAGIC GALATINA", 0, 0, "Da giocare"),
-    ("C03_2230", "Girone C", 3, "Sab 21/11/2026 18:00", "A.POL.DIL.AURORA BRINDISI", "ASD ASSI BASKET BRINDISI", 0, 0, "Da giocare"),
-    ("C03_2231", "Girone C", 3, "Dom 22/11/2026 18:30", "DIERRE ARREDAMENTI CALIMERA BASKET", "ASD BELLFIKA MESAGNE", 0, 0, "Da giocare"),
-    ("C03_2232", "Girone C", 3, "Dom 22/11/2026 18:00", "ASD POLISPORTIVA MANDURIA", "SENSI PALLACANESTRO LUPA LECCE", 0, 0, "Da giocare"),
-    ("C03_2233", "Girone C", 3, "Dom 22/11/2026 18:00", "ASD BASKET TRICASE", "ASD NEW BASKET CARMIANO", 0, 0, "Da giocare"),
+    ("C03_2229", "Girone C", 3, "Sab 21/11/2026 18:00", "ALL STAR BASKET FRANCAVILLA", "ASD MAGIC GALATINA", 91, 78, "Giocata"),
+    ("C03_2230", "Girone C", 3, "Sab 21/11/2026 18:00", "A.POL.DIL.AURORA BRINDISI", "ASD ASSI BASKET BRINDISI", 95, 64, "Giocata"),
+    ("C03_2231", "Girone C", 3, "Dom 22/11/2026 18:30", "DIERRE ARREDAMENTI CALIMERA BASKET", "ASD BELLFIKA MESAGNE", 52, 57, "Giocata"),
+    ("C03_2232", "Girone C", 3, "Dom 22/11/2026 18:00", "ASD POLISPORTIVA MANDURIA", "SENSI PALLACANESTRO LUPA LECCE", 53, 59, "Giocata"),
+    ("C03_2233", "Girone C", 3, "Dom 22/11/2026 18:00", "ASD BASKET TRICASE", "ASD NEW BASKET CARMIANO", 28, 81, "Giocata"),
 
     ("C04_2234", "Girone C", 4, "Dom 29/11/2026 17:00", "ASD BELLFIKA MESAGNE", "ASD BASKET TRICASE", 0, 0, "Da giocare"),
     ("C04_2235", "Girone C", 4, "Dom 29/11/2026 18:00", "ASD POLISPORTIVA MANDURIA", "ALL STAR BASKET FRANCAVILLA", 0, 0, "Da giocare"),
@@ -1748,7 +1753,7 @@ elif page == "Gestione Squadre":
     st.subheader("Ripristino Dati Ufficiali (Gironi A, B e C)")
     if st.button("🔄 Ripristina Tutti i Gironi e Calendari Ufficiali (A, B, C)"):
         reset_official_data()
-        st.success("33 squadre e calendari completi (G1–G22) di Gironi A, B e C ripristinati.")
+        st.success("33 squadre con loghi, risultati prime 3 giornate e calendari completi (G1–G22) ripristinati.")
         st.rerun()
 
     st.divider()
