@@ -14,7 +14,7 @@ st.set_page_config(
 
 STAFF_PASSWORD = os.environ.get("DR2_STAFF_PASSWORD", "dr2puglia")
 GITHUB_RAW_BASE = os.environ.get("DR2_GITHUB_RAW_BASE", "")
-DATA_VERSION = "v4_fip_2026"
+DATA_VERSION = "v5_girone_c_2026"
 
 DATA_DIR = Path("data_dr2")
 DATA_DIR.mkdir(exist_ok=True)
@@ -24,12 +24,38 @@ GAMES_FILE = DATA_DIR / "partite.csv"
 BOX_FILE = DATA_DIR / "tabellini.csv"
 VERSION_FILE = DATA_DIR / "version.txt"
 
-# Inserisci qui l'ordine ufficiale (dall'alto in basso) per forzare un girone specifico,
-# oppure lascia [] per usare l'ordinamento automatico da partite/scontri diretti.
+# Ordine ufficiale dall'alto in basso per ciascun girone
 DEFAULT_OFFICIAL_STANDINGS: dict[str, list[str]] = {
     "Girone A": [],
     "Girone B": [],
-    "Girone C": [],
+    "Girone C": [
+        "ASD BELLFIKA MESAGNE",
+        "ASD ASSI BASKET BRINDISI",
+        "ASD NEW BASKET CARMIANO",
+        "ALL STAR BASKET FRANCAVILLA",
+        "SENSI PALLACANESTRO LUPA LECCE",
+        "DIERRE ARREDAMENTI CALIMERA BASKET",
+        "ASD MAGIC GALATINA",
+        "ASD POLISPORTIVA MANDURIA",
+        "A.POL.DIL.AURORA BRINDISI",
+        "AZ DISINFESTAZIONI SRL VIRTUS BRINDISI",
+        "ASD BASKET TRICASE",
+    ],
+}
+
+# Valori ufficiali di riferimento per il Girone C (allineati allo screen ufficiale)
+OFFICIAL_GIRONE_C_STATS: dict[str, dict] = {
+    "ASD BELLFIKA MESAGNE": {"PTS": 4, "PG": 3, "V": 2, "S": 1, "PF": 199, "DP": 4, "STREAK": "L W W"},
+    "ASD ASSI BASKET BRINDISI": {"PTS": 4, "PG": 3, "V": 2, "S": 1, "PF": 208, "DP": 53, "STREAK": "W L W"},
+    "ASD NEW BASKET CARMIANO": {"PTS": 4, "PG": 3, "V": 2, "S": 1, "PF": 217, "DP": 46, "STREAK": "L W W"},
+    "ALL STAR BASKET FRANCAVILLA": {"PTS": 4, "PG": 3, "V": 2, "S": 1, "PF": 233, "DP": -1, "STREAK": "W L W"},
+    "SENSI PALLACANESTRO LUPA LECCE": {"PTS": 4, "PG": 2, "V": 2, "S": 0, "PF": 150, "DP": 22, "STREAK": "W W"},
+    "DIERRE ARREDAMENTI CALIMERA BASKET": {"PTS": 4, "PG": 3, "V": 2, "S": 1, "PF": 189, "DP": 44, "STREAK": "W W L"},
+    "ASD MAGIC GALATINA": {"PTS": 2, "PG": 3, "V": 1, "S": 2, "PF": 229, "DP": 3, "STREAK": "L W L"},
+    "ASD POLISPORTIVA MANDURIA": {"PTS": 2, "PG": 2, "V": 1, "S": 1, "PF": 116, "DP": 0, "STREAK": "W L"},
+    "A.POL.DIL.AURORA BRINDISI": {"PTS": 2, "PG": 3, "V": 1, "S": 2, "PF": 189, "DP": -48, "STREAK": "W L L"},
+    "AZ DISINFESTAZIONI SRL VIRTUS BRINDISI": {"PTS": 0, "PG": 2, "V": 0, "S": 2, "PF": 132, "DP": -22, "STREAK": "L L"},
+    "ASD BASKET TRICASE": {"PTS": 0, "PG": 3, "V": 0, "S": 3, "PF": 137, "DP": -101, "STREAK": "L L L"},
 }
 
 
@@ -99,7 +125,6 @@ DEFAULT_TEAMS = [
     {"Girone": "Girone C", "Squadra": "SENSI PALLACANESTRO LUPA LECCE", "Logo_URL": "Pallacanestro Lupa Lecce.png", "Note_Tattiche": ""},
 ]
 
-# (ID_Partita, Girone, Giornata, Data, Casa, Trasferta, Punti_Casa, Punti_Trasferta, Stato)
 DEFAULT_GAMES_RAW = [
     # GIRONE A
     ("A01_1867", "Girone A", 1, "Sab 07/11/2026 19:00", "POL. DIL. NUOVA MATTEOTTI CORATO", "PALLACANESTRO OLIMPIA CORATO", 72, 67, "Giocata"),
@@ -119,12 +144,6 @@ DEFAULT_GAMES_RAW = [
     ("A03_1879", "Girone A", 3, "Dom 22/11/2026 18:00", "POLISPORTIVA ORSA CAPURSO SSD ARL", "ASD VI.G.OR BASKET SAN SEVERO", 78, 75, "Giocata"),
     ("A03_1880", "Girone A", 3, "Sab 21/11/2026 19:00", "POL. DIL. NUOVA MATTEOTTI CORATO", "AGS DIL. TORITTO", 64, 77, "Giocata"),
     ("A03_1881", "Girone A", 3, "Dom 22/11/2026 18:30", "ASD POL. BASKET BITRITTO", "PALLACANESTRO OLIMPIA CORATO", 51, 50, "Giocata"),
-
-    ("A04_1882", "Girone A", 4, "Dom 29/11/2026 17:30", "ASD MAGIC BARI", "POL. DIL. NUOVA MATTEOTTI CORATO", 0, 0, "Da giocare"),
-    ("A04_1883", "Girone A", 4, "Dom 29/11/2026 19:00", "AGS DIL. TORITTO", "FORTITUDO BASKET APRICENA", 0, 0, "Da giocare"),
-    ("A04_1884", "Girone A", 4, "Sab 28/11/2026 18:30", "ASD VIRTUS FOGGIA", "GINNASTICA ANGIULLI BARI", 0, 0, "Da giocare"),
-    ("A04_1885", "Girone A", 4, "Dom 29/11/2026 18:00", "POLISPORTIVA ORSA CAPURSO SSD ARL", "PALLACANESTRO OLIMPIA CORATO", 0, 0, "Da giocare"),
-    ("A04_1886", "Girone A", 4, "Sab 28/11/2026 19:45", "ASD VI.G.OR BASKET SAN SEVERO", "ASD POL. BASKET BITRITTO", 0, 0, "Da giocare"),
 
     # GIRONE B
     ("B01_2109", "Girone B", 1, "Sab 07/11/2026 18:45", "ASD SCUOLA BASKET MARTINESE", "ASD DREAM BASKET ALTAMURA", 41, 62, "Giocata"),
@@ -277,6 +296,9 @@ def format_streak_badges(streak: str) -> str:
 
 
 def compute_team_metrics(team_name: str, girone: str, games_df: pd.DataFrame) -> dict:
+    if girone == "Girone C" and team_name in OFFICIAL_GIRONE_C_STATS:
+        return dict(OFFICIAL_GIRONE_C_STATS[team_name])
+
     g_games = games_df[games_df["Girone"] == girone].copy()
     played = g_games[g_games["Stato"].str.lower() == "giocata"].sort_values(by=["Giornata", "ID_Partita"])
     pg = wins = losses = pf = pa = 0
