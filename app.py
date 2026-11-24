@@ -21,7 +21,6 @@ DATA_DIR.mkdir(exist_ok=True)
 TEAMS_FILE = DATA_DIR / "squadre.csv"
 GAMES_FILE = DATA_DIR / "partite.csv"
 BOX_FILE = DATA_DIR / "tabellini.csv"
-META_FILE = DATA_DIR / "campionato_meta.csv"
 
 
 def logo_url(filename: str) -> str:
@@ -29,76 +28,20 @@ def logo_url(filename: str) -> str:
 
 
 DEFAULT_TEAMS = [
-    {
-        "Girone": "Girone A",
-        "Squadra": "Angiulli Bari",
-        "Logo_URL": logo_url("Angiulli Basket Bari.png"),
-        "Note_Tattiche": "",
-    },
-    {
-        "Girone": "Girone A",
-        "Squadra": "A.G.S.D. Toritto",
-        "Logo_URL": logo_url("A.G.S.D. TORITTO.png"),
-        "Note_Tattiche": "",
-    },
-    {
-        "Girone": "Girone A",
-        "Squadra": "Orsa Capurso",
-        "Logo_URL": logo_url("orsa capurso.png"),
-        "Note_Tattiche": "",
-    },
-    {
-        "Girone": "Girone A",
-        "Squadra": "Nuova Matteotti Corato",
-        "Logo_URL": logo_url("Nuova Matteotti Corato.png"),
-        "Note_Tattiche": "",
-    },
-    {
-        "Girone": "Girone A",
-        "Squadra": "Magic Bari",
-        "Logo_URL": logo_url("Magic Bari.png"),
-        "Note_Tattiche": "",
-    },
-    {
-        "Girone": "Girone A",
-        "Squadra": "Mediterranea Cerignola",
-        "Logo_URL": logo_url("Mediterranea Cerignola.png"),
-        "Note_Tattiche": "",
-    },
-    {
-        "Girone": "Girone A",
-        "Squadra": "Vigor San Severo",
-        "Logo_URL": logo_url("Vigor San Severo.png"),
-        "Note_Tattiche": "",
-    },
-    {
-        "Girone": "Girone A",
-        "Squadra": "Basket Bitritto",
-        "Logo_URL": logo_url("basket bitritto.png"),
-        "Note_Tattiche": "",
-    },
-    {
-        "Girone": "Girone A",
-        "Squadra": "Fortitudo BK Apricena",
-        "Logo_URL": logo_url("Fortitudo Basket Apricena.png"),
-        "Note_Tattiche": "",
-    },
-    {
-        "Girone": "Girone A",
-        "Squadra": "Olimpia Corato",
-        "Logo_URL": logo_url("Olimpia Corato.png"),
-        "Note_Tattiche": "",
-    },
-    {
-        "Girone": "Girone A",
-        "Squadra": "Virtus Foggia",
-        "Logo_URL": logo_url("Virtus Foggia.png"),
-        "Note_Tattiche": "",
-    },
+    {"Girone": "Girone A", "Squadra": "Angiulli Bari", "Logo_URL": logo_url("Angiulli Basket Bari.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "A.G.S.D. Toritto", "Logo_URL": logo_url("A.G.S.D. TORITTO.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "Orsa Capurso", "Logo_URL": logo_url("orsa capurso.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "Nuova Matteotti Corato", "Logo_URL": logo_url("Nuova Matteotti Corato.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "Magic Bari", "Logo_URL": logo_url("Magic Bari.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "Mediterranea Cerignola", "Logo_URL": logo_url("Mediterranea Cerignola.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "Vigor San Severo", "Logo_URL": logo_url("Vigor San Severo.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "Basket Bitritto", "Logo_URL": logo_url("basket bitritto.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "Fortitudo BK Apricena", "Logo_URL": logo_url("Fortitudo Basket Apricena.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "Olimpia Corato", "Logo_URL": logo_url("Olimpia Corato.png"), "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "Virtus Foggia", "Logo_URL": logo_url("Virtus Foggia.png"), "Note_Tattiche": ""},
 ]
 
 # Calendario ufficiale CU n. 91 (Squadra A = Casa, Squadra B = Trasferta)
-# Campi: (ID_Partita, Giornata, Data_Ora, Casa, Trasferta, Punti_Casa, Punti_Trasferta, Stato)
 DEFAULT_GAMES_RAW = [
     # 1ª Giornata di andata
     ("G01_1867", 1, "07/11/26 19:00", "Nuova Matteotti Corato", "Olimpia Corato", 72, 67, "Giocata"),
@@ -255,6 +198,28 @@ DEFAULT_GAMES_RAW = [
     ("G22_1976", 22, "24/04/27 19:30", "Angiulli Bari", "Olimpia Corato", 0, 0, "Da giocare"),
 ]
 
+GAME_COLS = [
+    "ID_Partita",
+    "Girone",
+    "Giornata",
+    "Data",
+    "Casa",
+    "Trasferta",
+    "Punti_Casa",
+    "Punti_Trasferta",
+    "Stato",
+    "Q1_C",
+    "Q2_C",
+    "Q3_C",
+    "Q4_C",
+    "OT_C",
+    "Q1_T",
+    "Q2_T",
+    "Q3_T",
+    "Q4_T",
+    "OT_T",
+]
+
 
 def build_default_games_df() -> pd.DataFrame:
     return pd.DataFrame(
@@ -269,6 +234,16 @@ def build_default_games_df() -> pd.DataFrame:
                 "Punti_Casa": pts_casa,
                 "Punti_Trasferta": pts_trasf,
                 "Stato": stato,
+                "Q1_C": 0,
+                "Q2_C": 0,
+                "Q3_C": 0,
+                "Q4_C": 0,
+                "OT_C": 0,
+                "Q1_T": 0,
+                "Q2_T": 0,
+                "Q3_T": 0,
+                "Q4_T": 0,
+                "OT_T": 0,
             }
             for gid, giornata, data_ora, casa, trasferta, pts_casa, pts_trasf, stato in DEFAULT_GAMES_RAW
         ]
@@ -300,20 +275,34 @@ def init_data():
             ]
         ).to_csv(BOX_FILE, index=False)
 
-    if not META_FILE.exists():
-        pd.DataFrame([{"Girone": "Girone A", "Terza_Migliore": "In attesa"}]).to_csv(META_FILE, index=False)
-
 
 def load_data():
     init_data()
     teams_df = pd.read_csv(TEAMS_FILE, dtype=str).fillna("")
     games_df = pd.read_csv(GAMES_FILE, dtype=str).fillna("")
     box_df = pd.read_csv(BOX_FILE, dtype=str).fillna("")
-    meta_df = pd.read_csv(META_FILE, dtype=str).fillna("")
 
-    for col in ["Giornata", "Punti_Casa", "Punti_Trasferta"]:
-        if col in games_df.columns:
-            games_df[col] = pd.to_numeric(games_df[col], errors="coerce").fillna(0).astype(int)
+    for col in GAME_COLS:
+        if col not in games_df.columns:
+            games_df[col] = 0 if col not in ["ID_Partita", "Girone", "Data", "Casa", "Trasferta", "Stato"] else ""
+
+    int_game_cols = [
+        "Giornata",
+        "Punti_Casa",
+        "Punti_Trasferta",
+        "Q1_C",
+        "Q2_C",
+        "Q3_C",
+        "Q4_C",
+        "OT_C",
+        "Q1_T",
+        "Q2_T",
+        "Q3_T",
+        "Q4_T",
+        "OT_T",
+    ]
+    for col in int_game_cols:
+        games_df[col] = pd.to_numeric(games_df[col], errors="coerce").fillna(0).astype(int)
 
     for col in ["Punti", "2P_Segnati", "3P_Segnati", "TL_Segnati", "TL_Sbagliati"]:
         if col in box_df.columns:
@@ -324,7 +313,7 @@ def load_data():
             box_df["Quintetto_Base"].astype(str).str.lower().isin(["true", "1", "si", "sì", "yes"])
         )
 
-    return teams_df, games_df, box_df, meta_df
+    return teams_df, games_df, box_df
 
 
 def save_teams(df):
@@ -337,10 +326,6 @@ def save_games(df):
 
 def save_box(df):
     df.to_csv(BOX_FILE, index=False)
-
-
-def save_meta(df):
-    df.to_csv(META_FILE, index=False)
 
 
 def compute_team_metrics(team_name: str, girone: str, games_df: pd.DataFrame) -> dict:
@@ -405,6 +390,41 @@ def compute_team_metrics(team_name: str, girone: str, games_df: pd.DataFrame) ->
     }
 
 
+def compute_standings_for_girone(girone: str, teams_df: pd.DataFrame, games_df: pd.DataFrame) -> list:
+    g_teams = teams_df[teams_df["Girone"] == girone]
+    if g_teams.empty:
+        return []
+    rows = []
+    for _, trow in g_teams.iterrows():
+        m = compute_team_metrics(trow["Squadra"], girone, games_df)
+        rows.append(
+            {
+                "Girone": girone,
+                "Squadra": trow["Squadra"],
+                "Logo_URL": trow["Logo_URL"],
+                "PTS": m["PTS"],
+                "PG": m["PG"],
+                "V": m["V"],
+                "S": m["S"],
+                "DP": m["DP"],
+                "STREAK": m["STREAK"],
+            }
+        )
+    return sorted(rows, key=lambda x: (-x["PTS"], -x["DP"], -x["V"], -x["PG"], x["Squadra"]))
+
+
+def compute_best_third(teams_df: pd.DataFrame, games_df: pd.DataFrame):
+    thirds = []
+    for g_name in ["Girone A", "Girone B", "Girone C"]:
+        st_list = compute_standings_for_girone(g_name, teams_df, games_df)
+        if len(st_list) >= 3:
+            thirds.append(st_list[2])
+    if not thirds:
+        return None, []
+    ranked_thirds = sorted(thirds, key=lambda x: (-x["PTS"], -x["DP"], -x["V"], x["Squadra"]))
+    return ranked_thirds[0], ranked_thirds
+
+
 def format_dp(dp: int) -> str:
     return f"+{dp}" if dp > 0 else str(dp)
 
@@ -466,25 +486,7 @@ def compute_roster_stats(team_name: str, girone: str, box_df: pd.DataFrame):
     return res.sort_values(by="Media Punti", ascending=False).reset_index(drop=True)
 
 
-def render_standings_board(g_teams: pd.DataFrame, girone_sel: str, games_df: pd.DataFrame, terza_status: str):
-    rows = []
-    for _, trow in g_teams.iterrows():
-        m = compute_team_metrics(trow["Squadra"], girone_sel, games_df)
-        rows.append(
-            {
-                "Squadra": trow["Squadra"],
-                "Logo_URL": trow["Logo_URL"],
-                "PTS": m["PTS"],
-                "PG": m["PG"],
-                "V": m["V"],
-                "S": m["S"],
-                "DP": m["DP"],
-                "STREAK": m["STREAK"],
-            }
-        )
-
-    board = sorted(rows, key=lambda x: (-x["PTS"], -x["V"], -x["DP"], -x["PG"], x["Squadra"]))
-
+def render_standings_board(board: list, girone_sel: str, best_third_team: dict | None, ranked_thirds: list):
     st.markdown(
         """
         <style>
@@ -506,9 +508,7 @@ def render_standings_board(g_teams: pd.DataFrame, girone_sel: str, games_df: pd.
             letter-spacing: 0.6px;
             text-align: center;
         }
-        .standings-header .left {
-            text-align: left;
-        }
+        .standings-header .left { text-align: left; }
         .zone-tag {
             font-size: 11px;
             font-weight: 800;
@@ -521,7 +521,8 @@ def render_standings_board(g_teams: pd.DataFrame, girone_sel: str, games_df: pd.
         }
         .zone-promo { background: #198754; color: #ffffff; }
         .zone-po { background: #d97706; color: #ffffff; }
-        .zone-terza { background: #0284c7; color: #ffffff; border: 1px solid #ffd43b; }
+        .zone-terza-ok { background: #15803d; color: #ffffff; border: 1px solid #ffd43b; }
+        .zone-terza-no { background: #0284c7; color: #ffffff; border: 1px solid rgba(255,255,255,0.4); }
         .zone-pout { background: #b91c1c; color: #ffffff; }
         .s-row {
             display: grid;
@@ -562,11 +563,6 @@ def render_standings_board(g_teams: pd.DataFrame, girone_sel: str, games_df: pd.
             text-transform: uppercase;
             letter-spacing: 0.3px;
         }
-        .s-sub {
-            font-size: 11px;
-            color: #cbd5e1;
-            font-weight: 600;
-        }
         .s-val {
             text-align: center;
             font-weight: 700;
@@ -603,8 +599,17 @@ def render_standings_board(g_teams: pd.DataFrame, girone_sel: str, games_df: pd.
             html_parts.append('<div class="zone-tag zone-po">PLAY-OFF (2° POSTO)</div>')
             row_class = "pos-2"
         elif idx == 3:
-            label_3 = f"3° POSTO — MIGLIORE TERZA: {terza_status.upper()}"
-            html_parts.append(f'<div class="zone-tag zone-terza">{label_3}</div>')
+            is_best = best_third_team is not None and best_third_team["Girone"] == girone_sel
+            if len(ranked_thirds) <= 1:
+                label_3 = "3° POSTO — MIGLIORE TERZA (IN ATTESA DATI GIRONI B/C)"
+                tag_cls = "zone-terza-no"
+            elif is_best:
+                label_3 = "3° POSTO — ATTUALE MIGLIORE TERZA (PLAY-OFF)"
+                tag_cls = "zone-terza-ok"
+            else:
+                label_3 = f"3° POSTO — NON MIGLIORE TERZA (ATTUALE: {best_third_team['Squadra']} - {best_third_team['Girone']})"
+                tag_cls = "zone-terza-no"
+            html_parts.append(f'<div class="zone-tag {tag_cls}">{label_3}</div>')
             row_class = "pos-3"
         elif idx == playout_start_pos:
             html_parts.append('<div class="zone-tag zone-pout">PLAY-OUT (ULTIME 4)</div>')
@@ -635,99 +640,117 @@ def render_standings_board(g_teams: pd.DataFrame, girone_sel: str, games_df: pd.
 
     html_parts.append("</div>")
     st.markdown("".join(html_parts), unsafe_allow_html=True)
-    return [x["Squadra"] for x in board]
+
+    if ranked_thirds:
+        st.markdown("#### Confronto Automatico Migliore Terza (Punti → Differenza Punti)")
+        t_rows = []
+        for rank_i, t_item in enumerate(ranked_thirds, start=1):
+            t_rows.append(
+                {
+                    "Pos": rank_i,
+                    "Girone": t_item["Girone"],
+                    "Squadra": t_item["Squadra"],
+                    "PTS": t_item["PTS"],
+                    "PG": t_item["PG"],
+                    "V": t_item["V"],
+                    "S": t_item["S"],
+                    "DP": format_dp(t_item["DP"]),
+                    "Stato": "QUALIFICATA PLAY-OFF" if rank_i == 1 else "FUORI PLAY-OFF",
+                }
+            )
+        st.dataframe(pd.DataFrame(t_rows), use_container_width=True, hide_index=True)
 
 
-def render_round_card(round_num: int, round_games: pd.DataFrame, logo_map: dict):
-    label_round = f"Giornata {round_num}" if round_num <= 11 else f"Ritorno — Giornata {round_num - 11} (G{round_num})"
+def render_round_card(round_num: int, round_games: pd.DataFrame, logo_map: dict, is_ritorno: bool = False):
+    display_num = round_num - 11 if is_ritorno and round_num > 11 else round_num
+    phase_txt = "RITORNO" if is_ritorno else "ANDATA"
+    label_round = f"GIORNATA {display_num} ({phase_txt})"
 
     st.markdown(
         """
         <style>
         .round-box {
-            background: #14171c;
-            border: 1px solid #262b34;
-            border-radius: 12px;
-            margin-bottom: 18px;
+            background: #0d161d;
+            border: 1px solid #1e2c38;
+            border-radius: 10px;
+            margin-bottom: 14px;
             overflow: hidden;
         }
         .round-title {
-            background: #1b2028;
-            color: #f1f5f9;
-            font-weight: 700;
-            font-size: 16px;
-            padding: 10px 16px;
-            border-bottom: 1px solid #262b34;
+            background: #13212c;
+            color: #e2e8f0;
+            font-weight: 800;
+            font-size: 13px;
+            letter-spacing: 0.7px;
+            padding: 8px 12px;
+            border-bottom: 1px solid #1e2c38;
+            text-transform: uppercase;
         }
         .match-row {
             display: grid;
-            grid-template-columns: 96px 1fr 48px;
-            gap: 12px;
+            grid-template-columns: 88px 1fr 42px 24px 24px 24px 24px 24px;
+            gap: 4px;
             align-items: center;
-            padding: 10px 16px;
-            border-bottom: 1px solid #20252e;
+            padding: 8px 10px;
+            border-bottom: 1px solid #17232d;
         }
-        .match-row:last-child {
-            border-bottom: none;
-        }
-        .m-meta {
-            text-align: center;
-            line-height: 1.35;
-        }
-        .m-date {
-            font-size: 12px;
-            color: #cbd5e1;
-            font-weight: 600;
-        }
-        .m-status-ft {
-            font-size: 12px;
-            color: #94a3b8;
-            font-weight: 700;
-        }
-        .m-status-time {
-            font-size: 12px;
+        .match-row:last-child { border-bottom: none; }
+        .m-dt {
+            font-size: 11px;
             color: #94a3b8;
             font-weight: 600;
+            line-height: 1.25;
         }
         .m-teams {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 5px;
+            min-width: 0;
         }
         .m-team-line {
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-size: 15px;
+            gap: 7px;
+            font-size: 13px;
             font-weight: 600;
-            color: #e2e8f0;
+            color: #cbd5e1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .m-team-line.winner {
             color: #ffffff;
             font-weight: 800;
         }
         .m-logo {
-            width: 22px;
-            height: 22px;
+            width: 19px;
+            height: 19px;
             object-fit: contain;
-            background: rgba(255,255,255,0.92);
+            background: rgba(255,255,255,0.94);
             border-radius: 4px;
             padding: 1px;
             flex-shrink: 0;
         }
-        .m-scores {
+        .m-tot {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 5px;
             text-align: right;
-            font-size: 15px;
-            font-weight: 700;
-            color: #cbd5e1;
-        }
-        .m-score-win {
-            color: #ffffff;
+            font-size: 14px;
             font-weight: 800;
+            color: #e2e8f0;
+            padding-right: 4px;
         }
+        .m-q {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            text-align: center;
+            font-size: 11px;
+            font-weight: 600;
+            color: #7c8b99;
+        }
+        .w-txt { color: #ffffff; font-weight: 900; }
         </style>
         """,
         unsafe_allow_html=True,
@@ -735,54 +758,66 @@ def render_round_card(round_num: int, round_games: pd.DataFrame, logo_map: dict)
 
     parts = [f'<div class="round-box"><div class="round-title">{label_round}</div>']
 
-    for _, g in round_games.iterrows():
-        is_played = str(g["Stato"]).lower() == "giocata"
-        raw_dt = str(g["Data"]).strip()
-        dt_tokens = raw_dt.split()
-        if len(dt_tokens) >= 3:
-            date_part = dt_tokens[1]
-            time_part = dt_tokens[2]
-        elif len(dt_tokens) == 2:
-            date_part, time_part = dt_tokens[0], dt_tokens[1]
-        else:
-            date_part, time_part = raw_dt, ""
+    if round_games.empty:
+        parts.append('<div class="match-row"><div class="m-dt">—</div><div class="m-team-line">Nessuna gara</div></div>')
+    else:
+        for _, g in round_games.iterrows():
+            is_played = str(g["Stato"]).lower() == "giocata"
+            raw_dt = str(g["Data"]).strip().replace("/", ".")
+            dt_tokens = raw_dt.split()
+            if len(dt_tokens) >= 2:
+                date_part = dt_tokens[0]
+                if len(date_part) >= 8 and date_part[5] == ".":
+                    date_part = date_part[:6]
+                dt_str = f"{date_part} {dt_tokens[1]}"
+            else:
+                dt_str = raw_dt
 
-        status_html = (
-            '<div class="m-status-ft">FT</div>'
-            if is_played
-            else f'<div class="m-status-time">{time_part}</div>'
-        )
+            home_name = g["Casa"]
+            away_name = g["Trasferta"]
+            home_pts = int(g["Punti_Casa"])
+            away_pts = int(g["Punti_Trasferta"])
 
-        home_name = g["Casa"]
-        away_name = g["Trasferta"]
-        home_pts = int(g["Punti_Casa"])
-        away_pts = int(g["Punti_Trasferta"])
+            home_win = is_played and home_pts > away_pts
+            away_win = is_played and away_pts > home_pts
 
-        home_win = is_played and home_pts > away_pts
-        away_win = is_played and away_pts > home_pts
+            home_logo = logo_map.get(home_name, "")
+            away_logo = logo_map.get(away_name, "")
+            h_logo_tag = f'<img class="m-logo" src="{home_logo}" alt="" />' if home_logo else "🏀"
+            a_logo_tag = f'<img class="m-logo" src="{away_logo}" alt="" />' if away_logo else "🏀"
 
-        home_logo = logo_map.get(home_name, "")
-        away_logo = logo_map.get(away_name, "")
+            s1 = str(home_pts) if is_played else "—"
+            s2 = str(away_pts) if is_played else "—"
 
-        h_logo_tag = f'<img class="m-logo" src="{home_logo}" alt="" />' if home_logo else "🏀"
-        a_logo_tag = f'<img class="m-logo" src="{away_logo}" alt="" />' if away_logo else "🏀"
+            q_vals_c = [int(g["Q1_C"]), int(g["Q2_C"]), int(g["Q3_C"]), int(g["Q4_C"])]
+            q_vals_t = [int(g["Q1_T"]), int(g["Q2_T"]), int(g["Q3_T"]), int(g["Q4_T"])]
+            has_quarters = is_played and (sum(q_vals_c) > 0 or sum(q_vals_t) > 0)
+            has_ot = is_played and (int(g["OT_C"]) > 0 or int(g["OT_T"]) > 0)
 
-        s1 = str(home_pts) if is_played else ""
-        s2 = str(away_pts) if is_played else ""
+            q_cols_html = []
+            for idx_q in range(4):
+                qc = str(q_vals_c[idx_q]) if has_quarters else ""
+                qt = str(q_vals_t[idx_q]) if has_quarters else ""
+                q_cols_html.append(f'<div class="m-q"><div>{qc}</div><div>{qt}</div></div>')
 
-        parts.append(
-            f'<div class="match-row">'
-            f'<div class="m-meta"><div class="m-date">{date_part}</div>{status_html}</div>'
-            f'<div class="m-teams">'
-            f'<div class="m-team-line {"winner" if home_win else ""}">{h_logo_tag}<span>{home_name}</span></div>'
-            f'<div class="m-team-line {"winner" if away_win else ""}">{a_logo_tag}<span>{away_name}</span></div>'
-            f'</div>'
-            f'<div class="m-scores">'
-            f'<div class="{"m-score-win" if home_win else ""}">{s1}</div>'
-            f'<div class="{"m-score-win" if away_win else ""}">{s2}</div>'
-            f'</div>'
-            f'</div>'
-        )
+            ot_c = str(int(g["OT_C"])) if has_ot else ""
+            ot_t = str(int(g["OT_T"])) if has_ot else ""
+            q_cols_html.append(f'<div class="m-q"><div>{ot_c}</div><div>{ot_t}</div></div>')
+
+            parts.append(
+                f'<div class="match-row">'
+                f'<div class="m-dt">{dt_str}</div>'
+                f'<div class="m-teams">'
+                f'<div class="m-team-line {"winner" if home_win else ""}">{h_logo_tag}<span>{home_name}</span></div>'
+                f'<div class="m-team-line {"winner" if away_win else ""}">{a_logo_tag}<span>{away_name}</span></div>'
+                f'</div>'
+                f'<div class="m-tot">'
+                f'<div class="{"w-txt" if home_win else ""}">{s1}</div>'
+                f'<div class="{"w-txt" if away_win else ""}">{s2}</div>'
+                f'</div>'
+                f'{"".join(q_cols_html)}'
+                f'</div>'
+            )
 
     parts.append("</div>")
     st.markdown("".join(parts), unsafe_allow_html=True)
@@ -806,7 +841,7 @@ if not st.session_state.authenticated:
             st.error("Password non valida.")
     st.stop()
 
-teams_df, games_df, box_df, meta_df = load_data()
+teams_df, games_df, box_df = load_data()
 logo_lookup = {
     row["Squadra"]: row["Logo_URL"].strip()
     for _, row in teams_df.iterrows()
@@ -824,42 +859,22 @@ if st.sidebar.button("Esci"):
 # ==========================================
 if page == "Gironi":
     st.title("Gironi — Divisione Regionale 2 Puglia")
-    st.caption("1ª sale diretta · 2ª Play-off · 3ª Play-off solo se migliore terza · Ultime 4 Play-out.")
+    st.caption("Classifica calcolata automaticamente dai risultati finali · Migliore 3ª calcolata per Punti e Differenza Punti.")
 
     girone_sel = st.selectbox("Seleziona Girone", ["Girone A", "Girone B", "Girone C"])
+    board = compute_standings_for_girone(girone_sel, teams_df, games_df)
+    best_third_team, ranked_thirds = compute_best_third(teams_df, games_df)
 
-    meta_row = meta_df[meta_df["Girone"] == girone_sel]
-    current_terza_status = meta_row.iloc[0]["Terza_Migliore"] if not meta_row.empty else "In attesa"
-
-    if girone_sel == "Girone A":
-        terza_opts = ["In attesa", "Migliore 3ª (Play-off)", "Non migliore 3ª"]
-        idx_t = terza_opts.index(current_terza_status) if current_terza_status in terza_opts else 0
-        new_terza_status = st.selectbox(
-            "Stato 3ª classificata (confronto migliore terza tra i 3 gironi)",
-            terza_opts,
-            index=idx_t,
-        )
-        if new_terza_status != current_terza_status:
-            if meta_row.empty:
-                meta_df = pd.concat(
-                    [meta_df, pd.DataFrame([{"Girone": girone_sel, "Terza_Migliore": new_terza_status}])],
-                    ignore_index=True,
-                )
-            else:
-                meta_df.loc[meta_df["Girone"] == girone_sel, "Terza_Migliore"] = new_terza_status
-            save_meta(meta_df)
-            current_terza_status = new_terza_status
-
-    g_teams = teams_df[teams_df["Girone"] == girone_sel].reset_index(drop=True)
-    if g_teams.empty:
+    if not board:
         st.info(
             f"Nessuna squadra inserita in **{girone_sel}** al momento. "
-            "Puoi aggiungere squadre da *Gestione Squadre* (utile per Play-off / Play-out o post-season)."
+            "Quando caricheremo calendario e risultati di Girone B e Girone C, classifica e migliore terza si aggiorneranno in automatico."
         )
     else:
         st.subheader(f"Classifica — {girone_sel}")
-        ordered_teams = render_standings_board(g_teams, girone_sel, games_df, current_terza_status)
+        render_standings_board(board, girone_sel, best_third_team, ranked_thirds)
 
+        ordered_teams = [x["Squadra"] for x in board]
         st.divider()
         st.subheader("Dettaglio Squadra e Roster")
         selected_team = st.selectbox(
@@ -867,6 +882,7 @@ if page == "Gironi":
             ordered_teams,
         )
 
+        g_teams = teams_df[teams_df["Girone"] == girone_sel].reset_index(drop=True)
         team_info = g_teams[g_teams["Squadra"] == selected_team].iloc[0]
         m_sel = compute_team_metrics(selected_team, girone_sel, games_df)
 
@@ -904,7 +920,7 @@ elif page == "Calendario & Tabellini":
     with st.expander("➕ Aggiungi nuova partita al calendario"):
         with st.form("add_game_form"):
             c1, c2, c3 = st.columns(3)
-            giornata = c1.number_input("Giornata", min_value=1, max_value=40, value=1, step=1)
+            giornata = c1.number_input("Giornata (1-11 Andata, 12-22 Ritorno)", min_value=1, max_value=40, value=1, step=1)
             data_gara = c2.text_input("Data e Ora (es. 29/11/26 18:00)", value="")
             stato = c3.selectbox("Stato", ["Da giocare", "Giocata"])
 
@@ -937,6 +953,16 @@ elif page == "Calendario & Tabellini":
                                 "Punti_Casa": int(pts_casa),
                                 "Punti_Trasferta": int(pts_trasf),
                                 "Stato": stato,
+                                "Q1_C": 0,
+                                "Q2_C": 0,
+                                "Q3_C": 0,
+                                "Q4_C": 0,
+                                "OT_C": 0,
+                                "Q1_T": 0,
+                                "Q2_T": 0,
+                                "Q3_T": 0,
+                                "Q4_T": 0,
+                                "OT_T": 0,
                             }
                         ]
                     )
@@ -950,28 +976,39 @@ elif page == "Calendario & Tabellini":
         st.info("Nessuna partita ancora presente per questo girone.")
     else:
         g_games_sorted = g_games.sort_values(by=["Giornata", "ID_Partita"]).reset_index(drop=True)
-        rounds_available = sorted(g_games_sorted["Giornata"].unique().tolist())
+        andata_rounds = sorted([int(r) for r in g_games_sorted["Giornata"].unique() if int(r) <= 11])
+        ritorno_rounds = sorted([int(r) for r in g_games_sorted["Giornata"].unique() if int(r) > 11])
 
-        round_filter = st.selectbox(
-            "Filtra per Giornata",
-            ["Tutte le giornate"] + [f"Giornata {r}" for r in rounds_available],
+        base_turns = sorted(list(set(andata_rounds + [r - 11 for r in ritorno_rounds])))
+        turn_filter = st.selectbox(
+            "Visualizza Turno (Andata a sinistra / Ritorno a destra)",
+            ["Tutti i turni (1ª–11ª)"] + [f"Turno {t} (G{t} Andata / G{t} Ritorno)" for t in base_turns],
         )
 
-        rounds_to_show = (
-            rounds_available
-            if round_filter == "Tutte le giornate"
-            else [int(round_filter.replace("Giornata ", ""))]
+        turns_to_show = (
+            base_turns
+            if turn_filter.startswith("Tutti")
+            else [int(turn_filter.split()[1])]
         )
 
-        for r_num in rounds_to_show:
-            r_df = g_games_sorted[g_games_sorted["Giornata"] == r_num]
-            render_round_card(int(r_num), r_df, logo_lookup)
+        head_l, head_r = st.columns(2)
+        head_l.markdown("### GIRONE DI ANDATA")
+        head_r.markdown("### GIRONE DI RITORNO")
+
+        for t_num in turns_to_show:
+            col_and, col_rit = st.columns(2)
+            with col_and:
+                df_and = g_games_sorted[g_games_sorted["Giornata"] == t_num]
+                render_round_card(t_num, df_and, logo_lookup, is_ritorno=False)
+            with col_rit:
+                df_rit = g_games_sorted[g_games_sorted["Giornata"] == (t_num + 11)]
+                render_round_card(t_num + 11, df_rit, logo_lookup, is_ritorno=True)
 
         st.divider()
-        st.subheader("Inserisci / Aggiorna Risultato e Tabellino Giocatore")
+        st.subheader("Aggiorna Risultato, Parziali per Quarto e Tabellini")
 
         game_labels = {
-            f"G{r['Giornata']} | {r['Casa']} vs {r['Trasferta']} ({r['Stato']})": r["ID_Partita"]
+            f"G{r['Giornata']} ({'Andata' if r['Giornata'] <= 11 else 'Ritorno ' + str(r['Giornata'] - 11)}) | {r['Casa']} vs {r['Trasferta']} ({r['Stato']})": r["ID_Partita"]
             for _, r in g_games_sorted.iterrows()
         }
         sel_game_label = st.selectbox("Seleziona Partita", list(game_labels.keys()))
@@ -979,17 +1016,44 @@ elif page == "Calendario & Tabellini":
         game_row = games_df[games_df["ID_Partita"] == sel_game_id].iloc[0]
 
         with st.form("update_result_form"):
-            col_r1, col_r2, col_r3, col_r4 = st.columns(4)
-            upd_casa = col_r1.number_input("Punti Casa", min_value=0, max_value=200, value=int(game_row["Punti_Casa"]), step=1)
-            upd_trasf = col_r2.number_input("Punti Trasferta", min_value=0, max_value=200, value=int(game_row["Punti_Trasferta"]), step=1)
+            st.markdown(f"**{game_row['Casa']} (Casa) vs {game_row['Trasferta']} (Trasferta)**")
+            col_r1, col_r2, col_r3 = st.columns(3)
+            upd_casa = col_r1.number_input("Punti Finali Casa", min_value=0, max_value=200, value=int(game_row["Punti_Casa"]), step=1)
+            upd_trasf = col_r2.number_input("Punti Finali Trasferta", min_value=0, max_value=200, value=int(game_row["Punti_Trasferta"]), step=1)
             upd_stato = col_r3.selectbox("Stato Partita", ["Da giocare", "Giocata"], index=0 if game_row["Stato"] == "Da giocare" else 1)
-            if col_r4.form_submit_button("Aggiorna Risultato"):
+
+            st.caption("Parziali per quarto (opzionali, compila se disponibili)")
+            qc1, qc2, qc3, qc4, qcot = st.columns(5)
+            q1_c = qc1.number_input("Q1 Casa", min_value=0, max_value=80, value=int(game_row["Q1_C"]), step=1)
+            q2_c = qc2.number_input("Q2 Casa", min_value=0, max_value=80, value=int(game_row["Q2_C"]), step=1)
+            q3_c = qc3.number_input("Q3 Casa", min_value=0, max_value=80, value=int(game_row["Q3_C"]), step=1)
+            q4_c = qc4.number_input("Q4 Casa", min_value=0, max_value=80, value=int(game_row["Q4_C"]), step=1)
+            ot_c = qcot.number_input("OT Casa", min_value=0, max_value=80, value=int(game_row["OT_C"]), step=1)
+
+            qt1, qt2, qt3, qt4, qtot = st.columns(5)
+            q1_t = qt1.number_input("Q1 Trasf", min_value=0, max_value=80, value=int(game_row["Q1_T"]), step=1)
+            q2_t = qt2.number_input("Q2 Trasf", min_value=0, max_value=80, value=int(game_row["Q2_T"]), step=1)
+            q3_t = qt3.number_input("Q3 Trasf", min_value=0, max_value=80, value=int(game_row["Q3_T"]), step=1)
+            q4_t = qt4.number_input("Q4 Trasf", min_value=0, max_value=80, value=int(game_row["Q4_T"]), step=1)
+            ot_t = qtot.number_input("OT Trasf", min_value=0, max_value=80, value=int(game_row["OT_T"]), step=1)
+
+            if st.form_submit_button("Salva Risultato e Parziali"):
                 idx = games_df.index[games_df["ID_Partita"] == sel_game_id][0]
                 games_df.loc[idx, "Punti_Casa"] = int(upd_casa)
                 games_df.loc[idx, "Punti_Trasferta"] = int(upd_trasf)
                 games_df.loc[idx, "Stato"] = upd_stato
+                games_df.loc[idx, "Q1_C"] = int(q1_c)
+                games_df.loc[idx, "Q2_C"] = int(q2_c)
+                games_df.loc[idx, "Q3_C"] = int(q3_c)
+                games_df.loc[idx, "Q4_C"] = int(q4_c)
+                games_df.loc[idx, "OT_C"] = int(ot_c)
+                games_df.loc[idx, "Q1_T"] = int(q1_t)
+                games_df.loc[idx, "Q2_T"] = int(q2_t)
+                games_df.loc[idx, "Q3_T"] = int(q3_t)
+                games_df.loc[idx, "Q4_T"] = int(q4_t)
+                games_df.loc[idx, "OT_T"] = int(ot_t)
                 save_games(games_df)
-                st.success("Risultato aggiornato.")
+                st.success("Risultato e parziali salvati.")
                 st.rerun()
 
         with st.form("add_box_row_form"):
@@ -1030,4 +1094,71 @@ elif page == "Calendario & Tabellini":
                             }
                         ]
                     )
-                    box_
+                    box_df = pd.concat([box_df, new_box], ignore_index=True)
+                    save_box(box_df)
+                    st.success("Riga di tabellino salvata.")
+                    st.rerun()
+
+        st.markdown("#### Tabellino Registrato per la Partita Selezionata")
+        game_box = box_df[box_df["ID_Partita"] == sel_game_id]
+        if game_box.empty:
+            st.info("Nessun giocatore inserito ancora per questa partita.")
+        else:
+            st.dataframe(
+                game_box[
+                    [
+                        "Squadra",
+                        "Quintetto_Base",
+                        "Numero",
+                        "Ruolo",
+                        "Giocatore",
+                        "Punti",
+                        "2P_Segnati",
+                        "3P_Segnati",
+                        "TL_Segnati",
+                        "TL_Sbagliati",
+                    ]
+                ],
+                use_container_width=True,
+                hide_index=True,
+            )
+
+# ==========================================
+# PAGINA 3: GESTIONE SQUADRE, RIPRISTINO & EXPORT
+# ==========================================
+elif page == "Gestione Squadre":
+    st.title("Gestione Squadre e Dati")
+    st.caption("Modifica squadre/loghi/note o aggiungi squadre per Gironi B e C.")
+
+    girone_edit = st.selectbox("Girone da modificare", ["Girone A", "Girone B", "Girone C"], key="edit_girone")
+    sub_teams = teams_df[teams_df["Girone"] == girone_edit].reset_index(drop=True)
+
+    edited_df = st.data_editor(
+        sub_teams,
+        num_rows="dynamic",
+        use_container_width=True,
+        hide_index=True,
+    )
+
+    if st.button("Salva Modifiche Squadre"):
+        edited_df["Girone"] = girone_edit
+        other_teams = teams_df[teams_df["Girone"] != girone_edit]
+        updated_all = pd.concat([other_teams, edited_df], ignore_index=True)
+        save_teams(updated_all)
+        st.success("Squadre salvate.")
+        st.rerun()
+
+    st.divider()
+    st.subheader("Ripristino Dati Ufficiali Girone A")
+    if st.button("🔄 Ripristina 11 Squadre e Calendario Ufficiale"):
+        save_teams(pd.DataFrame(DEFAULT_TEAMS))
+        save_games(build_default_games_df())
+        st.success("Squadre con loghi e calendario ufficiale ripristinati.")
+        st.rerun()
+
+    st.divider()
+    st.subheader("Esporta Dati (CSV)")
+    c_exp1, c_exp2, c_exp3 = st.columns(3)
+    c_exp1.download_button("Scarica Squadre CSV", teams_df.to_csv(index=False).encode("utf-8"), "squadre.csv", "text/csv")
+    c_exp2.download_button("Scarica Partite CSV", games_df.to_csv(index=False).encode("utf-8"), "partite.csv", "text/csv")
+    c_exp3.download_button("Scarica Tabellini CSV", box_df.to_csv(index=False).encode("utf-8"), "tabellini.csv", "text/csv")
