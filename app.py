@@ -14,6 +14,7 @@ st.set_page_config(
 
 STAFF_PASSWORD = os.environ.get("DR2_STAFF_PASSWORD", "dr2puglia")
 GITHUB_RAW_BASE = os.environ.get("DR2_GITHUB_RAW_BASE", "")
+DATA_VERSION = "v3_fip_2026"
 
 DATA_DIR = Path("data_dr2")
 DATA_DIR.mkdir(exist_ok=True)
@@ -21,6 +22,7 @@ DATA_DIR.mkdir(exist_ok=True)
 TEAMS_FILE = DATA_DIR / "squadre.csv"
 GAMES_FILE = DATA_DIR / "partite.csv"
 BOX_FILE = DATA_DIR / "tabellini.csv"
+VERSION_FILE = DATA_DIR / "version.txt"
 
 
 @st.cache_data(show_spinner=False)
@@ -72,9 +74,9 @@ DEFAULT_TEAMS = [
     {"Girone": "Girone B", "Squadra": "ASD MURGIA BASKET SANTERAMO", "Logo_URL": "Murgia Basket Santeramo.png", "Note_Tattiche": ""},
     {"Girone": "Girone B", "Squadra": "ASD SCUOLA BASKET MARTINESE", "Logo_URL": "SBM Martina Franca.png", "Note_Tattiche": ""},
     {"Girone": "Girone B", "Squadra": "DOMITI LA PINTA BASKET PULSANO", "Logo_URL": "Domiti La Pinta ASD Pulsano.png", "Note_Tattiche": ""},
-    {"Girone": "Girone B", "Squadra": "MASSERIA SEMERARO NEW SPORTING MOTTOLA", "Logo_URL": "New Sporting Mottola.png", "Note_Tattiche": ""},
+    {"Girone B", "Squadra": "MASSERIA SEMERARO NEW SPORTING MOTTOLA", "Logo_URL": "New Sporting Mottola.png", "Note_Tattiche": ""},
     {"Girone": "Girone B", "Squadra": "POL. OLYMPIA CLUB RUTIGLIANO", "Logo_URL": "olympia rutigliano.png", "Note_Tattiche": ""},
-    {"Girone": "Girone B", "Squadra": "SUPPORT_O TARANTO", "Logo_URL": "Support_o Taranto.png", "Note_Tattiche": ""},
+    {"Girone B", "Squadra": "SUPPORT_O TARANTO", "Logo_URL": "Support_o Taranto.png", "Note_Tattiche": ""},
     # Girone C (11 squadre)
     {"Girone": "Girone C", "Squadra": "A.POL.DIL.AURORA BRINDISI", "Logo_URL": "Aurora Brindisi.png", "Note_Tattiche": ""},
     {"Girone": "Girone C", "Squadra": "ALL STAR BASKET FRANCAVILLA", "Logo_URL": "All Star Francavilla.png", "Note_Tattiche": ""},
@@ -572,14 +574,13 @@ def reset_official_data():
     build_default_games_df().to_csv(GAMES_FILE, index=False)
     if not BOX_FILE.exists():
         pd.DataFrame(columns=BOX_COLS).to_csv(BOX_FILE, index=False)
+    VERSION_FILE.write_text(DATA_VERSION, encoding="utf-8")
 
 
 def init_data():
-    if not TEAMS_FILE.exists():
-        pd.DataFrame(DEFAULT_TEAMS).to_csv(TEAMS_FILE, index=False)
-
-    if not GAMES_FILE.exists():
-        build_default_games_df().to_csv(GAMES_FILE, index=False)
+    current_ver = VERSION_FILE.read_text(encoding="utf-8").strip() if VERSION_FILE.exists() else ""
+    if current_ver != DATA_VERSION or not TEAMS_FILE.exists() or not GAMES_FILE.exists():
+        reset_official_data()
 
     if not BOX_FILE.exists():
         pd.DataFrame(columns=BOX_COLS).to_csv(BOX_FILE, index=False)
@@ -705,19 +706,19 @@ def compute_team_metrics(team_name: str, girone: str, games_df: pd.DataFrame) ->
     }
 
 
-def _complete_h2h_available(group_teams: list[str], played_df: pd.DataFrame) -> tuple[bool, dict[str, dict]]:
-    """Usa gli scontri diretti solo se tutte le squadre a pari punti hanno già giocato tra loro."""
+def _fip_h2h_metrics(group_teams: list[str], played_df: pd.DataFrame) -> dict[str, dict]:
+    """Calcola la classifica avulsa FIP tra le squadre a pari punti."""
     team_set = set(group_teams)
-    stats = {t: {"h2h_pts": 0, "h2h_pf": 0, "h2h_dp": 0} for t in group_teams}
-    played_pairs = set()
+    stats = {t: {"h2h_pts": 0, "h2h_pf": 0, "h2h_dp": 0, "h2h_pg": 0} for t in group_teams}
 
     for _, row in played_df.iterrows():
         home = row["Casa"]
         away = row["Trasferta"]
         if home in team_set and away in team_set:
-            played_pairs.add((home, away))
             hp = int(row["Punti_Casa"])
             ap = int(row["Punti_Trasferta"])
+            stats[home]["h2h_pg"] += 1
+            stats[away]["h2h_pg"] += 1
             stats[home]["h2h_pf"] += hp
             stats[away]["h2h_pf"] += ap
             stats[home]["h2h_dp"] += hp - ap
@@ -727,12 +728,7 @@ def _complete_h2h_available(group_teams: list[str], played_df: pd.DataFrame) -> 
             elif ap > hp:
                 stats[away]["h2h_pts"] += 2
 
-    all_played = all(
-        (a, b) in played_pairs or (b, a) in played_pairs
-        for i, a in enumerate(group_teams)
-        for b in group_teams[i + 1 :]
-    )
-    return all_played, stats
+    return stats
 
 
 def compute_standings_for_girone(girone: str, teams_df: pd.DataFrame, games_df: pd.DataFrame) -> list:
@@ -771,28 +767,18 @@ def compute_standings_for_girone(girone: str, teams_df: pd.DataFrame, games_df: 
             ordered_board.extend(bucket)
         else:
             names = [x["Squadra"] for x in bucket]
-            h2h_ready, h2h = _complete_h2h_available(names, played)
-            if h2h_ready:
-                bucket_sorted = sorted(
-                    bucket,
-                    key=lambda x: (
-                        -h2h[x["Squadra"]]["h2h_pts"],
-                        -h2h[x["Squadra"]]["h2h_dp"],
-                        -h2h[x["Squadra"]]["h2h_pf"],
-                        -x["DP"],
-                        -x["PF"],
-                        x["Squadra"],
-                    ),
-                )
-            else:
-                bucket_sorted = sorted(
-                    bucket,
-                    key=lambda x: (
-                        -x["DP"],
-                        -x["PF"],
-                        x["Squadra"],
-                    ),
-                )
+            h2h = _fip_h2h_metrics(names, played)
+            bucket_sorted = sorted(
+                bucket,
+                key=lambda x: (
+                    -h2h[x["Squadra"]]["h2h_pts"],
+                    -h2h[x["Squadra"]]["h2h_dp"],
+                    -h2h[x["Squadra"]]["h2h_pf"],
+                    -x["DP"],
+                    -x["PF"],
+                    x["Squadra"],
+                ),
+            )
             ordered_board.extend(bucket_sorted)
 
     return ordered_board
