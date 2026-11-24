@@ -60,7 +60,6 @@ GIRONI_TEAMS: dict[str, list[dict[str, str]]] = {
     ],
 }
 
-# (ID_Partita, Girone, Giornata, Data, Casa, Trasferta, Punti_Casa, Punti_Trasferta, Stato)
 DEFAULT_GAMES_RAW = [
     # GIRONE A
     ("A01_1867", "Girone A", 1, "Sab 07/11/2026 19:00", "POL. DIL. NUOVA MATTEOTTI CORATO", "PALLACANESTRO OLIMPIA CORATO", 72, 67, "Giocata"),
@@ -891,9 +890,14 @@ def render_round_box(round_num: int, round_games: pd.DataFrame, logo_lookup: dic
     st.markdown("".join(parts), unsafe_allow_html=True)
 
 
-def render_calendar_page(girone: str, games_df: pd.DataFrame, logo_lookup: dict[str, str]) -> pd.DataFrame:
+def render_calendar_page(games_df: pd.DataFrame, logo_lookup: dict[str, str]) -> pd.DataFrame:
     st.title("Calendario e Risultati")
-    st.caption("Visualizza tutte le gare di Andata e Ritorno divise per girone e giornata.")
+    st.caption("Seleziona il girone e il turno per visualizzare o aggiungere gare di Andata e Ritorno.")
+
+    gironi_list = ["Girone A", "Girone B", "Girone C"]
+    current_idx = gironi_list.index(st.session_state["calendar_girone"])
+    girone = st.selectbox("Filtra per Girone", gironi_list, index=current_idx, key="cal_girone_select")
+    st.session_state["calendar_girone"] = girone
 
     teams_in_girone = [t["squadra"] for t in GIRONI_TEAMS.get(girone, [])]
 
@@ -971,6 +975,9 @@ if "authenticated" not in st.session_state:
 if "games_df" not in st.session_state:
     st.session_state["games_df"] = build_games_df()
 
+if "calendar_girone" not in st.session_state:
+    st.session_state["calendar_girone"] = "Girone A"
+
 if not st.session_state.authenticated:
     st.title("🏀 DR2 Puglia — Login Staff")
     pwd = st.text_input("Password", type="password")
@@ -989,7 +996,6 @@ if not st.session_state.authenticated:
 with st.sidebar:
     st.title("🏀 DR2 Puglia")
     sezione = st.radio("Sezione", ["Classifiche", "Calendario e Risultati"])
-    girone_selezionato = st.selectbox("Girone", ["Girone A", "Girone B", "Girone C"])
     if st.button("Esci"):
         st.session_state.authenticated = False
         st.rerun()
@@ -1003,8 +1009,9 @@ if not GITHUB_RAW_BASE:
 logo_lookup = build_logo_lookup()
 
 if sezione == "Classifiche":
-    classifica = compute_standings(girone_selezionato)
+    girone_classifica = st.selectbox("Seleziona Girone", ["Girone A", "Girone B", "Girone C"])
+    classifica = compute_standings(girone_classifica)
     terze_classificate = compute_thirds_standings()
-    render_standings(girone_selezionato, classifica, terze_classificate)
+    render_standings(girone_classifica, classifica, terze_classificate)
 else:
-    render_calendar_page(girone_selezionato, st.session_state["games_df"], logo_lookup)
+    render_calendar_page(st.session_state["games_df"], logo_lookup)
