@@ -148,7 +148,7 @@ STANDINGS_CSS = """
 }
 .board-head {
     display: grid;
-    grid-template-columns: 54px 52px 1fr 52px 52px 52px 68px 156px 64px;
+    grid-template-columns: 54px 52px 1fr 52px 52px 52px 68px 132px 64px;
     gap: 8px;
     padding: 0 10px 8px 10px;
     color: #ffd43b;
@@ -172,7 +172,7 @@ STANDINGS_CSS = """
 .zone-pout { background: #dc2626; color: #ffffff; }
 .board-row {
     display: grid;
-    grid-template-columns: 54px 52px 1fr 52px 52px 52px 68px 156px 64px;
+    grid-template-columns: 54px 52px 1fr 52px 52px 52px 68px 132px 64px;
     gap: 8px;
     align-items: center;
     background: rgba(8, 39, 82, 0.78);
@@ -218,44 +218,23 @@ STANDINGS_CSS = """
     font-weight: 700;
     font-size: 14px;
 }
-.streak-track {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    background: #0d1218;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 8px;
-    padding: 4px 12px 4px 6px;
-    min-width: 122px;
-    justify-content: flex-start;
-}
-.streak-item {
-    position: relative;
-    display: inline-flex;
+.streak-wrap {
+    display: flex;
     align-items: center;
     justify-content: center;
-}
-a.streak-link {
-    text-decoration: none !important;
-    display: inline-flex;
+    gap: 5px;
 }
 .streak-box {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 20px;
-    height: 20px;
-    border-radius: 4px;
+    width: 22px;
+    height: 22px;
+    border-radius: 5px;
     font-size: 11px;
     font-weight: 900;
     color: #ffffff;
     line-height: 1;
-    cursor: pointer;
-    transition: transform 0.12s ease, filter 0.12s ease;
-}
-.streak-item:hover .streak-box {
-    transform: translateY(-2px);
-    filter: brightness(1.15);
 }
 .streak-w {
     background: #16a34a;
@@ -265,82 +244,10 @@ a.streak-link {
     background: #dc2626;
     border: 1px solid #ef4444;
 }
-.streak-tooltip {
-    visibility: hidden;
-    opacity: 0;
-    pointer-events: none;
-    position: absolute;
-    bottom: calc(100% + 8px);
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 9999;
-    min-width: 210px;
-    max-width: 290px;
-    background: #0f172a;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 9px;
-    padding: 7px 10px;
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
-    text-align: center;
-    white-space: normal;
-    transition: opacity 0.14s ease, visibility 0.14s ease;
-}
-.streak-tooltip::after {
-    content: "";
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    border-width: 6px;
-    border-style: solid;
-    border-color: #0f172a transparent transparent transparent;
-}
-.streak-item:hover .streak-tooltip {
-    visibility: visible;
-    opacity: 1;
-}
-.tt-top {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    font-size: 11px;
-    font-weight: 700;
-    color: #94a3b8;
-    margin-bottom: 3px;
-}
-.tt-badge-w {
-    background: rgba(22, 163, 74, 0.25);
-    color: #4ade80;
-    border-radius: 4px;
-    padding: 1px 5px;
-    font-size: 10px;
-    font-weight: 900;
-}
-.tt-badge-l {
-    background: rgba(220, 38, 38, 0.25);
-    color: #f87171;
-    border-radius: 4px;
-    padding: 1px 5px;
-    font-size: 10px;
-    font-weight: 900;
-}
-.tt-match {
-    font-size: 11.5px;
-    font-weight: 800;
-    color: #f8fafc;
-    line-height: 1.3;
-}
-.tt-score {
-    color: #ffd43b;
-    font-weight: 900;
-    margin: 0 4px;
-}
 .streak-empty {
-    color: #64748b;
-    font-size: 12px;
+    color: #cbd5e1;
+    font-size: 13px;
     font-weight: 700;
-    padding: 0 4px;
 }
 .b-pts {
     text-align: center;
@@ -391,11 +298,6 @@ CALENDAR_CSS = """
     border-bottom: 1px solid #262b34;
     text-transform: uppercase;
 }
-a.cal-match-link {
-    text-decoration: none !important;
-    color: inherit !important;
-    display: block;
-}
 .cal-match {
     display: grid;
     grid-template-columns: 96px 1fr 48px;
@@ -403,11 +305,6 @@ a.cal-match-link {
     align-items: center;
     padding: 9px 14px;
     border-bottom: 1px solid #20252e;
-    transition: background 0.14s ease;
-    cursor: pointer;
-}
-.cal-match:hover {
-    background: #1d232d;
 }
 .cal-match:last-child { border-bottom: none; }
 .cal-meta { text-align: center; line-height: 1.35; }
@@ -447,118 +344,6 @@ a.cal-match-link {
     color: #94a3b8;
 }
 .cal-score-win { color: #ffffff; font-weight: 800; }
-</style>
-"""
-
-MATCH_DETAIL_CSS = """
-<style>
-.md-hero {
-    background: linear-gradient(180deg, #061b26 0%, #092635 100%);
-    border: 1px solid #163b4e;
-    border-radius: 14px;
-    padding: 24px 20px;
-    margin-bottom: 14px;
-}
-.md-grid {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    gap: 16px;
-    align-items: center;
-    text-align: center;
-}
-.md-team-block {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-}
-.md-logo-box {
-    width: 76px;
-    height: 76px;
-    background: #ffffff;
-    border-radius: 16px;
-    padding: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.35);
-}
-.md-logo-box img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-}
-.md-team-name {
-    font-size: 16px;
-    font-weight: 800;
-    color: #f8fafc;
-}
-.md-center {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-}
-.md-date {
-    font-size: 13px;
-    font-weight: 700;
-    color: #cbd5e1;
-}
-.md-score {
-    font-size: 46px;
-    font-weight: 900;
-    color: #ffffff;
-    letter-spacing: 2px;
-    line-height: 1.1;
-}
-.md-status {
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: 1.2px;
-    color: #94a3b8;
-    text-transform: uppercase;
-}
-.md-sec-card {
-    background: #071922;
-    border: 1px solid #133343;
-    border-radius: 10px;
-    padding: 16px;
-    margin-bottom: 14px;
-}
-.md-sec-title {
-    font-size: 13px;
-    font-weight: 800;
-    letter-spacing: 0.7px;
-    text-transform: uppercase;
-    color: #e2e8f0;
-    margin-bottom: 12px;
-}
-.md-res-table {
-    width: 100%;
-    border-collapse: collapse;
-    color: #e2e8f0;
-    font-size: 14px;
-}
-.md-res-table th {
-    text-align: center;
-    color: #94a3b8;
-    font-size: 12px;
-    padding: 6px 10px;
-    border-bottom: 1px solid #163b4e;
-}
-.md-res-table th.team-col, .md-res-table td.team-col {
-    text-align: left;
-    font-weight: 700;
-}
-.md-res-table td {
-    text-align: center;
-    padding: 10px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-}
-.md-res-table td.tot-col {
-    font-weight: 900;
-    color: #ffffff;
-}
 </style>
 """
 
@@ -619,56 +404,20 @@ def build_team_logo_html_map(github_base: str) -> dict[str, str]:
                 if src
                 else "🏀"
             )
-            mapping[f"hero::{squadra}"] = (
-                f'<div class="md-logo-box"><img src="{src}" alt="{squadra}" /></div>'
-                if src
-                else '<div class="md-logo-box"><span style="font-size:32px;">🏀</span></div>'
-            )
     return mapping
 
 
-def _format_tooltip_data(g) -> dict[str, str]:
-    tokens = str(g.Data).strip().split()
-    date_part = tokens[1] if len(tokens) >= 3 else (tokens[0] if len(tokens) >= 1 else "")
-    return {
-        "date": date_part,
-        "home": str(g.Casa),
-        "away": str(g.Trasferta),
-        "score": f"{int(g.Punti_Casa)} - {int(g.Punti_Trasferta)}",
-    }
-
-
-def _render_streak_html(events: list[dict], max_items: int = 5) -> str:
-    recent = events[-max_items:]
+def _render_streak_html(outcomes: list[str], max_items: int = 5) -> str:
+    recent = outcomes[-max_items:]
     if not recent:
-        return '<div class="streak-track"><span class="streak-empty">—</span></div>'
-
-    items = []
-    for ev in recent:
-        res = ev["res"]
-        gid = quote(str(ev["game_id"]), safe="")
-        tip = ev.get("tooltip_data", {})
-        date_str = str(tip.get("date", "")).replace("<", "&lt;").replace(">", "&gt;")
-        home_str = str(tip.get("home", "")).replace("<", "&lt;").replace(">", "&gt;")
-        away_str = str(tip.get("away", "")).replace("<", "&lt;").replace(">", "&gt;")
-        score_str = str(tip.get("score", "")).replace("<", "&lt;").replace(">", "&gt;")
-
-        cls = "streak-w" if res == "W" else "streak-l"
-        badge_cls = "tt-badge-w" if res == "W" else "tt-badge-l"
-        esito_txt = "VITTORIA" if res == "W" else "SCONFITTA"
-
-        items.append(
-            f'<div class="streak-item">'
-            f'<div class="streak-tooltip">'
-            f'<div class="tt-top"><span>{date_str}</span><span class="{badge_cls}">{esito_txt}</span></div>'
-            f'<div class="tt-match">{home_str}<span class="tt-score">{score_str}</span>{away_str}</div>'
-            f'</div>'
-            f'<a class="streak-link" href="?match={gid}" target="_self">'
-            f'<span class="streak-box {cls}">{res}</span>'
-            f'</a>'
-            f'</div>'
-        )
-    return f'<div class="streak-track">{"".join(items)}</div>'
+        return '<div class="streak-wrap"><span class="streak-empty">—</span></div>'
+    boxes = []
+    for res in recent:
+        if res == "W":
+            boxes.append('<span class="streak-box streak-w">W</span>')
+        elif res == "L":
+            boxes.append('<span class="streak-box streak-l">L</span>')
+    return f'<div class="streak-wrap">{"".join(boxes)}</div>'
 
 
 def _h2h_points_for_group(group_teams: list[str], played_games: list[tuple]) -> dict[str, int]:
@@ -715,7 +464,7 @@ def compute_standings(girone: str, games_df: pd.DataFrame) -> list[dict]:
             "pf": 0,
             "ps": 0,
             "diff": 0,
-            "streak_events": [],
+            "outcomes": [],
             "pts": 0,
         }
         for item in teams
@@ -733,8 +482,6 @@ def compute_standings(girone: str, games_df: pd.DataFrame) -> list[dict]:
         away = str(g.Trasferta)
         p_home = int(g.Punti_Casa)
         p_away = int(g.Punti_Trasferta)
-        gid = str(g.ID_Partita)
-        tip_data = _format_tooltip_data(g)
 
         if home not in stats or away not in stats:
             continue
@@ -750,14 +497,14 @@ def compute_standings(girone: str, games_df: pd.DataFrame) -> list[dict]:
             stats[home]["w"] += 1
             stats[away]["l"] += 1
             stats[home]["pts"] += 2
-            stats[home]["streak_events"].append({"res": "W", "game_id": gid, "tooltip_data": tip_data})
-            stats[away]["streak_events"].append({"res": "L", "game_id": gid, "tooltip_data": tip_data})
+            stats[home]["outcomes"].append("W")
+            stats[away]["outcomes"].append("L")
         elif p_away > p_home:
             stats[away]["w"] += 1
             stats[home]["l"] += 1
             stats[away]["pts"] += 2
-            stats[away]["streak_events"].append({"res": "W", "game_id": gid, "tooltip_data": tip_data})
-            stats[home]["streak_events"].append({"res": "L", "game_id": gid, "tooltip_data": tip_data})
+            stats[away]["outcomes"].append("W")
+            stats[home]["outcomes"].append("L")
 
     for r in stats.values():
         r["diff"] = r["pf"] - r["ps"]
@@ -774,7 +521,6 @@ def compute_standings(girone: str, games_df: pd.DataFrame) -> list[dict]:
 
 
 def compute_thirds_standings(games_df: pd.DataFrame) -> list[dict]:
-    """Classifica delle terze classificate dei tre gironi (punti, poi differenza canestri)."""
     thirds = []
     for g_name in ("Girone A", "Girone B", "Girone C"):
         board = compute_standings(g_name, games_df)
@@ -822,7 +568,7 @@ def render_standings(girone: str, rows: list[dict], thirds_board: list[dict], lo
 
         diff_val = r["diff"]
         diff_str = f"+{diff_val}" if diff_val > 0 else str(diff_val)
-        streak_html = _render_streak_html(r.get("streak_events", []))
+        streak_html = _render_streak_html(r.get("outcomes", []))
 
         logo_tag = logo_html_map.get(f"board::{r['squadra']}", '<div class="b-pos">🏀</div>')
         html.append(
@@ -834,7 +580,7 @@ def render_standings(girone: str, rows: list[dict], thirds_board: list[dict], lo
             f'<div class="b-val">{r["w"]}</div>'
             f'<div class="b-val">{r["l"]}</div>'
             f'<div class="b-val">{diff_str}</div>'
-            f'<div style="text-align:center;">{streak_html}</div>'
+            f'<div>{streak_html}</div>'
             f'<div class="b-pts">{r["pts"]}</div>'
             f'</div>'
         )
@@ -857,7 +603,7 @@ def render_standings(girone: str, rows: list[dict], thirds_board: list[dict], lo
             badge = '<span class="badge-ok">PLAY-OFF</span>' if qual else '<span class="badge-no">FUORI</span>'
             diff_val = t["diff"]
             diff_str = f"+{diff_val}" if diff_val > 0 else str(diff_val)
-            streak_html = _render_streak_html(t.get("streak_events", []))
+            streak_html = _render_streak_html(t.get("outcomes", []))
             logo_tag = logo_html_map.get(f"board::{t['squadra']}", '<div class="b-pos">🏀</div>')
             t_html.append(
                 f'<div class="board-row {r_cls}">'
@@ -871,7 +617,7 @@ def render_standings(girone: str, rows: list[dict], thirds_board: list[dict], lo
                 f'<div class="b-val">{t["w"]}</div>'
                 f'<div class="b-val">{t["l"]}</div>'
                 f'<div class="b-val">{diff_str}</div>'
-                f'<div style="text-align:center;">{streak_html}</div>'
+                f'<div>{streak_html}</div>'
                 f'<div class="b-pts">{t["pts"]}</div>'
                 '</div>'
             )
@@ -892,7 +638,6 @@ def build_round_html(round_num: int, round_games: pd.DataFrame, logo_html_map: d
         )
     else:
         for g in round_games.itertuples(index=False):
-            gid_encoded = quote(str(g.ID_Partita), safe="")
             is_played = str(g.Stato).strip().lower() == "giocata"
             tokens = str(g.Data).strip().split()
             if len(tokens) >= 3:
@@ -902,7 +647,7 @@ def build_round_html(round_num: int, round_games: pd.DataFrame, logo_html_map: d
             else:
                 date_str, time_str = str(g.Data).strip(), ""
 
-            meta_sub = '<div class="cal-ft">FINALE</div>' if is_played else f'<div class="cal-time">{time_str}</div>'
+            meta_sub = '<div class="cal-ft">FT</div>' if is_played else f'<div class="cal-time">{time_str}</div>'
 
             home_name = str(g.Casa)
             away_name = str(g.Trasferta)
@@ -918,7 +663,6 @@ def build_round_html(round_num: int, round_games: pd.DataFrame, logo_html_map: d
             s2 = str(away_pts) if is_played else ""
 
             parts.append(
-                f'<a class="cal-match-link" href="?match={gid_encoded}" target="_self">'
                 f'<div class="cal-match">'
                 f'<div class="cal-meta"><div class="cal-date">{date_str}</div>{meta_sub}</div>'
                 f'<div class="cal-teams">'
@@ -930,222 +674,16 @@ def build_round_html(round_num: int, round_games: pd.DataFrame, logo_html_map: d
                 f'<div class="{"cal-score-win" if away_win else ""}">{s2}</div>'
                 f'</div>'
                 f'</div>'
-                f'</a>'
             )
 
     parts.append("</div>")
     return "".join(parts)
 
 
-def _ensure_match_meta(match_id: str) -> dict:
-    meta_store = st.session_state.setdefault("match_meta", {})
-    if match_id not in meta_store:
-        meta_store[match_id] = {
-            "quarters_home": [0, 0, 0, 0],
-            "quarters_away": [0, 0, 0, 0],
-            "video_url": "",
-            "notes": "",
-        }
-    return meta_store[match_id]
-
-
-def _ensure_boxscore_df(match_id: str, team_name: str) -> pd.DataFrame:
-    box_store = st.session_state.setdefault("boxscores", {})
-    key = f"{match_id}::{team_name}"
-    if key not in box_store:
-        box_store[key] = pd.DataFrame(
-            [
-                {
-                    "Giocatore": "",
-                    "MIN": 0,
-                    "PTS": 0,
-                    "REB": 0,
-                    "AST": 0,
-                    "2PT": "0/0",
-                    "3PT": "0/0",
-                    "TL": "0/0",
-                    "FALLI": 0,
-                }
-                for _ in range(8)
-            ]
-        )
-    return box_store[key]
-
-
-def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: dict[str, str]) -> None:
-    st.markdown(MATCH_DETAIL_CSS, unsafe_allow_html=True)
-
-    if st.button("← Torna indietro"):
-        st.session_state["selected_match_id"] = None
-        if "match" in st.query_params:
-            del st.query_params["match"]
-        st.rerun()
-
-    rows = games_df[games_df["ID_Partita"] == match_id]
-    if rows.empty:
-        st.warning(f"Partita `{match_id}` non trovata.")
-        return
-
-    g = rows.iloc[0]
-    home_name = str(g["Casa"])
-    away_name = str(g["Trasferta"])
-    home_pts = int(g["Punti_Casa"])
-    away_pts = int(g["Punti_Trasferta"])
-    is_played = str(g["Stato"]).strip().lower() == "giocata"
-    status_label = "FINALE" if is_played else str(g["Stato"]).upper()
-
-    h_hero_logo = logo_html_map.get(f"hero::{home_name}", '<div class="md-logo-box">🏀</div>')
-    a_hero_logo = logo_html_map.get(f"hero::{away_name}", '<div class="md-logo-box">🏀</div>')
-
-    score_text = f"{home_pts} - {away_pts}" if is_played else "VS"
-
-    st.markdown(
-        f'<div class="md-hero">'
-        f'<div class="md-grid">'
-        f'<div class="md-team-block">{h_hero_logo}<div class="md-team-name">{home_name}</div></div>'
-        f'<div class="md-center">'
-        f'<div class="md-date">{g["Data"]} • {g["Girone"]} (Giornata {int(g["Giornata"])})</div>'
-        f'<div class="md-score">{score_text}</div>'
-        f'<div class="md-status">{status_label}</div>'
-        f'</div>'
-        f'<div class="md-team-block">{a_hero_logo}<div class="md-team-name">{away_name}</div></div>'
-        f'</div>'
-        f'</div>',
-        unsafe_allow_html=True,
-    )
-
-    meta = _ensure_match_meta(match_id)
-
-    sezioni_gara = st.radio(
-        "Sezione partita",
-        ("RIASSUNTO", "STATS GIOCATORE", "STATISTICHE", "FORMAZIONI", "CRONOLOGIA DELL'INCONTRO"),
-        horizontal=True,
-        label_visibility="collapsed",
-        key=f"md_tab_{match_id}",
-    )
-
-    if sezioni_gara == "RIASSUNTO":
-        col_vid, col_res = st.columns([1.15, 1.35])
-        with col_vid:
-            st.markdown('<div class="md-sec-card"><div class="md-sec-title">HIGHLIGHTS / VIDEO</div>', unsafe_allow_html=True)
-            if meta["video_url"].strip():
-                st.video(meta["video_url"].strip())
-            else:
-                st.info("Nessun video collegato per questa gara. Puoi inserire qui sotto il link YouTube.")
-            new_vid = st.text_input("Link YouTube Highlights", value=meta["video_url"], key=f"vid_input_{match_id}")
-            if st.button("Salva link video", key=f"save_vid_{match_id}"):
-                meta["video_url"] = new_vid.strip()
-                st.success("Link video salvato.")
-                st.rerun()
-            st.markdown("</div>", unsafe_allow_html=True)
-
-        with col_res:
-            q_h = meta["quarters_home"]
-            q_a = meta["quarters_away"]
-            st.markdown(
-                f'<div class="md-sec-card">'
-                f'<div class="md-sec-title">RISULTATO</div>'
-                f'<table class="md-res-table">'
-                f'<thead><tr><th class="team-col">SQUADRA</th><th>TOT</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th></tr></thead>'
-                f'<tbody>'
-                f'<tr><td class="team-col">{home_name}</td><td class="tot-col">{home_pts}</td><td>{q_h[0]}</td><td>{q_h[1]}</td><td>{q_h[2]}</td><td>{q_h[3]}</td></tr>'
-                f'<tr><td class="team-col">{away_name}</td><td class="tot-col">{away_pts}</td><td>{q_a[0]}</td><td>{q_a[1]}</td><td>{q_a[2]}</td><td>{q_a[3]}</td></tr>'
-                f'</tbody></table></div>',
-                unsafe_allow_html=True,
-            )
-            with st.expander("Modifica parziali quarti"):
-                qc = st.columns(4)
-                nh = [qc[i].number_input(f"{home_name[:12]} Q{i+1}", min_value=0, max_value=80, value=int(q_h[i]), key=f"qh_{match_id}_{i}") for i in range(4)]
-                qc2 = st.columns(4)
-                na = [qc2[i].number_input(f"{away_name[:12]} Q{i+1}", min_value=0, max_value=80, value=int(q_a[i]), key=f"qa_{match_id}_{i}") for i in range(4)]
-                if st.button("Salva parziali", key=f"save_q_{match_id}"):
-                    meta["quarters_home"] = nh
-                    meta["quarters_away"] = na
-                    st.rerun()
-
-    elif sezioni_gara == "STATS GIOCATORE":
-        st.markdown('<div class="md-sec-card"><div class="md-sec-title">TABELLINI GIOCATORI (MODIFICABILI)</div>', unsafe_allow_html=True)
-        st.caption("Inserisci o incolla qui i tabellini dei giocatori delle due squadre e clicca su 'Salva tabellini'.")
-
-        tab_h, tab_a = st.tabs([home_name, away_name])
-        with tab_h:
-            df_h = _ensure_boxscore_df(match_id, home_name)
-            edited_h = st.data_editor(
-                df_h,
-                num_rows="dynamic",
-                use_container_width=True,
-                key=f"editor_h_{match_id}",
-            )
-        with tab_a:
-            df_a = _ensure_boxscore_df(match_id, away_name)
-            edited_a = st.data_editor(
-                df_a,
-                num_rows="dynamic",
-                use_container_width=True,
-                key=f"editor_a_{match_id}",
-            )
-
-        if st.button("💾 Salva tabellini giocatori", key=f"save_box_{match_id}"):
-            st.session_state["boxscores"][f"{match_id}::{home_name}"] = edited_h
-            st.session_state["boxscores"][f"{match_id}::{away_name}"] = edited_a
-            st.success("Tabellini salvati nella sessione.")
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    elif sezioni_gara == "STATISTICHE":
-        st.markdown('<div class="md-sec-card"><div class="md-sec-title">STATISTICHE DI SQUADRA</div>', unsafe_allow_html=True)
-        df_h = _ensure_boxscore_df(match_id, home_name)
-        df_a = _ensure_boxscore_df(match_id, away_name)
-        tot_pts_h = int(pd.to_numeric(df_h["PTS"], errors="coerce").fillna(0).sum()) if "PTS" in df_h else home_pts
-        tot_pts_a = int(pd.to_numeric(df_a["PTS"], errors="coerce").fillna(0).sum()) if "PTS" in df_a else away_pts
-        tot_reb_h = int(pd.to_numeric(df_h["REB"], errors="coerce").fillna(0).sum()) if "REB" in df_h else 0
-        tot_reb_a = int(pd.to_numeric(df_a["REB"], errors="coerce").fillna(0).sum()) if "REB" in df_a else 0
-        tot_ast_h = int(pd.to_numeric(df_h["AST"], errors="coerce").fillna(0).sum()) if "AST" in df_h else 0
-        tot_ast_a = int(pd.to_numeric(df_a["AST"], errors="coerce").fillna(0).sum()) if "AST" in df_a else 0
-
-        st.table(
-            pd.DataFrame(
-                [
-                    {"Statistica": "Punti (Tabellino / Referto)", home_name: f"{tot_pts_h or home_pts} ({home_pts})", away_name: f"{tot_pts_a or away_pts} ({away_pts})"},
-                    {"Statistica": "Rimbalzi totali", home_name: tot_reb_h, away_name: tot_reb_a},
-                    {"Statistica": "Assist totali", home_name: tot_ast_h, away_name: tot_ast_a},
-                ]
-            )
-        )
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    elif sezioni_gara == "FORMAZIONI":
-        st.markdown('<div class="md-sec-card"><div class="md-sec-title">FORMAZIONI / ROSTER INSERITI</div>', unsafe_allow_html=True)
-        c1, c2 = st.columns(2)
-        with c1:
-            st.markdown(f"**{home_name}**")
-            df_h = _ensure_boxscore_df(match_id, home_name)
-            players_h = [p for p in df_h["Giocatore"].astype(str).str.strip().tolist() if p]
-            st.write(", ".join(players_h) if players_h else "Nessun giocatore ancora inserito nel tabellino.")
-        with c2:
-            st.markdown(f"**{away_name}**")
-            df_a = _ensure_boxscore_df(match_id, away_name)
-            players_a = [p for p in df_a["Giocatore"].astype(str).str.strip().tolist() if p]
-            st.write(", ".join(players_a) if players_a else "Nessun giocatore ancora inserito nel tabellino.")
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    else:
-        st.markdown('<div class="md-sec-card"><div class="md-sec-title">CRONOLOGIA DELL\'INCONTRO / NOTE</div>', unsafe_allow_html=True)
-        new_notes = st.text_area(
-            "Momenti chiave, parziali o note cronaca gara",
-            value=meta["notes"],
-            height=140,
-            key=f"notes_{match_id}",
-        )
-        if st.button("Salva cronologia / note", key=f"save_notes_{match_id}"):
-            meta["notes"] = new_notes
-            st.success("Note salvate.")
-        st.markdown("</div>", unsafe_allow_html=True)
-
-
 def render_calendar_page(games_df: pd.DataFrame, logo_html_map: dict[str, str]) -> pd.DataFrame:
     st.markdown(CALENDAR_CSS, unsafe_allow_html=True)
     st.title("Calendario e Risultati")
-    st.caption("Seleziona il girone e il turno. Clicca su una partita per aprirne la scheda e i tabellini.")
+    st.caption("Seleziona il girone e il turno per visualizzare o aggiungere gare di Andata e Ritorno.")
 
     gironi_list = ("Girone A", "Girone B", "Girone C")
     current_idx = gironi_list.index(st.session_state["calendar_girone"])
@@ -1241,13 +779,6 @@ if "games_df" not in st.session_state:
 if "calendar_girone" not in st.session_state:
     st.session_state["calendar_girone"] = "Girone A"
 
-if "selected_match_id" not in st.session_state:
-    st.session_state["selected_match_id"] = None
-
-query_match = st.query_params.get("match")
-if query_match:
-    st.session_state["selected_match_id"] = str(query_match)
-
 if not st.session_state.authenticated:
     st.title("🏀 DR2 Puglia — Login Staff")
     pwd = st.text_input("Password", type="password")
@@ -1261,20 +792,9 @@ if not st.session_state.authenticated:
 
 with st.sidebar:
     st.title("🏀 DR2 Puglia")
-    sezione = st.radio(
-        "Sezione",
-        ("Classifiche", "Calendario e Risultati"),
-        key="nav_sezione",
-        on_change=lambda: (
-            st.session_state.update({"selected_match_id": None}),
-            st.query_params.pop("match", None),
-        ),
-    )
+    sezione = st.radio("Sezione", ("Classifiche", "Calendario e Risultati"))
     if st.button("Esci"):
         st.session_state.authenticated = False
-        st.session_state["selected_match_id"] = None
-        if "match" in st.query_params:
-            del st.query_params["match"]
         st.rerun()
 
 if not GITHUB_RAW_BASE:
@@ -1285,9 +805,7 @@ if not GITHUB_RAW_BASE:
 
 logo_html_map = build_team_logo_html_map(GITHUB_RAW_BASE)
 
-if st.session_state["selected_match_id"]:
-    render_match_detail(st.session_state["selected_match_id"], st.session_state["games_df"], logo_html_map)
-elif sezione == "Classifiche":
+if sezione == "Classifiche":
     girone_classifica = st.selectbox("Seleziona Girone", ("Girone A", "Girone B", "Girone C"))
     classifica = compute_standings(girone_classifica, st.session_state["games_df"])
     terze_classificate = compute_thirds_standings(st.session_state["games_df"])
