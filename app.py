@@ -218,7 +218,7 @@ STANDINGS_CSS = """
     font-weight: 700;
     font-size: 14px;
 }
-/* Barra scura tipo "Ultime 5" come nello screenshot */
+/* Barra scura tipo "Ultime 5" */
 .streak-track {
     display: inline-flex;
     align-items: center;
@@ -229,6 +229,12 @@ STANDINGS_CSS = """
     padding: 4px 14px 4px 6px;
     min-width: 124px;
     justify-content: flex-start;
+}
+.streak-item {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 a.streak-link {
     text-decoration: none !important;
@@ -246,10 +252,10 @@ a.streak-link {
     color: #ffffff;
     line-height: 1;
     cursor: pointer;
-    transition: transform 0.12s ease, filter 0.12s ease;
+    transition: transform 0.14s ease, filter 0.14s ease;
 }
-.streak-box:hover {
-    transform: translateY(-1px);
+.streak-item:hover .streak-box {
+    transform: translateY(-2px) scale(1.06);
     filter: brightness(1.15);
 }
 .streak-w {
@@ -259,6 +265,81 @@ a.streak-link {
 .streak-l {
     background: #dc2626;
     border: 1px solid #ef4444;
+}
+/* Tooltip estetico al passaggio del mouse */
+.streak-tooltip {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+    bottom: calc(100% + 9px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    z-index: 9999;
+    min-width: 220px;
+    max-width: 300px;
+    background: linear-gradient(180deg, #111827 0%, #0b101b 100%);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 10px;
+    padding: 8px 11px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 212, 59, 0.08);
+    text-align: center;
+    white-space: normal;
+    transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s ease;
+}
+.streak-tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: #0b101b transparent transparent transparent;
+}
+.streak-item:hover .streak-tooltip {
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+.tt-top {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #94a3b8;
+    margin-bottom: 4px;
+}
+.tt-badge-w {
+    background: rgba(22, 163, 74, 0.22);
+    color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.45);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 10px;
+    font-weight: 900;
+}
+.tt-badge-l {
+    background: rgba(220, 38, 38, 0.22);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.45);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 10px;
+    font-weight: 900;
+}
+.tt-match {
+    font-size: 11.5px;
+    font-weight: 800;
+    color: #f8fafc;
+    line-height: 1.3;
+}
+.tt-score {
+    color: #ffd43b;
+    font-weight: 900;
+    margin: 0 4px;
 }
 .streak-empty {
     color: #64748b;
@@ -551,14 +632,19 @@ def build_team_logo_html_map(github_base: str) -> dict[str, str]:
     return mapping
 
 
-def _format_tooltip_title(g) -> str:
+def _format_tooltip_data(g) -> dict[str, str]:
     tokens = str(g.Data).strip().split()
     date_part = tokens[1] if len(tokens) >= 3 else (tokens[0] if len(tokens) >= 1 else "")
-    return f"{date_part} — {g.Casa} {int(g.Punti_Casa)} - {int(g.Punti_Trasferta)} {g.Trasferta}".replace('"', "&quot;")
+    return {
+        "date": date_part,
+        "home": str(g.Casa),
+        "away": str(g.Trasferta),
+        "score": f"{int(g.Punti_Casa)} - {int(g.Punti_Trasferta)}",
+    }
 
 
 def _render_streak_html(events: list[dict], max_items: int = 5) -> str:
-    """Renderizza la barra Streak con box W/L cliccabili che aprono la partita corrispondente."""
+    """Renderizza la barra Streak con box W/L cliccabili e tooltip estetico al passaggio del mouse."""
     recent = events[-max_items:]
     if not recent:
         return '<div class="streak-track"><span class="streak-empty">—</span></div>'
@@ -567,12 +653,26 @@ def _render_streak_html(events: list[dict], max_items: int = 5) -> str:
     for ev in recent:
         res = ev["res"]
         gid = quote(str(ev["game_id"]), safe="")
-        title = str(ev["tooltip"]).replace('"', "&quot;")
+        tip = ev.get("tooltip_data", {})
+        date_str = str(tip.get("date", "")).replace("<", "&lt;").replace(">", "&gt;")
+        home_str = str(tip.get("home", "")).replace("<", "&lt;").replace(">", "&gt;")
+        away_str = str(tip.get("away", "")).replace("<", "&lt;").replace(">", "&gt;")
+        score_str = str(tip.get("score", "")).replace("<", "&lt;").replace(">", "&gt;")
+
         cls = "streak-w" if res == "W" else "streak-l"
+        badge_cls = "tt-badge-w" if res == "W" else "tt-badge-l"
+        esito_txt = "VITTORIA" if res == "W" else "SCONFITTA"
+
         items.append(
-            f'<a class="streak-link" href="?match={gid}" target="_self" title="{title}">'
+            f'<div class="streak-item">'
+            f'<div class="streak-tooltip">'
+            f'<div class="tt-top"><span>{date_str}</span><span class="{badge_cls}">{esito_txt}</span></div>'
+            f'<div class="tt-match">{home_str}<span class="tt-score">{score_str}</span>{away_str}</div>'
+            f'</div>'
+            f'<a class="streak-link" href="?match={gid}" target="_self">'
             f'<span class="streak-box {cls}">{res}</span>'
             f'</a>'
+            f'</div>'
         )
     return f'<div class="streak-track">{"".join(items)}</div>'
 
@@ -640,7 +740,7 @@ def compute_standings(girone: str, games_df: pd.DataFrame) -> list[dict]:
         p_home = int(g.Punti_Casa)
         p_away = int(g.Punti_Trasferta)
         gid = str(g.ID_Partita)
-        tip = _format_tooltip_title(g)
+        tip_data = _format_tooltip_data(g)
 
         if home not in stats or away not in stats:
             continue
@@ -656,14 +756,14 @@ def compute_standings(girone: str, games_df: pd.DataFrame) -> list[dict]:
             stats[home]["w"] += 1
             stats[away]["l"] += 1
             stats[home]["pts"] += 2
-            stats[home]["streak_events"].append({"res": "W", "game_id": gid, "tooltip": tip})
-            stats[away]["streak_events"].append({"res": "L", "game_id": gid, "tooltip": tip})
+            stats[home]["streak_events"].append({"res": "W", "game_id": gid, "tooltip_data": tip_data})
+            stats[away]["streak_events"].append({"res": "L", "game_id": gid, "tooltip_data": tip_data})
         elif p_away > p_home:
             stats[away]["w"] += 1
             stats[home]["l"] += 1
             stats[away]["pts"] += 2
-            stats[away]["streak_events"].append({"res": "W", "game_id": gid, "tooltip": tip})
-            stats[home]["streak_events"].append({"res": "L", "game_id": gid, "tooltip": tip})
+            stats[away]["streak_events"].append({"res": "W", "game_id": gid, "tooltip_data": tip_data})
+            stats[home]["streak_events"].append({"res": "L", "game_id": gid, "tooltip_data": tip_data})
 
     for r in stats.values():
         r["diff"] = r["pf"] - r["ps"]
