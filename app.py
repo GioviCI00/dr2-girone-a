@@ -669,7 +669,7 @@ def render_standings_board(board: list, girone_sel: str, best_third_team: dict |
         st.dataframe(pd.DataFrame(t_rows), use_container_width=True, hide_index=True)
 
 
-def render_round_card(round_num: int, round_games: pd.DataFrame, logo_map: dict, is_ritorno: bool = False, key_prefix: str = ""):
+def render_round_card(round_num: int, round_games: pd.DataFrame, logo_map: dict, girone_cal: str, is_ritorno: bool = False):
     display_num = round_num - 11 if is_ritorno and round_num > 11 else round_num
     phase_txt = "RITORNO" if is_ritorno else "ANDATA"
     label_round = f"GIORNATA {display_num} ({phase_txt})"
@@ -681,7 +681,7 @@ def render_round_card(round_num: int, round_games: pd.DataFrame, logo_map: dict,
             background: #14171c;
             border: 1px solid #262b34;
             border-radius: 10px;
-            margin-bottom: 6px;
+            margin-bottom: 14px;
             overflow: hidden;
         }
         .round-title {
@@ -692,15 +692,27 @@ def render_round_card(round_num: int, round_games: pd.DataFrame, logo_map: dict,
             padding: 8px 14px;
             border-bottom: 1px solid #262b34;
         }
+        a.match-link {
+            display: block;
+            text-decoration: none !important;
+            color: inherit !important;
+            border-bottom: 1px solid #20252e;
+            transition: background 0.15s ease;
+        }
+        a.match-link:last-child {
+            border-bottom: none;
+        }
+        a.match-link:hover {
+            background: #1c222b;
+        }
         .match-row {
             display: grid;
             grid-template-columns: 92px 1fr 44px;
             gap: 10px;
             align-items: center;
-            padding: 8px 14px;
-            border-bottom: 1px solid #20252e;
+            padding: 9px 14px;
+            cursor: pointer;
         }
-        .match-row:last-child { border-bottom: none; }
         .m-meta {
             text-align: center;
             line-height: 1.3;
@@ -772,72 +784,68 @@ def render_round_card(round_num: int, round_games: pd.DataFrame, logo_map: dict,
 
     if round_games.empty:
         parts.append('<div class="match-row"><div class="m-meta">—</div><div class="m-team-line">Nessuna gara</div><div class="m-scores"></div></div>')
-        parts.append("</div>")
-        st.markdown("".join(parts), unsafe_allow_html=True)
-        return
+    else:
+        for _, g in round_games.iterrows():
+            is_played = str(g["Stato"]).lower() == "giocata"
+            raw_dt = str(g["Data"]).strip()
+            dt_tokens = raw_dt.split()
+            if len(dt_tokens) >= 3:
+                date_part = dt_tokens[1]
+                time_part = dt_tokens[2]
+            elif len(dt_tokens) == 2:
+                date_part, time_part = dt_tokens[0], dt_tokens[1]
+            else:
+                date_part, time_part = raw_dt, ""
 
-    for _, g in round_games.iterrows():
-        is_played = str(g["Stato"]).lower() == "giocata"
-        raw_dt = str(g["Data"]).strip()
-        dt_tokens = raw_dt.split()
-        if len(dt_tokens) >= 3:
-            date_part = dt_tokens[1]
-            time_part = dt_tokens[2]
-        elif len(dt_tokens) == 2:
-            date_part, time_part = dt_tokens[0], dt_tokens[1]
-        else:
-            date_part, time_part = raw_dt, ""
+            status_html = (
+                '<div class="m-status-ft">FT</div>'
+                if is_played
+                else f'<div class="m-status-time">{time_part}</div>'
+            )
 
-        status_html = (
-            '<div class="m-status-ft">FT</div>'
-            if is_played
-            else f'<div class="m-status-time">{time_part}</div>'
-        )
+            home_name = g["Casa"]
+            away_name = g["Trasferta"]
+            home_pts = int(g["Punti_Casa"])
+            away_pts = int(g["Punti_Trasferta"])
 
-        home_name = g["Casa"]
-        away_name = g["Trasferta"]
-        home_pts = int(g["Punti_Casa"])
-        away_pts = int(g["Punti_Trasferta"])
+            home_win = is_played and home_pts > away_pts
+            away_win = is_played and away_pts > home_pts
 
-        home_win = is_played and home_pts > away_pts
-        away_win = is_played and away_pts > home_pts
+            home_logo = logo_map.get(home_name, "")
+            away_logo = logo_map.get(away_name, "")
+            h_logo_tag = f'<img class="m-logo" src="{home_logo}" alt="" />' if home_logo else "🏀"
+            a_logo_tag = f'<img class="m-logo" src="{away_logo}" alt="" />' if away_logo else "🏀"
 
-        home_logo = logo_map.get(home_name, "")
-        away_logo = logo_map.get(away_name, "")
-        h_logo_tag = f'<img class="m-logo" src="{home_logo}" alt="" />' if home_logo else "🏀"
-        a_logo_tag = f'<img class="m-logo" src="{away_logo}" alt="" />' if away_logo else "🏀"
+            s1 = str(home_pts) if is_played else ""
+            s2 = str(away_pts) if is_played else ""
 
-        s1 = str(home_pts) if is_played else ""
-        s2 = str(away_pts) if is_played else ""
+            href = f"?girone={quote(girone_cal)}&game={quote(str(g['ID_Partita']))}"
 
-        row_html = (
-            f'<div class="round-box" style="margin-bottom:4px;">'
-            f'<div class="match-row">'
-            f'<div class="m-meta"><div class="m-date">{date_part}</div>{status_html}</div>'
-            f'<div class="m-teams">'
-            f'<div class="m-team-line {"winner" if home_win else ""}">{h_logo_tag}<span>{home_name}</span></div>'
-            f'<div class="m-team-line {"winner" if away_win else ""}">{a_logo_tag}<span>{away_name}</span></div>'
-            f'</div>'
-            f'<div class="m-scores">'
-            f'<div class="{"m-score-win" if home_win else ""}">{s1}</div>'
-            f'<div class="{"m-score-win" if away_win else ""}">{s2}</div>'
-            f'</div>'
-            f'</div></div>'
-        )
-        c_card, c_btn = st.columns([6, 1.3])
-        with c_card:
-            st.markdown(row_html, unsafe_allow_html=True)
-        with c_btn:
-            if st.button("Dettagli", key=f"open_{key_prefix}_{g['ID_Partita']}", use_container_width=True):
-                st.session_state["selected_game_id"] = g["ID_Partita"]
-                st.session_state["match_tab"] = "RIASSUNTO"
-                st.rerun()
+            parts.append(
+                f'<a class="match-link" href="{href}" target="_self">'
+                f'<div class="match-row">'
+                f'<div class="m-meta"><div class="m-date">{date_part}</div>{status_html}</div>'
+                f'<div class="m-teams">'
+                f'<div class="m-team-line {"winner" if home_win else ""}">{h_logo_tag}<span>{home_name}</span></div>'
+                f'<div class="m-team-line {"winner" if away_win else ""}">{a_logo_tag}<span>{away_name}</span></div>'
+                f'</div>'
+                f'<div class="m-scores">'
+                f'<div class="{"m-score-win" if home_win else ""}">{s1}</div>'
+                f'<div class="{"m-score-win" if away_win else ""}">{s2}</div>'
+                f'</div>'
+                f'</div></a>'
+            )
+
+    parts.append("</div>")
+    st.markdown("".join(parts), unsafe_allow_html=True)
 
 
 def render_match_center(game_id: str, teams_df: pd.DataFrame, games_df: pd.DataFrame, box_df: pd.DataFrame, logo_map: dict, cal_teams: list):
     matches = games_df[games_df["ID_Partita"] == game_id]
     if matches.empty:
         st.session_state["selected_game_id"] = None
+        if "game" in st.query_params:
+            del st.query_params["game"]
         st.rerun()
 
     idx = matches.index[0]
@@ -845,6 +853,8 @@ def render_match_center(game_id: str, teams_df: pd.DataFrame, games_df: pd.DataF
 
     if st.button("← Torna al Calendario"):
         st.session_state["selected_game_id"] = None
+        if "game" in st.query_params:
+            del st.query_params["game"]
         st.rerun()
 
     home_name = g["Casa"]
@@ -1152,6 +1162,11 @@ def render_match_center(game_id: str, teams_df: pd.DataFrame, games_df: pd.DataF
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
+qp_game = st.query_params.get("game", None)
+qp_girone = st.query_params.get("girone", None)
+if qp_game:
+    st.session_state["selected_game_id"] = qp_game
+
 if not st.session_state.authenticated:
     st.title("🏀 DR2 Puglia — Area Riservata Staff")
     st.caption("Inserisci la password dello staff per accedere a calendari, gironi e tabellini.")
@@ -1174,10 +1189,14 @@ logo_lookup = {
 if "selected_game_id" not in st.session_state:
     st.session_state["selected_game_id"] = None
 
+default_nav_idx = 1 if st.session_state["selected_game_id"] else 0
+
 st.sidebar.title("🏀 DR2 Puglia")
-page = st.sidebar.radio("Navigazione", ["Gironi", "Calendario & Tabellini", "Gestione Squadre"])
+page = st.sidebar.radio("Navigazione", ["Gironi", "Calendario & Tabellini", "Gestione Squadre"], index=default_nav_idx)
 if st.sidebar.button("Esci"):
     st.session_state.authenticated = False
+    st.session_state["selected_game_id"] = None
+    st.query_params.clear()
     st.rerun()
 
 # ==========================================
@@ -1185,6 +1204,8 @@ if st.sidebar.button("Esci"):
 # ==========================================
 if page == "Gironi":
     st.session_state["selected_game_id"] = None
+    if "game" in st.query_params:
+        del st.query_params["game"]
     st.title("Gironi — Divisione Regionale 2 Puglia")
     st.caption("Classifica calcolata automaticamente dai risultati finali · Migliore 3ª calcolata per Punti e Differenza Punti.")
 
@@ -1239,7 +1260,9 @@ if page == "Gironi":
 # PAGINA 2: CALENDARIO & TABELLINI
 # ==========================================
 elif page == "Calendario & Tabellini":
-    girone_cal = st.selectbox("Girone", ["Girone A", "Girone B", "Girone C"], key="cal_girone")
+    g_options = ["Girone A", "Girone B", "Girone C"]
+    default_g_idx = g_options.index(qp_girone) if qp_girone in g_options else 0
+    girone_cal = st.selectbox("Girone", g_options, index=default_g_idx, key="cal_girone")
     cal_teams = teams_df[teams_df["Girone"] == girone_cal]["Squadra"].tolist()
 
     if st.session_state["selected_game_id"]:
@@ -1253,6 +1276,7 @@ elif page == "Calendario & Tabellini":
         )
     else:
         st.title("Calendario & Tabellini")
+        st.caption("Clicca direttamente su una partita per aprire parziali per quarto, tabellini e note giocatori.")
 
         with st.expander("➕ Aggiungi nuova partita al calendario"):
             with st.form("add_game_form"):
@@ -1337,16 +1361,18 @@ elif page == "Calendario & Tabellini":
                 col_and, col_rit = st.columns(2)
                 with col_and:
                     df_and = g_games_sorted[g_games_sorted["Giornata"] == t_num]
-                    render_round_card(t_num, df_and, logo_lookup, is_ritorno=False, key_prefix="and")
+                    render_round_card(t_num, df_and, logo_lookup, girone_cal, is_ritorno=False)
                 with col_rit:
                     df_rit = g_games_sorted[g_games_sorted["Giornata"] == (t_num + 11)]
-                    render_round_card(t_num + 11, df_rit, logo_lookup, is_ritorno=True, key_prefix="rit")
+                    render_round_card(t_num + 11, df_rit, logo_lookup, girone_cal, is_ritorno=True)
 
 # ==========================================
 # PAGINA 3: GESTIONE SQUADRE, RIPRISTINO & EXPORT
 # ==========================================
 elif page == "Gestione Squadre":
     st.session_state["selected_game_id"] = None
+    if "game" in st.query_params:
+        del st.query_params["game"]
     st.title("Gestione Squadre e Dati")
     st.caption("Modifica squadre/loghi/note o aggiungi squadre per Gironi B e C.")
 
