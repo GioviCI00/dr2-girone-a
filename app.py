@@ -61,7 +61,7 @@ GIRONI_TEAMS: dict[str, list[dict[str, str]]] = {
 }
 
 DEFAULT_GAMES_RAW = [
-    # GIRONE A (allineato alla classifica ufficiale: P, W, L, DIFF, PTS)
+    # GIRONE A
     ("A01_1867", "Girone A", 1, "Sab 07/11/2026 19:00", "POL. DIL. NUOVA MATTEOTTI CORATO", "PALLACANESTRO OLIMPIA CORATO", 72, 67, "Giocata"),
     ("A01_1868", "Girone A", 1, "Dom 08/11/2026 18:30", "FORTITUDO BASKET APRICENA", "ECOFAN CERIGNOLA MEDITERRANEA 92", 50, 76, "Giocata"),
     ("A01_1869", "Girone A", 1, "Dom 08/11/2026 18:00", "GINNASTICA ANGIULLI BARI", "ASD MAGIC BARI", 68, 50, "Giocata"),
@@ -86,7 +86,7 @@ DEFAULT_GAMES_RAW = [
     ("A04_1885", "Girone A", 4, "Dom 29/11/2026 18:00", "POLISPORTIVA ORSA CAPURSO SSD ARL", "PALLACANESTRO OLIMPIA CORATO", 0, 0, "Da giocare"),
     ("A04_1886", "Girone A", 4, "Sab 28/11/2026 19:45", "ASD VI.G.OR BASKET SAN SEVERO", "ASD POL. BASKET BITRITTO", 0, 0, "Da giocare"),
 
-    # GIRONE B (allineato alla classifica ufficiale: P, W, L, DIFF, PTS)
+    # GIRONE B
     ("B01_2109", "Girone B", 1, "Sab 07/11/2026 18:45", "ASD SCUOLA BASKET MARTINESE", "ASD DREAM BASKET ALTAMURA", 41, 62, "Giocata"),
     ("B01_2110", "Girone B", 1, "Dom 08/11/2026 17:30", "ASD MURGIA BASKET SANTERAMO", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", 70, 59, "Giocata"),
     ("B01_2111", "Girone B", 1, "Dom 08/11/2026 18:00", "SUPPORT_O TARANTO", "DOMITI LA PINTA BASKET PULSANO", 71, 59, "Giocata"),
@@ -111,7 +111,7 @@ DEFAULT_GAMES_RAW = [
     ("B04_2127", "Girone B", 4, "Dom 29/11/2026 18:30", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", "ASD SCUOLA BASKET MARTINESE", 0, 0, "Da giocare"),
     ("B04_2128", "Girone B", 4, "Dom 29/11/2026 18:00", "POL. OLYMPIA CLUB RUTIGLIANO", "SUPPORT_O TARANTO", 0, 0, "Da giocare"),
 
-    # GIRONE C (allineato alla classifica ufficiale: P, W, L, DIFF, PTS)
+    # GIRONE C
     ("C01_2219", "Girone C", 1, "Dom 08/11/2026 18:00", "ASD BASKET TRICASE", "A.POL.DIL.AURORA BRINDISI", 51, 57, "Giocata"),
     ("C01_2220", "Girone C", 1, "Sab 07/11/2026 18:00", "ALL STAR BASKET FRANCAVILLA", "ASD BELLFIKA MESAGNE", 72, 66, "Giocata"),
     ("C01_2221", "Girone C", 1, "Dom 08/11/2026 18:30", "DIERRE ARREDAMENTI CALIMERA BASKET", "ASD MAGIC GALATINA", 77, 51, "Giocata"),
@@ -148,7 +148,7 @@ STANDINGS_CSS = """
 }
 .board-head {
     display: grid;
-    grid-template-columns: 54px 52px 1fr 52px 52px 52px 68px 110px 64px;
+    grid-template-columns: 54px 52px 1fr 52px 52px 52px 68px 132px 64px;
     gap: 8px;
     padding: 0 10px 8px 10px;
     color: #ffd43b;
@@ -172,7 +172,7 @@ STANDINGS_CSS = """
 .zone-pout { background: #dc2626; color: #ffffff; }
 .board-row {
     display: grid;
-    grid-template-columns: 54px 52px 1fr 52px 52px 52px 68px 110px 64px;
+    grid-template-columns: 54px 52px 1fr 52px 52px 52px 68px 132px 64px;
     gap: 8px;
     align-items: center;
     background: rgba(8, 39, 82, 0.78);
@@ -217,6 +217,37 @@ STANDINGS_CSS = """
     text-align: center;
     font-weight: 700;
     font-size: 14px;
+}
+.streak-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+.streak-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 900;
+    color: #ffffff;
+    line-height: 1;
+}
+.streak-w {
+    background: #16a34a;
+    border: 1px solid #22c55e;
+}
+.streak-l {
+    background: #dc2626;
+    border: 1px solid #ef4444;
+}
+.streak-empty {
+    color: #cbd5e1;
+    font-size: 13px;
+    font-weight: 700;
 }
 .b-pts {
     text-align: center;
@@ -376,17 +407,17 @@ def build_team_logo_html_map(github_base: str) -> dict[str, str]:
     return mapping
 
 
-def _format_streak(outcomes: list[str]) -> str:
-    if not outcomes:
-        return "—"
-    last = outcomes[-1]
-    count = 0
-    for item in reversed(outcomes):
-        if item == last:
-            count += 1
-        else:
-            break
-    return f"{count}{last}"
+def _render_streak_html(outcomes: list[str], max_items: int = 5) -> str:
+    recent = outcomes[-max_items:]
+    if not recent:
+        return '<div class="streak-wrap"><span class="streak-empty">—</span></div>'
+    boxes = []
+    for res in recent:
+        if res == "W":
+            boxes.append('<span class="streak-box streak-w">W</span>')
+        elif res == "L":
+            boxes.append('<span class="streak-box streak-l">L</span>')
+    return f'<div class="streak-wrap">{"".join(boxes)}</div>'
 
 
 def _h2h_points_for_group(group_teams: list[str], played_games: list[tuple]) -> dict[str, int]:
@@ -434,7 +465,6 @@ def compute_standings(girone: str, games_df: pd.DataFrame) -> list[dict]:
             "ps": 0,
             "diff": 0,
             "outcomes": [],
-            "streak": "—",
             "pts": 0,
         }
         for item in teams
@@ -478,7 +508,6 @@ def compute_standings(girone: str, games_df: pd.DataFrame) -> list[dict]:
 
     for r in stats.values():
         r["diff"] = r["pf"] - r["ps"]
-        r["streak"] = _format_streak(r["outcomes"])
 
     by_pts: dict[int, list[dict]] = {}
     for r in stats.values():
@@ -539,6 +568,7 @@ def render_standings(girone: str, rows: list[dict], thirds_board: list[dict], lo
 
         diff_val = r["diff"]
         diff_str = f"+{diff_val}" if diff_val > 0 else str(diff_val)
+        streak_html = _render_streak_html(r.get("outcomes", []))
 
         logo_tag = logo_html_map.get(f"board::{r['squadra']}", '<div class="b-pos">🏀</div>')
         html.append(
@@ -550,7 +580,7 @@ def render_standings(girone: str, rows: list[dict], thirds_board: list[dict], lo
             f'<div class="b-val">{r["w"]}</div>'
             f'<div class="b-val">{r["l"]}</div>'
             f'<div class="b-val">{diff_str}</div>'
-            f'<div class="b-val">{r["streak"]}</div>'
+            f'<div>{streak_html}</div>'
             f'<div class="b-pts">{r["pts"]}</div>'
             f'</div>'
         )
@@ -573,6 +603,7 @@ def render_standings(girone: str, rows: list[dict], thirds_board: list[dict], lo
             badge = '<span class="badge-ok">PLAY-OFF</span>' if qual else '<span class="badge-no">FUORI</span>'
             diff_val = t["diff"]
             diff_str = f"+{diff_val}" if diff_val > 0 else str(diff_val)
+            streak_html = _render_streak_html(t.get("outcomes", []))
             logo_tag = logo_html_map.get(f"board::{t['squadra']}", '<div class="b-pos">🏀</div>')
             t_html.append(
                 f'<div class="board-row {r_cls}">'
@@ -586,7 +617,7 @@ def render_standings(girone: str, rows: list[dict], thirds_board: list[dict], lo
                 f'<div class="b-val">{t["w"]}</div>'
                 f'<div class="b-val">{t["l"]}</div>'
                 f'<div class="b-val">{diff_str}</div>'
-                f'<div class="b-val">{t["streak"]}</div>'
+                f'<div>{streak_html}</div>'
                 f'<div class="b-pts">{t["pts"]}</div>'
                 '</div>'
             )
