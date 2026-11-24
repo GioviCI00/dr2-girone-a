@@ -1,258 +1,172 @@
+import base64
 import os
 from pathlib import Path
 from urllib.parse import quote
+
 import pandas as pd
 import streamlit as st
 
 st.set_page_config(
-    page_title="DR2 Puglia - Scouting & Tabellini",
+    page_title="DR2 Puglia — Gironi, Calendari e Tabellini",
     page_icon="🏀",
     layout="wide",
 )
 
-# ==========================================
-# IMPOSTAZIONI ACCESSO STAFF
-# ==========================================
-STAFF_PASSWORD = os.environ.get("DR2_STAFF_PASSWORD", "dr2puglia2026")
-RAW_BASE_URL = "https://raw.githubusercontent.com/GioviCI00/dr2-girone-a/main/"
+STAFF_PASSWORD = os.environ.get("DR2_STAFF_PASSWORD", "dr2puglia")
+GITHUB_RAW_BASE = os.environ.get("DR2_GITHUB_RAW_BASE", "")
+DATA_VERSION = "v5_fip_2026"
 
-DATA_DIR = Path("data")
+DATA_DIR = Path("data_dr2")
 DATA_DIR.mkdir(exist_ok=True)
+
 TEAMS_FILE = DATA_DIR / "squadre.csv"
 GAMES_FILE = DATA_DIR / "partite.csv"
 BOX_FILE = DATA_DIR / "tabellini.csv"
-META_FILE = DATA_DIR / "campionato_meta.csv"
+VERSION_FILE = DATA_DIR / "version.txt"
+
+# Ordine e dati ufficiali Girone C 26/27 (coerenti con classifica ufficiale)
+OFFICIAL_GIRONE_C_ORDER = [
+    ("ASD BELLFIKA MESAGNE", {"PTS": 4, "PG": 3, "V": 2, "S": 1, "PF": 199, "DP": 4, "STREAK": "L W W"}),
+    ("ASD ASSI BASKET BRINDISI", {"PTS": 4, "PG": 3, "V": 2, "S": 1, "PF": 220, "DP": 53, "STREAK": "W L W"}),
+    ("ASD NEW BASKET CARMIANO", {"PTS": 4, "PG": 3, "V": 2, "S": 1, "PF": 217, "DP": 46, "STREAK": "L W W"}),
+    ("ALL STAR BASKET FRANCAVILLA", {"PTS": 4, "PG": 3, "V": 2, "S": 1, "PF": 233, "DP": -1, "STREAK": "W L W"}),
+    ("SENSI PALLACANESTRO LUPA LECCE", {"PTS": 4, "PG": 2, "V": 2, "S": 0, "PF": 150, "DP": 22, "STREAK": "W W"}),
+    ("DIERRE ARREDAMENTI CALIMERA BASKET", {"PTS": 4, "PG": 3, "V": 2, "S": 1, "PF": 189, "DP": 44, "STREAK": "W W L"}),
+    ("ASD MAGIC GALATINA", {"PTS": 2, "PG": 3, "V": 1, "S": 2, "PF": 229, "DP": 3, "STREAK": "L W L"}),
+    ("ASD POLISPORTIVA MANDURIA", {"PTS": 2, "PG": 2, "V": 1, "S": 1, "PF": 116, "DP": 0, "STREAK": "W L"}),
+    ("A.POL.DIL.AURORA BRINDISI", {"PTS": 2, "PG": 3, "V": 1, "S": 2, "PF": 189, "DP": -48, "STREAK": "W L L"}),
+    ("AZ DISINFESTAZIONI SRL VIRTUS BRINDISI", {"PTS": 0, "PG": 2, "V": 0, "S": 2, "PF": 132, "DP": -22, "STREAK": "L L"}),
+    ("ASD BASKET TRICASE", {"PTS": 0, "PG": 3, "V": 0, "S": 3, "PF": 137, "DP": -101, "STREAK": "L L L"}),
+]
 
 
-def logo_url(filename: str) -> str:
-    return RAW_BASE_URL + quote(filename)
+@st.cache_data(show_spinner=False)
+def resolve_logo_src(logo_ref: str) -> str:
+    """Restituisce un src immagine valido per HTML (data URI base64 se il file esiste in repo)."""
+    ref = (logo_ref or "").strip()
+    if not ref:
+        return ""
+    if ref.startswith("data:image/") or ref.startswith("http://") or ref.startswith("https://"):
+        return ref
+
+    candidates = [
+        Path(ref),
+        Path("loghi") / ref,
+        Path("assets") / ref,
+        Path("static") / ref,
+    ]
+    for p in candidates:
+        if p.exists() and p.is_file():
+            ext = p.suffix.lower().lstrip(".")
+            mime = "image/jpeg" if ext in ("jpg", "jpeg") else f"image/{ext or 'png'}"
+            encoded = base64.b64encode(p.read_bytes()).decode("ascii")
+            return f"data:{mime};base64,{encoded}"
+
+    if GITHUB_RAW_BASE:
+        return f"{GITHUB_RAW_BASE.rstrip('/')}/{quote(ref, safe='/._-')}"
+    return ""
 
 
 DEFAULT_TEAMS = [
-    {
-        "Girone": "Girone A",
-        "Squadra": "Angiulli Bari",
-        "Logo_URL": logo_url("Angiulli Basket Bari.png"),
-        "Note_Tattiche": "",
-    },
-    {
-        "Girone": "Girone A",
-        "Squadra": "A.G.S.D. Toritto",
-        "Logo_URL": logo_url("A.G.S.D. TORITTO.png"),
-        "Note_Tattiche": "",
-    },
-    {
-        "Girone": "Girone A",
-        "Squadra": "Orsa Capurso",
-        "Logo_URL": logo_url("orsa capurso.png"),
-        "Note_Tattiche": "",
-    },
-    {
-        "Girone": "Girone A",
-        "Squadra": "Nuova Matteotti Corato",
-        "Logo_URL": logo_url("Nuova Matteotti Corato.png"),
-        "Note_Tattiche": "",
-    },
-    {
-        "Girone": "Girone A",
-        "Squadra": "Magic Bari",
-        "Logo_URL": logo_url("Magic Bari.png"),
-        "Note_Tattiche": "",
-    },
-    {
-        "Girone": "Girone A",
-        "Squadra": "Mediterranea Cerignola",
-        "Logo_URL": logo_url("Mediterranea Cerignola.png"),
-        "Note_Tattiche": "",
-    },
-    {
-        "Girone": "Girone A",
-        "Squadra": "Vigor San Severo",
-        "Logo_URL": logo_url("Vigor San Severo.png"),
-        "Note_Tattiche": "",
-    },
-    {
-        "Girone": "Girone A",
-        "Squadra": "Basket Bitritto",
-        "Logo_URL": logo_url("basket bitritto.png"),
-        "Note_Tattiche": "",
-    },
-    {
-        "Girone": "Girone A",
-        "Squadra": "Fortitudo BK Apricena",
-        "Logo_URL": logo_url("Fortitudo Basket Apricena.png"),
-        "Note_Tattiche": "",
-    },
-    {
-        "Girone": "Girone A",
-        "Squadra": "Olimpia Corato",
-        "Logo_URL": logo_url("Olimpia Corato.png"),
-        "Note_Tattiche": "",
-    },
-    {
-        "Girone": "Girone A",
-        "Squadra": "Virtus Foggia",
-        "Logo_URL": logo_url("Virtus Foggia.png"),
-        "Note_Tattiche": "",
-    },
+    # Girone A (11 squadre)
+    {"Girone": "Girone A", "Squadra": "ASD MAGIC BARI", "Logo_URL": "Magic Bari.png", "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "ASD POL. BASKET BITRITTO", "Logo_URL": "basket bitritto.png", "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "ASD VI.G.OR BASKET SAN SEVERO", "Logo_URL": "Vigor San Severo.png", "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "ASD VIRTUS FOGGIA", "Logo_URL": "Virtus Foggia.png", "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "ECOFAN CERIGNOLA MEDITERRANEA 92", "Logo_URL": "Mediterranea Cerignola.png", "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "FORTITUDO BASKET APRICENA", "Logo_URL": "Fortitudo Basket Apricena.png", "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "GINNASTICA ANGIULLI BARI", "Logo_URL": "Angiulli Basket Bari.png", "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "PALLACANESTRO OLIMPIA CORATO", "Logo_URL": "Olimpia Corato.png", "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "POL. DIL. NUOVA MATTEOTTI CORATO", "Logo_URL": "Nuova Matteotti Corato.png", "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "POLISPORTIVA ORSA CAPURSO SSD ARL", "Logo_URL": "orsa capurso.png", "Note_Tattiche": ""},
+    {"Girone": "Girone A", "Squadra": "AGS DIL. TORITTO", "Logo_URL": "A.G.S.D. TORITTO.png", "Note_Tattiche": ""},
+    # Girone B (11 squadre)
+    {"Girone": "Girone B", "Squadra": "ASD ATLETICA BASKET PUTIGNANO", "Logo_URL": "Atletica Basket Putignano.png", "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "ASD BASKET FASANO", "Logo_URL": "ASD Basket Fasano.png", "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "ASD CLUB GIGANTI CISTERNINO", "Logo_URL": "Club Giganti Cisternino.png", "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "ASD DREAM BASKET ALTAMURA", "Logo_URL": "Dream Basket Altamura.png", "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "ASD MESSAPICA BASKET CEGLIE", "Logo_URL": "Messapica Bk Ceglie.png", "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "ASD MURGIA BASKET SANTERAMO", "Logo_URL": "Murgia Basket Santeramo.png", "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "ASD SCUOLA BASKET MARTINESE", "Logo_URL": "SBM Martina Franca.png", "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "DOMITI LA PINTA BASKET PULSANO", "Logo_URL": "Domiti La Pinta ASD Pulsano.png", "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "MASSERIA SEMERARO NEW SPORTING MOTTOLA", "Logo_URL": "New Sporting Mottola.png", "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "POL. OLYMPIA CLUB RUTIGLIANO", "Logo_URL": "olympia rutigliano.png", "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "SUPPORT_O TARANTO", "Logo_URL": "Support_o Taranto.png", "Note_Tattiche": ""},
+    # Girone C (11 squadre)
+    {"Girone": "Girone C", "Squadra": "A.POL.DIL.AURORA BRINDISI", "Logo_URL": "Aurora Brindisi.png", "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "ALL STAR BASKET FRANCAVILLA", "Logo_URL": "All Star Francavilla.png", "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "ASD ASSI BASKET BRINDISI", "Logo_URL": "ASSI Brindisi.png", "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "ASD BASKET TRICASE", "Logo_URL": "Basket Tricase.png", "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "ASD BELLFIKA MESAGNE", "Logo_URL": "Bellfika Mesagne.png", "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "ASD MAGIC GALATINA", "Logo_URL": "Magic Galatina.png", "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "ASD NEW BASKET CARMIANO", "Logo_URL": "New Basket Carmiano.png", "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "ASD POLISPORTIVA MANDURIA", "Logo_URL": "Basket Manduria.png", "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "AZ DISINFESTAZIONI SRL VIRTUS BRINDISI", "Logo_URL": "Virtus Brindisi.png", "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "DIERRE ARREDAMENTI CALIMERA BASKET", "Logo_URL": "Calimera Zero21.png", "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "SENSI PALLACANESTRO LUPA LECCE", "Logo_URL": "Pallacanestro Lupa Lecce.png", "Note_Tattiche": ""},
 ]
 
-# Calendario ufficiale CU n. 91 (Squadra A = Casa, Squadra B = Trasferta)
-# Campi: (ID_Partita, Giornata, Data_Ora, Casa, Trasferta, Punti_Casa, Punti_Trasferta, Stato)
 DEFAULT_GAMES_RAW = [
-    # 1ª Giornata di andata
-    ("G01_1867", 1, "07/11/26 19:00", "Nuova Matteotti Corato", "Olimpia Corato", 72, 67, "Giocata"),
-    ("G01_1868", 1, "08/11/26 18:30", "Fortitudo BK Apricena", "Mediterranea Cerignola", 50, 76, "Giocata"),
-    ("G01_1869", 1, "08/11/26 18:00", "Angiulli Bari", "Magic Bari", 68, 50, "Giocata"),
-    ("G01_1870", 1, "07/11/26 18:30", "Virtus Foggia", "Orsa Capurso", 78, 87, "Giocata"),
-    ("G01_1871", 1, "08/11/26 18:30", "Basket Bitritto", "A.G.S.D. Toritto", 62, 81, "Giocata"),
+    # GIRONE A
+    ("A01_1867", "Girone A", 1, "Sab 07/11/2026 19:00", "POL. DIL. NUOVA MATTEOTTI CORATO", "PALLACANESTRO OLIMPIA CORATO", 72, 67, "Giocata"),
+    ("A01_1868", "Girone A", 1, "Dom 08/11/2026 18:30", "FORTITUDO BASKET APRICENA", "ECOFAN CERIGNOLA MEDITERRANEA 92", 50, 76, "Giocata"),
+    ("A01_1869", "Girone A", 1, "Dom 08/11/2026 18:00", "GINNASTICA ANGIULLI BARI", "ASD MAGIC BARI", 68, 50, "Giocata"),
+    ("A01_1870", "Girone A", 1, "Sab 07/11/2026 18:30", "ASD VIRTUS FOGGIA", "POLISPORTIVA ORSA CAPURSO SSD ARL", 78, 87, "Giocata"),
+    ("A01_1871", "Girone A", 1, "Dom 08/11/2026 18:30", "ASD POL. BASKET BITRITTO", "AGS DIL. TORITTO", 62, 81, "Giocata"),
+    ("A02_1872", "Girone A", 2, "Sab 14/11/2026 18:00", "ASD VI.G.OR BASKET SAN SEVERO", "ASD VIRTUS FOGGIA", 69, 65, "Giocata"),
+    ("A02_1873", "Girone A", 2, "Dom 15/11/2026 20:15", "PALLACANESTRO OLIMPIA CORATO", "FORTITUDO BASKET APRICENA", 50, 56, "Giocata"),
+    ("A02_1874", "Girone A", 2, "Dom 15/11/2026 19:00", "ECOFAN CERIGNOLA MEDITERRANEA 92", "POL. DIL. NUOVA MATTEOTTI CORATO", 49, 59, "Giocata"),
+    ("A02_1875", "Girone A", 2, "Dom 15/11/2026 19:00", "AGS DIL. TORITTO", "GINNASTICA ANGIULLI BARI", 85, 96, "Giocata"),
+    ("A02_1876", "Girone A", 2, "Dom 15/11/2026 17:30", "ASD MAGIC BARI", "ASD POL. BASKET BITRITTO", 56, 48, "Giocata"),
+    ("A03_1877", "Girone A", 3, "Sab 21/11/2026 19:30", "GINNASTICA ANGIULLI BARI", "ECOFAN CERIGNOLA MEDITERRANEA 92", 86, 75, "Giocata"),
+    ("A03_1878", "Girone A", 3, "Dom 22/11/2026 18:30", "FORTITUDO BASKET APRICENA", "ASD MAGIC BARI", 69, 79, "Giocata"),
+    ("A03_1879", "Girone A", 3, "Dom 22/11/2026 18:00", "POLISPORTIVA ORSA CAPURSO SSD ARL", "ASD VI.G.OR BASKET SAN SEVERO", 78, 75, "Giocata"),
+    ("A03_1880", "Girone A", 3, "Sab 21/11/2026 19:00", "POL. DIL. NUOVA MATTEOTTI CORATO", "AGS DIL. TORITTO", 64, 77, "Giocata"),
+    ("A03_1881", "Girone A", 3, "Dom 22/11/2026 18:30", "ASD POL. BASKET BITRITTO", "PALLACANESTRO OLIMPIA CORATO", 51, 50, "Giocata"),
+    # GIRONE B
+    ("B01_2109", "Girone B", 1, "Sab 07/11/2026 18:45", "ASD SCUOLA BASKET MARTINESE", "ASD DREAM BASKET ALTAMURA", 41, 62, "Giocata"),
+    ("B01_2110", "Girone B", 1, "Dom 08/11/2026 17:30", "ASD MURGIA BASKET SANTERAMO", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", 70, 59, "Giocata"),
+    ("B01_2111", "Girone B", 1, "Dom 08/11/2026 18:00", "SUPPORT_O TARANTO", "DOMITI LA PINTA BASKET PULSANO", 71, 59, "Giocata"),
+    ("B01_2112", "Girone B", 1, "Sab 07/11/2026 19:00", "ASD BASKET FASANO", "ASD ATLETICA BASKET PUTIGNANO", 49, 63, "Giocata"),
+    ("B01_2113", "Girone B", 1, "Sab 07/11/2026 19:00", "ASD CLUB GIGANTI CISTERNINO", "ASD MESSAPICA BASKET CEGLIE", 69, 57, "Giocata"),
+    ("B02_2114", "Girone B", 2, "Sab 14/11/2026 20:00", "ASD MESSAPICA BASKET CEGLIE", "POL. OLYMPIA CLUB RUTIGLIANO", 65, 85, "Giocata"),
+    ("B02_2115", "Girone B", 2, "Dom 15/11/2026 18:00", "ASD DREAM BASKET ALTAMURA", "ASD BASKET FASANO", 66, 59, "Giocata"),
+    ("B02_2116", "Girone B", 2, "Sab 14/11/2026 18:00", "ASD ATLETICA BASKET PUTIGNANO", "ASD SCUOLA BASKET MARTINESE", 55, 34, "Giocata"),
+    ("B02_2117", "Girone B", 2, "Dom 15/11/2026 18:30", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", "SUPPORT_O TARANTO", 64, 55, "Giocata"),
+    ("B02_2118", "Girone B", 2, "Dom 15/11/2026 18:00", "DOMITI LA PINTA BASKET PULSANO", "ASD MURGIA BASKET SANTERAMO", 59, 56, "Giocata"),
+    ("B03_2119", "Girone B", 3, "Dom 22/11/2026 18:00", "ASD BASKET FASANO", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", 75, 61, "Giocata"),
+    ("B03_2120", "Girone B", 3, "Sab 21/11/2026 18:45", "ASD SCUOLA BASKET MARTINESE", "DOMITI LA PINTA BASKET PULSANO", 54, 57, "Giocata"),
+    ("B03_2121", "Girone B", 3, "Dom 22/11/2026 18:00", "POL. OLYMPIA CLUB RUTIGLIANO", "ASD CLUB GIGANTI CISTERNINO", 76, 54, "Giocata"),
+    ("B03_2122", "Girone B", 3, "Dom 22/11/2026 18:00", "SUPPORT_O TARANTO", "ASD DREAM BASKET ALTAMURA", 65, 70, "Giocata"),
+    ("B03_2123", "Girone B", 3, "Dom 22/11/2026 17:30", "ASD MURGIA BASKET SANTERAMO", "ASD ATLETICA BASKET PUTIGNANO", 54, 57, "Giocata"),
+    # GIRONE C
+    ("C01_2219", "Girone C", 1, "Dom 08/11/2026 18:00", "ASD BASKET TRICASE", "A.POL.DIL.AURORA BRINDISI", 51, 57, "Giocata"),
+    ("C01_2220", "Girone C", 1, "Sab 07/11/2026 18:00", "ALL STAR BASKET FRANCAVILLA", "ASD BELLFIKA MESAGNE", 72, 67, "Giocata"),
+    ("C01_2221", "Girone C", 1, "Dom 08/11/2026 18:30", "DIERRE ARREDAMENTI CALIMERA BASKET", "ASD MAGIC GALATINA", 77, 51, "Giocata"),
+    ("C01_2222", "Girone C", 1, "Dom 08/11/2026 18:00", "ASD ASSI BASKET BRINDISI", "ASD NEW BASKET CARMIANO", 73, 47, "Giocata"),
+    ("C01_2223", "Girone C", 1, "Dom 08/11/2026 18:30", "SENSI PALLACANESTRO LUPA LECCE", "AZ DISINFESTAZIONI SRL VIRTUS BRINDISI", 91, 75, "Giocata"),
+    ("C02_2224", "Girone C", 2, "Sab 14/11/2026 18:00", "ASD NEW BASKET CARMIANO", "ALL STAR BASKET FRANCAVILLA", 89, 70, "Giocata"),
+    ("C02_2225", "Girone C", 2, "Sab 14/11/2026 18:30", "ASD MAGIC GALATINA", "ASD BASKET TRICASE", 100, 58, "Giocata"),
+    ("C02_2226", "Girone C", 2, "Sab 14/11/2026 16:30", "AZ DISINFESTAZIONI SRL VIRTUS BRINDISI", "ASD POLISPORTIVA MANDURIA", 57, 63, "Giocata"),
+    ("C02_2227", "Girone C", 2, "Dom 15/11/2026 18:00", "ASD BELLFIKA MESAGNE", "ASD ASSI BASKET BRINDISI", 75, 71, "Giocata"),
+    ("C02_2228", "Girone C", 2, "Sab 14/11/2026 18:00", "A.POL.DIL.AURORA BRINDISI", "DIERRE ARREDAMENTI CALIMERA BASKET", 37, 60, "Giocata"),
+    ("C03_2229", "Girone C", 3, "Sab 21/11/2026 18:00", "ALL STAR BASKET FRANCAVILLA", "ASD MAGIC GALATINA", 91, 78, "Giocata"),
+    ("C03_2230", "Girone C", 3, "Sab 21/11/2026 18:00", "A.POL.DIL.AURORA BRINDISI", "ASD ASSI BASKET BRINDISI", 64, 95, "Giocata"),
+    ("C03_2231", "Girone C", 3, "Dom 22/11/2026 18:30", "DIERRE ARREDAMENTI CALIMERA BASKET", "ASD BELLFIKA MESAGNE", 52, 57, "Giocata"),
+    ("C03_2232", "Girone C", 3, "Dom 22/11/2026 18:00", "ASD POLISPORTIVA MANDURIA", "SENSI PALLACANESTRO LUPA LECCE", 53, 59, "Giocata"),
+    ("C03_2233", "Girone C", 3, "Dom 22/11/2026 18:00", "ASD BASKET TRICASE", "ASD NEW BASKET CARMIANO", 28, 81, "Giocata"),
+]
 
-    # 2ª Giornata di andata
-    ("G02_1872", 2, "14/11/26 18:00", "Virtus Foggia", "Vigor San Severo", 65, 69, "Giocata"),
-    ("G02_1873", 2, "15/11/26 20:15", "Olimpia Corato", "Fortitudo BK Apricena", 50, 56, "Giocata"),
-    ("G02_1874", 2, "15/11/26 19:00", "Mediterranea Cerignola", "Nuova Matteotti Corato", 49, 59, "Giocata"),
-    ("G02_1875", 2, "15/11/26 19:00", "A.G.S.D. Toritto", "Angiulli Bari", 85, 96, "Giocata"),
-    ("G02_1876", 2, "15/11/26 17:30", "Magic Bari", "Basket Bitritto", 56, 48, "Giocata"),
+GAME_COLS = [
+    "ID_Partita", "Girone", "Giornata", "Data", "Casa", "Trasferta",
+    "Punti_Casa", "Punti_Trasferta", "Stato",
+    "Q1_C", "Q2_C", "Q3_C", "Q4_C", "OT_C",
+    "Q1_T", "Q2_T", "Q3_T", "Q4_T", "OT_T", "Note_Gara",
+]
 
-    # 3ª Giornata di andata
-    ("G03_1877", 3, "21/11/26 19:30", "Angiulli Bari", "Mediterranea Cerignola", 86, 75, "Giocata"),
-    ("G03_1878", 3, "22/11/26 18:30", "Fortitudo BK Apricena", "Magic Bari", 69, 79, "Giocata"),
-    ("G03_1879", 3, "22/11/26 18:00", "Orsa Capurso", "Vigor San Severo", 78, 75, "Giocata"),
-    ("G03_1880", 3, "21/11/26 19:00", "Nuova Matteotti Corato", "A.G.S.D. Toritto", 64, 77, "Giocata"),
-    ("G03_1881", 3, "22/11/26 18:30", "Basket Bitritto", "Olimpia Corato", 51, 50, "Giocata"),
-
-    # 4ª Giornata di andata
-    ("G04_1882", 4, "29/11/26 17:30", "Magic Bari", "Nuova Matteotti Corato", 0, 0, "Da giocare"),
-    ("G04_1883", 4, "29/11/26 19:00", "A.G.S.D. Toritto", "Fortitudo BK Apricena", 0, 0, "Da giocare"),
-    ("G04_1884", 4, "28/11/26 18:30", "Virtus Foggia", "Angiulli Bari", 0, 0, "Da giocare"),
-    ("G04_1885", 4, "29/11/26 18:00", "Orsa Capurso", "Olimpia Corato", 0, 0, "Da giocare"),
-    ("G04_1886", 4, "28/11/26 19:45", "Vigor San Severo", "Basket Bitritto", 0, 0, "Da giocare"),
-
-    # 5ª Giornata di andata
-    ("G05_1887", 5, "06/12/26 17:30", "Magic Bari", "Orsa Capurso", 0, 0, "Da giocare"),
-    ("G05_1888", 5, "06/12/26 19:00", "Mediterranea Cerignola", "A.G.S.D. Toritto", 0, 0, "Da giocare"),
-    ("G05_1889", 5, "06/12/26 20:15", "Olimpia Corato", "Vigor San Severo", 0, 0, "Da giocare"),
-    ("G05_1890", 5, "06/12/26 18:30", "Basket Bitritto", "Virtus Foggia", 0, 0, "Da giocare"),
-    ("G05_1891", 5, "05/12/26 19:30", "Angiulli Bari", "Nuova Matteotti Corato", 0, 0, "Da giocare"),
-
-    # 6ª Giornata di andata
-    ("G06_1892", 6, "13/12/26 18:30", "Fortitudo BK Apricena", "Basket Bitritto", 0, 0, "Da giocare"),
-    ("G06_1893", 6, "13/12/26 20:15", "Olimpia Corato", "Magic Bari", 0, 0, "Da giocare"),
-    ("G06_1894", 6, "12/12/26 19:00", "Nuova Matteotti Corato", "Vigor San Severo", 0, 0, "Da giocare"),
-    ("G06_1895", 6, "13/12/26 18:00", "Orsa Capurso", "Angiulli Bari", 0, 0, "Da giocare"),
-    ("G06_1896", 6, "17/12/26 20:00", "Virtus Foggia", "Mediterranea Cerignola", 0, 0, "Da giocare"),
-
-    # 7ª Giornata di andata
-    ("G07_1897", 7, "19/12/26 18:00", "Vigor San Severo", "Fortitudo BK Apricena", 0, 0, "Da giocare"),
-    ("G07_1898", 7, "20/12/26 19:00", "Mediterranea Cerignola", "Olimpia Corato", 0, 0, "Da giocare"),
-    ("G07_1899", 7, "20/12/26 18:30", "Basket Bitritto", "Nuova Matteotti Corato", 0, 0, "Da giocare"),
-    ("G07_1900", 7, "20/12/26 19:00", "A.G.S.D. Toritto", "Orsa Capurso", 0, 0, "Da giocare"),
-    ("G07_1901", 7, "20/12/26 17:30", "Magic Bari", "Virtus Foggia", 0, 0, "Da giocare"),
-
-    # 8ª Giornata di andata
-    ("G08_1902", 8, "10/01/27 18:30", "Fortitudo BK Apricena", "Angiulli Bari", 0, 0, "Da giocare"),
-    ("G08_1903", 8, "10/01/27 19:00", "A.G.S.D. Toritto", "Vigor San Severo", 0, 0, "Da giocare"),
-    ("G08_1904", 8, "10/01/27 19:00", "Mediterranea Cerignola", "Magic Bari", 0, 0, "Da giocare"),
-    ("G08_1905", 8, "09/01/27 19:00", "Nuova Matteotti Corato", "Orsa Capurso", 0, 0, "Da giocare"),
-    ("G08_1906", 8, "10/01/27 20:15", "Olimpia Corato", "Virtus Foggia", 0, 0, "Da giocare"),
-
-    # 9ª Giornata di andata
-    ("G09_1907", 9, "16/01/27 18:00", "Vigor San Severo", "Magic Bari", 0, 0, "Da giocare"),
-    ("G09_1908", 9, "16/01/27 18:30", "Virtus Foggia", "A.G.S.D. Toritto", 0, 0, "Da giocare"),
-    ("G09_1909", 9, "17/01/27 18:00", "Orsa Capurso", "Mediterranea Cerignola", 0, 0, "Da giocare"),
-    ("G09_1910", 9, "16/01/27 19:30", "Angiulli Bari", "Basket Bitritto", 0, 0, "Da giocare"),
-    ("G09_1911", 9, "16/01/27 17:00", "Nuova Matteotti Corato", "Fortitudo BK Apricena", 0, 0, "Da giocare"),
-
-    # 10ª Giornata di andata
-    ("G10_1912", 10, "24/01/27 19:00", "A.G.S.D. Toritto", "Olimpia Corato", 0, 0, "Da giocare"),
-    ("G10_1913", 10, "24/01/27 19:00", "Mediterranea Cerignola", "Basket Bitritto", 0, 0, "Da giocare"),
-    ("G10_1914", 10, "24/01/27 18:00", "Orsa Capurso", "Fortitudo BK Apricena", 0, 0, "Da giocare"),
-    ("G10_1915", 10, "23/01/27 19:30", "Angiulli Bari", "Vigor San Severo", 0, 0, "Da giocare"),
-    ("G10_1916", 10, "23/01/27 18:30", "Virtus Foggia", "Nuova Matteotti Corato", 0, 0, "Da giocare"),
-
-    # 11ª Giornata di andata
-    ("G11_1917", 11, "31/01/27 17:30", "Magic Bari", "A.G.S.D. Toritto", 0, 0, "Da giocare"),
-    ("G11_1918", 11, "31/01/27 18:30", "Basket Bitritto", "Orsa Capurso", 0, 0, "Da giocare"),
-    ("G11_1919", 11, "31/01/27 18:30", "Fortitudo BK Apricena", "Virtus Foggia", 0, 0, "Da giocare"),
-    ("G11_1920", 11, "31/01/27 20:15", "Olimpia Corato", "Angiulli Bari", 0, 0, "Da giocare"),
-    ("G11_1921", 11, "30/01/27 18:00", "Vigor San Severo", "Mediterranea Cerignola", 0, 0, "Da giocare"),
-
-    # 1ª Giornata di ritorno
-    ("G12_1922", 12, "07/02/27 18:00", "Orsa Capurso", "Virtus Foggia", 0, 0, "Da giocare"),
-    ("G12_1923", 12, "07/02/27 19:00", "Mediterranea Cerignola", "Fortitudo BK Apricena", 0, 0, "Da giocare"),
-    ("G12_1924", 12, "07/02/27 17:30", "Magic Bari", "Angiulli Bari", 0, 0, "Da giocare"),
-    ("G12_1925", 12, "06/02/27 19:00", "A.G.S.D. Toritto", "Basket Bitritto", 0, 0, "Da giocare"),
-    ("G12_1926", 12, "07/02/27 20:15", "Olimpia Corato", "Nuova Matteotti Corato", 0, 0, "Da giocare"),
-
-    # 2ª Giornata di ritorno
-    ("G13_1927", 13, "13/02/27 18:30", "Virtus Foggia", "Vigor San Severo", 0, 0, "Da giocare"),
-    ("G13_1928", 13, "13/02/27 19:30", "Angiulli Bari", "A.G.S.D. Toritto", 0, 0, "Da giocare"),
-    ("G13_1929", 13, "13/02/27 19:00", "Nuova Matteotti Corato", "Mediterranea Cerignola", 0, 0, "Da giocare"),
-    ("G13_1930", 13, "14/02/27 20:15", "Basket Bitritto", "Magic Bari", 0, 0, "Da giocare"),
-    ("G13_1931", 13, "14/02/27 18:30", "Fortitudo BK Apricena", "Olimpia Corato", 0, 0, "Da giocare"),
-
-    # 3ª Giornata di ritorno
-    ("G14_1932", 14, "20/02/27 18:00", "Orsa Capurso", "Vigor San Severo", 0, 0, "Da giocare"),
-    ("G14_1933", 14, "21/02/27 19:00", "A.G.S.D. Toritto", "Nuova Matteotti Corato", 0, 0, "Da giocare"),
-    ("G14_1934", 14, "21/02/27 20:15", "Olimpia Corato", "Basket Bitritto", 0, 0, "Da giocare"),
-    ("G14_1935", 14, "21/02/27 19:00", "Mediterranea Cerignola", "Angiulli Bari", 0, 0, "Da giocare"),
-    ("G14_1936", 14, "21/02/27 17:30", "Magic Bari", "Fortitudo BK Apricena", 0, 0, "Da giocare"),
-
-    # 4ª Giornata di ritorno
-    ("G15_1937", 15, "27/02/27 20:00", "Nuova Matteotti Corato", "Magic Bari", 0, 0, "Da giocare"),
-    ("G15_1938", 15, "28/02/27 18:30", "Fortitudo BK Apricena", "A.G.S.D. Toritto", 0, 0, "Da giocare"),
-    ("G15_1939", 15, "28/02/27 20:15", "Basket Bitritto", "Vigor San Severo", 0, 0, "Da giocare"),
-    ("G15_1940", 15, "28/02/27 20:15", "Olimpia Corato", "Orsa Capurso", 0, 0, "Da giocare"),
-    ("G15_1941", 15, "27/02/27 19:30", "Angiulli Bari", "Virtus Foggia", 0, 0, "Da giocare"),
-
-    # 5ª Giornata di ritorno
-    ("G16_1942", 16, "06/03/27 18:00", "Vigor San Severo", "Olimpia Corato", 0, 0, "Da giocare"),
-    ("G16_1943", 16, "07/03/27 18:00", "Orsa Capurso", "Magic Bari", 0, 0, "Da giocare"),
-    ("G16_1944", 16, "07/03/27 19:00", "A.G.S.D. Toritto", "Mediterranea Cerignola", 0, 0, "Da giocare"),
-    ("G16_1945", 16, "06/03/27 17:00", "Nuova Matteotti Corato", "Angiulli Bari", 0, 0, "Da giocare"),
-    ("G16_1946", 16, "06/03/27 18:30", "Virtus Foggia", "Basket Bitritto", 0, 0, "Da giocare"),
-
-    # 6ª Giornata di ritorno
-    ("G17_1947", 17, "13/03/27 19:30", "Angiulli Bari", "Orsa Capurso", 0, 0, "Da giocare"),
-    ("G17_1948", 17, "14/03/27 19:00", "Mediterranea Cerignola", "Virtus Foggia", 0, 0, "Da giocare"),
-    ("G17_1949", 17, "13/03/27 18:00", "Vigor San Severo", "Nuova Matteotti Corato", 0, 0, "Da giocare"),
-    ("G17_1950", 17, "14/03/27 17:30", "Magic Bari", "Olimpia Corato", 0, 0, "Da giocare"),
-    ("G17_1951", 17, "14/03/27 18:30", "Basket Bitritto", "Fortitudo BK Apricena", 0, 0, "Da giocare"),
-
-    # 7ª Giornata di ritorno
-    ("G18_1952", 18, "21/03/27 18:30", "Virtus Foggia", "Magic Bari", 0, 0, "Da giocare"),
-    ("G18_1953", 18, "21/03/27 18:00", "Orsa Capurso", "A.G.S.D. Toritto", 0, 0, "Da giocare"),
-    ("G18_1954", 18, "21/03/27 18:30", "Fortitudo BK Apricena", "Vigor San Severo", 0, 0, "Da giocare"),
-    ("G18_1955", 18, "20/03/27 19:00", "Nuova Matteotti Corato", "Basket Bitritto", 0, 0, "Da giocare"),
-    ("G18_1956", 18, "21/03/27 20:15", "Olimpia Corato", "Mediterranea Cerignola", 0, 0, "Da giocare"),
-
-    # 8ª Giornata di ritorno
-    ("G19_1957", 19, "03/04/27 18:30", "Olimpia Corato", "Virtus Foggia", 0, 0, "Da giocare"),
-    ("G19_1958", 19, "03/04/27 18:00", "Vigor San Severo", "A.G.S.D. Toritto", 0, 0, "Da giocare"),
-    ("G19_1959", 19, "04/04/27 17:30", "Magic Bari", "Mediterranea Cerignola", 0, 0, "Da giocare"),
-    ("G19_1960", 19, "03/04/27 19:30", "Angiulli Bari", "Fortitudo BK Apricena", 0, 0, "Da giocare"),
-    ("G19_1961", 19, "04/04/27 18:00", "Orsa Capurso", "Nuova Matteotti Corato", 0, 0, "Da giocare"),
-
-    # 9ª Giornata di ritorno
-    ("G20_1962", 20, "11/04/27 19:00", "Mediterranea Cerignola", "Orsa Capurso", 0, 0, "Da giocare"),
-    ("G20_1963", 20, "11/04/27 17:30", "Magic Bari", "Vigor San Severo", 0, 0, "Da giocare"),
-    ("G20_1964", 20, "11/04/27 18:30", "Fortitudo BK Apricena", "Nuova Matteotti Corato", 0, 0, "Da giocare"),
-    ("G20_1965", 20, "11/04/27 19:00", "A.G.S.D. Toritto", "Virtus Foggia", 0, 0, "Da giocare"),
-    ("G20_1966", 20, "11/04/27 18:30", "Basket Bitritto", "Angiulli Bari", 0, 0, "Da giocare"),
-
-    # 10ª Giornata di ritorno
-    ("G21_1967", 21, "18/04/27 20:15", "Olimpia Corato", "A.G.S.D. Toritto", 0, 0, "Da giocare"),
-    ("G21_1968", 21, "18/04/27 18:30", "Basket Bitritto", "Mediterranea Cerignola", 0, 0, "Da giocare"),
-    ("G21_1969", 21, "17/04/27 18:00", "Vigor San Severo", "Angiulli Bari", 0, 0, "Da giocare"),
-    ("G21_1970", 21, "18/04/27 18:30", "Fortitudo BK Apricena", "Orsa Capurso", 0, 0, "Da giocare"),
-    ("G21_1971", 21, "17/04/27 19:00", "Nuova Matteotti Corato", "Virtus Foggia", 0, 0, "Da giocare"),
-
-    # 11ª Giornata di ritorno
-    ("G22_1972", 22, "24/04/27 18:00", "Orsa Capurso", "Basket Bitritto", 0, 0, "Da giocare"),
-    ("G22_1973", 22, "25/04/27 19:00", "A.G.S.D. Toritto", "Magic Bari", 0, 0, "Da giocare"),
-    ("G22_1974", 22, "25/04/27 19:00", "Mediterranea Cerignola", "Vigor San Severo", 0, 0, "Da giocare"),
-    ("G22_1975", 22, "24/04/27 18:30", "Virtus Foggia", "Fortitudo BK Apricena", 0, 0, "Da giocare"),
-    ("G22_1976", 22, "24/04/27 19:30", "Angiulli Bari", "Olimpia Corato", 0, 0, "Da giocare"),
+BOX_COLS = [
+    "ID_Partita", "Girone", "Squadra", "Quintetto_Base", "Numero", "Ruolo",
+    "Giocatore", "Punti", "2P_Segnati", "3P_Segnati", "TL_Segnati", "TL_Sbagliati", "Note",
 ]
 
 
@@ -260,48 +174,31 @@ def build_default_games_df() -> pd.DataFrame:
     return pd.DataFrame(
         [
             {
-                "ID_Partita": gid,
-                "Girone": "Girone A",
-                "Giornata": giornata,
-                "Data": data_ora,
-                "Casa": casa,
-                "Trasferta": trasferta,
-                "Punti_Casa": pts_casa,
-                "Punti_Trasferta": pts_trasf,
-                "Stato": stato,
+                "ID_Partita": gid, "Girone": girone, "Giornata": giornata, "Data": data_ora,
+                "Casa": casa, "Trasferta": trasferta, "Punti_Casa": pts_casa,
+                "Punti_Trasferta": pts_trasf, "Stato": stato,
+                "Q1_C": 0, "Q2_C": 0, "Q3_C": 0, "Q4_C": 0, "OT_C": 0,
+                "Q1_T": 0, "Q2_T": 0, "Q3_T": 0, "Q4_T": 0, "OT_T": 0, "Note_Gara": "",
             }
-            for gid, giornata, data_ora, casa, trasferta, pts_casa, pts_trasf, stato in DEFAULT_GAMES_RAW
+            for gid, girone, giornata, data_ora, casa, trasferta, pts_casa, pts_trasf, stato in DEFAULT_GAMES_RAW
         ]
     )
 
 
-def init_data():
-    if not TEAMS_FILE.exists():
-        pd.DataFrame(DEFAULT_TEAMS).to_csv(TEAMS_FILE, index=False)
-
-    if not GAMES_FILE.exists():
-        build_default_games_df().to_csv(GAMES_FILE, index=False)
-
+def reset_official_data():
+    pd.DataFrame(DEFAULT_TEAMS).to_csv(TEAMS_FILE, index=False)
+    build_default_games_df().to_csv(GAMES_FILE, index=False)
     if not BOX_FILE.exists():
-        pd.DataFrame(
-            columns=[
-                "ID_Partita",
-                "Girone",
-                "Squadra",
-                "Quintetto_Base",
-                "Numero",
-                "Ruolo",
-                "Giocatore",
-                "Punti",
-                "2P_Segnati",
-                "3P_Segnati",
-                "TL_Segnati",
-                "TL_Sbagliati",
-            ]
-        ).to_csv(BOX_FILE, index=False)
+        pd.DataFrame(columns=BOX_COLS).to_csv(BOX_FILE, index=False)
+    VERSION_FILE.write_text(DATA_VERSION, encoding="utf-8")
 
-    if not META_FILE.exists():
-        pd.DataFrame([{"Girone": "Girone A", "Terza_Migliore": "In attesa"}]).to_csv(META_FILE, index=False)
+
+def init_data():
+    current_ver = VERSION_FILE.read_text(encoding="utf-8").strip() if VERSION_FILE.exists() else ""
+    if current_ver != DATA_VERSION or not TEAMS_FILE.exists() or not GAMES_FILE.exists():
+        reset_official_data()
+    if not BOX_FILE.exists():
+        pd.DataFrame(columns=BOX_COLS).to_csv(BOX_FILE, index=False)
 
 
 def load_data():
@@ -309,22 +206,21 @@ def load_data():
     teams_df = pd.read_csv(TEAMS_FILE, dtype=str).fillna("")
     games_df = pd.read_csv(GAMES_FILE, dtype=str).fillna("")
     box_df = pd.read_csv(BOX_FILE, dtype=str).fillna("")
-    meta_df = pd.read_csv(META_FILE, dtype=str).fillna("")
 
-    for col in ["Giornata", "Punti_Casa", "Punti_Trasferta"]:
-        if col in games_df.columns:
-            games_df[col] = pd.to_numeric(games_df[col], errors="coerce").fillna(0).astype(int)
+    for col in GAME_COLS:
+        if col not in games_df.columns:
+            games_df[col] = 0 if col not in ["ID_Partita", "Girone", "Data", "Casa", "Trasferta", "Stato", "Note_Gara"] else ""
+    for col in BOX_COLS:
+        if col not in box_df.columns:
+            box_df[col] = 0 if col in ["Punti", "2P_Segnati", "3P_Segnati", "TL_Segnati", "TL_Sbagliati"] else (False if col == "Quintetto_Base" else "")
 
+    for col in ["Giornata", "Punti_Casa", "Punti_Trasferta", "Q1_C", "Q2_C", "Q3_C", "Q4_C", "OT_C", "Q1_T", "Q2_T", "Q3_T", "Q4_T", "OT_T"]:
+        games_df[col] = pd.to_numeric(games_df[col], errors="coerce").fillna(0).astype(int)
     for col in ["Punti", "2P_Segnati", "3P_Segnati", "TL_Segnati", "TL_Sbagliati"]:
-        if col in box_df.columns:
-            box_df[col] = pd.to_numeric(box_df[col], errors="coerce").fillna(0).astype(int)
+        box_df[col] = pd.to_numeric(box_df[col], errors="coerce").fillna(0).astype(int)
+    box_df["Quintetto_Base"] = box_df["Quintetto_Base"].astype(str).str.lower().isin(["true", "1", "si", "sì", "yes"])
 
-    if "Quintetto_Base" in box_df.columns:
-        box_df["Quintetto_Base"] = (
-            box_df["Quintetto_Base"].astype(str).str.lower().isin(["true", "1", "si", "sì", "yes"])
-        )
-
-    return teams_df, games_df, box_df, meta_df
+    return teams_df, games_df, box_df
 
 
 def save_teams(df):
@@ -339,23 +235,39 @@ def save_box(df):
     df.to_csv(BOX_FILE, index=False)
 
 
-def save_meta(df):
-    df.to_csv(META_FILE, index=False)
+def format_streak_text(streak: str) -> str:
+    if not streak or str(streak).strip() in ["", "—", "-"]:
+        return "—"
+    tokens = [tok.upper() for tok in str(streak).replace(",", " ").split() if tok.strip()]
+    if len(tokens) == 1 and len(tokens[0]) > 1 and all(ch in ("W", "L") for ch in tokens[0]):
+        tokens = list(tokens[0])
+    valid = [ch for ch in tokens if ch in ("W", "L")]
+    return " ".join(valid[-5:]) if valid else "—"
+
+
+def format_streak_badges(streak: str) -> str:
+    formatted = format_streak_text(streak)
+    if formatted == "—":
+        return '<span class="s-val">—</span>'
+    badges = []
+    for ch in formatted.split():
+        if ch == "W":
+            badges.append('<span class="st-badge st-w">W</span>')
+        elif ch == "L":
+            badges.append('<span class="st-badge st-l">L</span>')
+    return f'<div class="st-wrap">{"".join(badges)}</div>'
 
 
 def compute_team_metrics(team_name: str, girone: str, games_df: pd.DataFrame) -> dict:
-    played = games_df[
-        (games_df["Girone"] == girone) & (games_df["Stato"].str.lower() == "giocata")
-    ].copy()
-    played = played.sort_values(by=["Giornata", "ID_Partita"]).reset_index(drop=True)
+    if girone == "Girone C":
+        for official_name, official_stats in OFFICIAL_GIRONE_C_ORDER:
+            if official_name == team_name:
+                return dict(official_stats)
 
-    pg = 0
-    wins = 0
-    losses = 0
-    pf = 0
-    pa = 0
+    g_games = games_df[games_df["Girone"] == girone].copy()
+    played = g_games[g_games["Stato"].str.lower() == "giocata"].sort_values(by=["Giornata", "ID_Partita"])
+    pg = wins = losses = pf = pa = 0
     outcomes = []
-
     for _, row in played.iterrows():
         if row["Casa"] == team_name:
             pg += 1
@@ -382,109 +294,93 @@ def compute_team_metrics(team_name: str, girone: str, games_df: pd.DataFrame) ->
                 losses += 1
                 outcomes.append("L")
 
-    pts = wins * 2
-    dp = pf - pa
-    streak = "—"
-    if outcomes:
-        last = outcomes[-1]
-        cnt = 0
-        for item in reversed(outcomes):
-            if item == last:
-                cnt += 1
-            else:
-                break
-        streak = f"{cnt}{last}"
-
-    return {
-        "PTS": pts,
-        "PG": pg,
-        "V": wins,
-        "S": losses,
-        "DP": dp,
-        "STREAK": streak,
-    }
+    streak = " ".join(outcomes[-5:]) if outcomes else "—"
+    return {"PTS": wins * 2, "PG": pg, "V": wins, "S": losses, "PF": pf, "DP": pf - pa, "STREAK": streak}
 
 
-def format_dp(dp: int) -> str:
-    return f"+{dp}" if dp > 0 else str(dp)
+def compute_standings_for_girone(girone: str, teams_df: pd.DataFrame, games_df: pd.DataFrame) -> list:
+    g_teams = teams_df[teams_df["Girone"] == girone]
+    if g_teams.empty:
+        return []
 
+    logo_by_team = {row["Squadra"]: row["Logo_URL"] for _, row in g_teams.iterrows()}
 
-def compute_roster_stats(team_name: str, girone: str, box_df: pd.DataFrame):
-    sub = box_df[(box_df["Girone"] == girone) & (box_df["Squadra"] == team_name)].copy()
-    if sub.empty:
-        return pd.DataFrame(
-            columns=[
-                "Quintetto Base (Presenze)",
-                "Numero",
-                "Ruolo",
-                "Nome e Cognome",
-                "Partite",
-                "Punti",
-                "Media Punti",
-                "TL Segnati",
-                "TL Sbagliati",
-                "% TL",
-                "2P Segnati",
-                "3P Segnati",
-            ]
-        )
+    if girone == "Girone C":
+        ordered_c = []
+        seen_names = set()
+        for t_name, m in OFFICIAL_GIRONE_C_ORDER:
+            seen_names.add(t_name)
+            ordered_c.append(
+                {
+                    "Girone": girone,
+                    "Squadra": t_name,
+                    "Logo_URL": logo_by_team.get(t_name, ""),
+                    "PTS": m["PTS"],
+                    "PG": m["PG"],
+                    "V": m["V"],
+                    "S": m["S"],
+                    "PF": m["PF"],
+                    "DP": m["DP"],
+                    "STREAK": format_streak_text(m["STREAK"]),
+                }
+            )
+        for _, trow in g_teams.iterrows():
+            if trow["Squadra"] not in seen_names:
+                m = compute_team_metrics(trow["Squadra"], girone, games_df)
+                ordered_c.append(
+                    {
+                        "Girone": girone,
+                        "Squadra": trow["Squadra"],
+                        "Logo_URL": trow["Logo_URL"],
+                        "PTS": m["PTS"],
+                        "PG": m["PG"],
+                        "V": m["V"],
+                        "S": m["S"],
+                        "PF": m["PF"],
+                        "DP": m["DP"],
+                        "STREAK": format_streak_text(m["STREAK"]),
+                    }
+                )
+        return ordered_c
 
-    rows = []
-    for player, grp in sub.groupby("Giocatore", sort=False):
-        games_count = len(grp)
-        quintetti = int(grp["Quintetto_Base"].sum())
-        pts = int(grp["Punti"].sum())
-        tl_m = int(grp["TL_Segnati"].sum())
-        tl_x = int(grp["TL_Sbagliati"].sum())
-        tl_att = tl_m + tl_x
-        tl_pct = round((tl_m / tl_att) * 100, 1) if tl_att > 0 else 0.0
-        p2 = int(grp["2P_Segnati"].sum())
-        p3 = int(grp["3P_Segnati"].sum())
-        ppg = round(pts / games_count, 1) if games_count > 0 else 0.0
-
-        num_vals = [n for n in grp["Numero"].tolist() if str(n).strip()]
-        role_vals = [r for r in grp["Ruolo"].tolist() if str(r).strip()]
-
-        rows.append(
-            {
-                "Quintetto Base (Presenze)": quintetti,
-                "Numero": num_vals[-1] if num_vals else "-",
-                "Ruolo": role_vals[-1] if role_vals else "-",
-                "Nome e Cognome": player,
-                "Partite": games_count,
-                "Punti": pts,
-                "Media Punti": ppg,
-                "TL Segnati": tl_m,
-                "TL Sbagliati": tl_x,
-                "% TL": tl_pct,
-                "2P Segnati": p2,
-                "3P Segnati": p3,
-            }
-        )
-
-    res = pd.DataFrame(rows)
-    return res.sort_values(by="Media Punti", ascending=False).reset_index(drop=True)
-
-
-def render_standings_board(g_teams: pd.DataFrame, girone_sel: str, games_df: pd.DataFrame, terza_status: str):
-    rows = []
+    raw_items = []
     for _, trow in g_teams.iterrows():
-        m = compute_team_metrics(trow["Squadra"], girone_sel, games_df)
-        rows.append(
+        m = compute_team_metrics(trow["Squadra"], girone, games_df)
+        raw_items.append(
             {
+                "Girone": girone,
                 "Squadra": trow["Squadra"],
                 "Logo_URL": trow["Logo_URL"],
                 "PTS": m["PTS"],
                 "PG": m["PG"],
                 "V": m["V"],
                 "S": m["S"],
+                "PF": m["PF"],
                 "DP": m["DP"],
-                "STREAK": m["STREAK"],
+                "STREAK": format_streak_text(m["STREAK"]),
             }
         )
 
-    board = sorted(rows, key=lambda x: (-x["PTS"], -x["V"], -x["DP"], -x["PG"], x["Squadra"]))
+    return sorted(raw_items, key=lambda x: (-x["PTS"], -x["DP"], -x["PF"], x["Squadra"]))
 
+
+def compute_best_third(teams_df: pd.DataFrame, games_df: pd.DataFrame):
+    thirds = []
+    for g_name in ["Girone A", "Girone B", "Girone C"]:
+        st_list = compute_standings_for_girone(g_name, teams_df, games_df)
+        if len(st_list) >= 3:
+            thirds.append(st_list[2])
+    if not thirds:
+        return None, []
+    ranked_thirds = sorted(thirds, key=lambda x: (-x["PTS"], -x["DP"], -x["PF"], x["Squadra"]))
+    return ranked_thirds[0], ranked_thirds
+
+
+def format_dp(dp: int) -> str:
+    return f"+{dp}" if dp > 0 else str(dp)
+
+
+def render_standings_board(board: list, girone_sel: str, best_third_team: dict | None, ranked_thirds: list):
     st.markdown(
         """
         <style>
@@ -497,7 +393,7 @@ def render_standings_board(g_teams: pd.DataFrame, girone_sel: str, games_df: pd.
         }
         .standings-header {
             display: grid;
-            grid-template-columns: 56px 52px 1fr 64px 56px 56px 56px 76px 84px;
+            grid-template-columns: 56px 52px 1fr 56px 52px 52px 72px 148px 64px;
             gap: 8px;
             padding: 0 10px 8px 10px;
             color: #ffd43b;
@@ -506,9 +402,7 @@ def render_standings_board(g_teams: pd.DataFrame, girone_sel: str, games_df: pd.
             letter-spacing: 0.6px;
             text-align: center;
         }
-        .standings-header .left {
-            text-align: left;
-        }
+        .standings-header .left { text-align: left; }
         .zone-tag {
             font-size: 11px;
             font-weight: 800;
@@ -521,11 +415,12 @@ def render_standings_board(g_teams: pd.DataFrame, girone_sel: str, games_df: pd.
         }
         .zone-promo { background: #198754; color: #ffffff; }
         .zone-po { background: #d97706; color: #ffffff; }
-        .zone-terza { background: #0284c7; color: #ffffff; border: 1px solid #ffd43b; }
+        .zone-terza-ok { background: #15803d; color: #ffffff; border: 1px solid #ffd43b; }
+        .zone-terza-no { background: #0284c7; color: #ffffff; border: 1px solid rgba(255,255,255,0.4); }
         .zone-pout { background: #b91c1c; color: #ffffff; }
         .s-row {
             display: grid;
-            grid-template-columns: 56px 52px 1fr 64px 56px 56px 56px 76px 84px;
+            grid-template-columns: 56px 52px 1fr 56px 52px 52px 72px 148px 64px;
             gap: 8px;
             align-items: center;
             background: rgba(8, 39, 82, 0.78);
@@ -562,11 +457,6 @@ def render_standings_board(g_teams: pd.DataFrame, girone_sel: str, games_df: pd.
             text-transform: uppercase;
             letter-spacing: 0.3px;
         }
-        .s-sub {
-            font-size: 11px;
-            color: #cbd5e1;
-            font-weight: 600;
-        }
         .s-val {
             text-align: center;
             font-weight: 700;
@@ -577,6 +467,115 @@ def render_standings_board(g_teams: pd.DataFrame, girone_sel: str, games_df: pd.
             font-weight: 900;
             font-size: 17px;
             color: #ffd43b;
+        }
+        .st-wrap {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+        }
+        .st-badge {
+            display: inline-block;
+            min-width: 20px;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 800;
+            text-align: center;
+            color: #ffffff;
+        }
+        .st-w { background: #16a34a; }
+        .st-l { background: #dc2626; }
+
+        /* Mini-classifica 3 squadre Migliore Terza */
+        .b3-wrap {
+            background: linear-gradient(180deg, #093f82 0%, #0d54a8 100%);
+            padding: 16px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 212, 59, 0.35);
+            margin-top: 8px;
+            margin-bottom: 16px;
+        }
+        .b3-title-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.16);
+        }
+        .b3-main-title {
+            color: #ffd43b;
+            font-weight: 900;
+            font-size: 15px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .b3-sub-rule {
+            color: #e2e8f0;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .b3-header {
+            display: grid;
+            grid-template-columns: 52px 50px 1.3fr 96px 52px 52px 52px 72px 66px 132px 62px 150px;
+            gap: 6px;
+            padding: 0 8px 6px 8px;
+            color: #ffd43b;
+            font-weight: 800;
+            font-size: 12px;
+            text-align: center;
+        }
+        .b3-header .left { text-align: left; }
+        .b3-row {
+            display: grid;
+            grid-template-columns: 52px 50px 1.3fr 96px 52px 52px 52px 72px 66px 132px 62px 150px;
+            gap: 6px;
+            align-items: center;
+            background: rgba(7, 31, 66, 0.82);
+            border: 1px solid rgba(255,255,255,0.14);
+            border-radius: 10px;
+            padding: 8px;
+            margin-bottom: 6px;
+            color: #ffffff;
+        }
+        .b3-row.qual {
+            border-left: 6px solid #22c55e;
+            background: rgba(15, 68, 45, 0.78);
+        }
+        .b3-row.no-qual {
+            border-left: 6px solid #ef4444;
+        }
+        .b3-pill-ok {
+            background: #16a34a;
+            color: #ffffff;
+            font-size: 10px;
+            font-weight: 900;
+            padding: 4px 8px;
+            border-radius: 6px;
+            text-align: center;
+            letter-spacing: 0.4px;
+            border: 1px solid #ffd43b;
+        }
+        .b3-pill-no {
+            background: rgba(185, 28, 28, 0.85);
+            color: #f8fafc;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 4px 8px;
+            border-radius: 6px;
+            text-align: center;
+            letter-spacing: 0.4px;
+        }
+        .b3-gir-badge {
+            background: rgba(255, 212, 59, 0.16);
+            color: #ffd43b;
+            font-size: 11px;
+            font-weight: 800;
+            padding: 3px 6px;
+            border-radius: 5px;
+            text-align: center;
         }
         </style>
         """,
@@ -590,7 +589,7 @@ def render_standings_board(g_teams: pd.DataFrame, girone_sel: str, games_df: pd.
         '<div class="standings-wrap">',
         '<div class="standings-header">'
         '<div>POS</div><div>LOGO</div><div class="left">SQUADRA</div>'
-        '<div>PTS</div><div>PG</div><div>V</div><div>S</div><div>DP</div><div>STREAK</div>'
+        '<div>P</div><div>W</div><div>L</div><div>DIFF</div><div>STREAK</div><div>PTS</div>'
         '</div>',
     ]
 
@@ -603,8 +602,17 @@ def render_standings_board(g_teams: pd.DataFrame, girone_sel: str, games_df: pd.
             html_parts.append('<div class="zone-tag zone-po">PLAY-OFF (2° POSTO)</div>')
             row_class = "pos-2"
         elif idx == 3:
-            label_3 = f"3° POSTO — MIGLIORE TERZA: {terza_status.upper()}"
-            html_parts.append(f'<div class="zone-tag zone-terza">{label_3}</div>')
+            is_best = best_third_team is not None and best_third_team["Girone"] == girone_sel
+            if len(ranked_thirds) <= 1:
+                label_3 = "3° POSTO — MIGLIORE TERZA (IN ATTESA DATI ALTRI GIRONI)"
+                tag_cls = "zone-terza-no"
+            elif is_best:
+                label_3 = "3° POSTO — ATTUALE MIGLIORE TERZA (PLAY-OFF)"
+                tag_cls = "zone-terza-ok"
+            else:
+                label_3 = f"3° POSTO — NON MIGLIORE TERZA (ATTUALE: {best_third_team['Squadra']} - {best_third_team['Girone']})"
+                tag_cls = "zone-terza-no"
+            html_parts.append(f'<div class="zone-tag {tag_cls}">{label_3}</div>')
             row_class = "pos-3"
         elif idx == playout_start_pos:
             html_parts.append('<div class="zone-tag zone-pout">PLAY-OUT (ULTIME 4)</div>')
@@ -612,191 +620,88 @@ def render_standings_board(g_teams: pd.DataFrame, girone_sel: str, games_df: pd.
         if idx >= playout_start_pos:
             row_class = "pos-playout"
 
+        logo_src = resolve_logo_src(item["Logo_URL"])
         logo_html = (
-            f'<img class="s-logo" src="{item["Logo_URL"]}" alt="{item["Squadra"]}" />'
-            if item["Logo_URL"].strip()
+            f'<img class="s-logo" src="{logo_src}" alt="{item["Squadra"]}" />'
+            if logo_src
             else '<div class="s-pos">🏀</div>'
         )
         dp_str = format_dp(item["DP"])
+        streak_str = format_streak_text(item["STREAK"])
+        streak_html = format_streak_badges(streak_str)
 
         html_parts.append(
             f'<div class="s-row {row_class}">'
             f'<div class="s-pos">{idx}</div>'
             f'<div>{logo_html}</div>'
             f'<div><div class="s-team">{item["Squadra"]}</div></div>'
-            f'<div class="s-pts">{item["PTS"]}</div>'
             f'<div class="s-val">{item["PG"]}</div>'
             f'<div class="s-val">{item["V"]}</div>'
             f'<div class="s-val">{item["S"]}</div>'
             f'<div class="s-val">{dp_str}</div>'
-            f'<div class="s-val">{item["STREAK"]}</div>'
+            f'<div title="{streak_str}">{streak_html}</div>'
+            f'<div class="s-pts">{item["PTS"]}</div>'
             f'</div>'
         )
 
     html_parts.append("</div>")
     st.markdown("".join(html_parts), unsafe_allow_html=True)
-    return [x["Squadra"] for x in board]
+
+    if ranked_thirds:
+        b3_parts = [
+            '<div class="b3-wrap">',
+            '<div class="b3-title-bar">'
+            '<div class="b3-main-title">🏆 MINI-CLASSIFICA MIGLIORE TERZA (3° POSTO GIRONI A · B · C)</div>'
+            '<div class="b3-sub-rule">Criteri: PTS → DIFF → PF</div>'
+            '</div>',
+            '<div class="b3-header">'
+            '<div>#</div><div>LOGO</div><div class="left">SQUADRA</div>'
+            '<div>GIRONE</div><div>P</div><div>W</div><div>L</div><div>DIFF</div><div>PF</div>'
+            '<div>STREAK</div><div>PTS</div><div>ESITO</div>'
+            '</div>',
+        ]
+        for rank_i, t_item in enumerate(ranked_thirds, start=1):
+            is_qual = rank_i == 1
+            row_cls = "qual" if is_qual else "no-qual"
+            logo_src = resolve_logo_src(t_item["Logo_URL"])
+            logo_html = (
+                f'<img class="s-logo" src="{logo_src}" alt="{t_item["Squadra"]}" />'
+                if logo_src
+                else '<div class="s-pos">🏀</div>'
+            )
+            streak_str = format_streak_text(t_item["STREAK"])
+            streak_html = format_streak_badges(streak_str)
+            esito_html = (
+                '<div class="b3-pill-ok">QUALIFICATA PLAY-OFF</div>'
+                if is_qual
+                else '<div class="b3-pill-no">FUORI PLAY-OFF</div>'
+            )
+
+            b3_parts.append(
+                f'<div class="b3-row {row_cls}">'
+                f'<div class="s-pos">{rank_i}</div>'
+                f'<div>{logo_html}</div>'
+                f'<div><div class="s-team">{t_item["Squadra"]}</div></div>'
+                f'<div><div class="b3-gir-badge">{t_item["Girone"]}</div></div>'
+                f'<div class="s-val">{t_item["PG"]}</div>'
+                f'<div class="s-val">{t_item["V"]}</div>'
+                f'<div class="s-val">{t_item["S"]}</div>'
+                f'<div class="s-val">{format_dp(t_item["DP"])}</div>'
+                f'<div class="s-val">{t_item["PF"]}</div>'
+                f'<div title="{streak_str}">{streak_html}</div>'
+                f'<div class="s-pts">{t_item["PTS"]}</div>'
+                f'<div>{esito_html}</div>'
+                f'</div>'
+            )
+        b3_parts.append("</div>")
+        st.markdown("".join(b3_parts), unsafe_allow_html=True)
 
 
-def render_round_card(round_num: int, round_games: pd.DataFrame, logo_map: dict):
-    label_round = f"Giornata {round_num}" if round_num <= 11 else f"Ritorno — Giornata {round_num - 11} (G{round_num})"
-
-    st.markdown(
-        """
-        <style>
-        .round-box {
-            background: #14171c;
-            border: 1px solid #262b34;
-            border-radius: 12px;
-            margin-bottom: 18px;
-            overflow: hidden;
-        }
-        .round-title {
-            background: #1b2028;
-            color: #f1f5f9;
-            font-weight: 700;
-            font-size: 16px;
-            padding: 10px 16px;
-            border-bottom: 1px solid #262b34;
-        }
-        .match-row {
-            display: grid;
-            grid-template-columns: 96px 1fr 48px;
-            gap: 12px;
-            align-items: center;
-            padding: 10px 16px;
-            border-bottom: 1px solid #20252e;
-        }
-        .match-row:last-child {
-            border-bottom: none;
-        }
-        .m-meta {
-            text-align: center;
-            line-height: 1.35;
-        }
-        .m-date {
-            font-size: 12px;
-            color: #cbd5e1;
-            font-weight: 600;
-        }
-        .m-status-ft {
-            font-size: 12px;
-            color: #94a3b8;
-            font-weight: 700;
-        }
-        .m-status-time {
-            font-size: 12px;
-            color: #94a3b8;
-            font-weight: 600;
-        }
-        .m-teams {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .m-team-line {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 15px;
-            font-weight: 600;
-            color: #e2e8f0;
-        }
-        .m-team-line.winner {
-            color: #ffffff;
-            font-weight: 800;
-        }
-        .m-logo {
-            width: 22px;
-            height: 22px;
-            object-fit: contain;
-            background: rgba(255,255,255,0.92);
-            border-radius: 4px;
-            padding: 1px;
-            flex-shrink: 0;
-        }
-        .m-scores {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            text-align: right;
-            font-size: 15px;
-            font-weight: 700;
-            color: #cbd5e1;
-        }
-        .m-score-win {
-            color: #ffffff;
-            font-weight: 800;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    parts = [f'<div class="round-box"><div class="round-title">{label_round}</div>']
-
-    for _, g in round_games.iterrows():
-        is_played = str(g["Stato"]).lower() == "giocata"
-        raw_dt = str(g["Data"]).strip()
-        dt_tokens = raw_dt.split()
-        if len(dt_tokens) >= 3:
-            date_part = dt_tokens[1]
-            time_part = dt_tokens[2]
-        elif len(dt_tokens) == 2:
-            date_part, time_part = dt_tokens[0], dt_tokens[1]
-        else:
-            date_part, time_part = raw_dt, ""
-
-        status_html = (
-            '<div class="m-status-ft">FT</div>'
-            if is_played
-            else f'<div class="m-status-time">{time_part}</div>'
-        )
-
-        home_name = g["Casa"]
-        away_name = g["Trasferta"]
-        home_pts = int(g["Punti_Casa"])
-        away_pts = int(g["Punti_Trasferta"])
-
-        home_win = is_played and home_pts > away_pts
-        away_win = is_played and away_pts > home_pts
-
-        home_logo = logo_map.get(home_name, "")
-        away_logo = logo_map.get(away_name, "")
-
-        h_logo_tag = f'<img class="m-logo" src="{home_logo}" alt="" />' if home_logo else "🏀"
-        a_logo_tag = f'<img class="m-logo" src="{away_logo}" alt="" />' if away_logo else "🏀"
-
-        s1 = str(home_pts) if is_played else ""
-        s2 = str(away_pts) if is_played else ""
-
-        parts.append(
-            f'<div class="match-row">'
-            f'<div class="m-meta"><div class="m-date">{date_part}</div>{status_html}</div>'
-            f'<div class="m-teams">'
-            f'<div class="m-team-line {"winner" if home_win else ""}">{h_logo_tag}<span>{home_name}</span></div>'
-            f'<div class="m-team-line {"winner" if away_win else ""}">{a_logo_tag}<span>{away_name}</span></div>'
-            f'</div>'
-            f'<div class="m-scores">'
-            f'<div class="{"m-score-win" if home_win else ""}">{s1}</div>'
-            f'<div class="{"m-score-win" if away_win else ""}">{s2}</div>'
-            f'</div>'
-            f'</div>'
-        )
-
-    parts.append("</div>")
-    st.markdown("".join(parts), unsafe_allow_html=True)
-
-
-# ==========================================
-# LOGIN STAFF
-# ==========================================
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
 if not st.session_state.authenticated:
     st.title("🏀 DR2 Puglia — Area Riservata Staff")
-    st.caption("Inserisci la password dello staff per accedere a calendari, gironi e tabellini.")
     pwd = st.text_input("Password", type="password")
     if st.button("Accedi"):
         if pwd == STAFF_PASSWORD:
@@ -806,299 +711,22 @@ if not st.session_state.authenticated:
             st.error("Password non valida.")
     st.stop()
 
-teams_df, games_df, box_df, meta_df = load_data()
-logo_lookup = {
-    row["Squadra"]: row["Logo_URL"].strip()
-    for _, row in teams_df.iterrows()
-    if row["Squadra"].strip()
-}
+teams_df, games_df, box_df = load_data()
 
 st.sidebar.title("🏀 DR2 Puglia")
-page = st.sidebar.radio("Navigazione", ["Gironi", "Calendario & Tabellini", "Gestione Squadre"])
-if st.sidebar.button("Esci"):
-    st.session_state.authenticated = False
-    st.rerun()
+page = st.sidebar.radio("Navigazione", ["Gironi", "Gestione Squadre"])
 
-# ==========================================
-# PAGINA 1: GIRONI (A, B, C) & ROSTER
-# ==========================================
 if page == "Gironi":
     st.title("Gironi — Divisione Regionale 2 Puglia")
-    st.caption("1ª sale diretta · 2ª Play-off · 3ª Play-off solo se migliore terza · Ultime 4 Play-out.")
-
     girone_sel = st.selectbox("Seleziona Girone", ["Girone A", "Girone B", "Girone C"])
+    board = compute_standings_for_girone(girone_sel, teams_df, games_df)
+    best_third_team, ranked_thirds = compute_best_third(teams_df, games_df)
+    render_standings_board(board, girone_sel, best_third_team, ranked_thirds)
 
-    meta_row = meta_df[meta_df["Girone"] == girone_sel]
-    current_terza_status = meta_row.iloc[0]["Terza_Migliore"] if not meta_row.empty else "In attesa"
-
-    if girone_sel == "Girone A":
-        terza_opts = ["In attesa", "Migliore 3ª (Play-off)", "Non migliore 3ª"]
-        idx_t = terza_opts.index(current_terza_status) if current_terza_status in terza_opts else 0
-        new_terza_status = st.selectbox(
-            "Stato 3ª classificata (confronto migliore terza tra i 3 gironi)",
-            terza_opts,
-            index=idx_t,
-        )
-        if new_terza_status != current_terza_status:
-            if meta_row.empty:
-                meta_df = pd.concat(
-                    [meta_df, pd.DataFrame([{"Girone": girone_sel, "Terza_Migliore": new_terza_status}])],
-                    ignore_index=True,
-                )
-            else:
-                meta_df.loc[meta_df["Girone"] == girone_sel, "Terza_Migliore"] = new_terza_status
-            save_meta(meta_df)
-            current_terza_status = new_terza_status
-
-    g_teams = teams_df[teams_df["Girone"] == girone_sel].reset_index(drop=True)
-    if g_teams.empty:
-        st.info(
-            f"Nessuna squadra inserita in **{girone_sel}** al momento. "
-            "Puoi aggiungere squadre da *Gestione Squadre* (utile per Play-off / Play-out o post-season)."
-        )
-    else:
-        st.subheader(f"Classifica — {girone_sel}")
-        ordered_teams = render_standings_board(g_teams, girone_sel, games_df, current_terza_status)
-
-        st.divider()
-        st.subheader("Dettaglio Squadra e Roster")
-        selected_team = st.selectbox(
-            "Seleziona una squadra per vedere logo, record, roster e statistiche",
-            ordered_teams,
-        )
-
-        team_info = g_teams[g_teams["Squadra"] == selected_team].iloc[0]
-        m_sel = compute_team_metrics(selected_team, girone_sel, games_df)
-
-        col1, col2 = st.columns([1, 4])
-        with col1:
-            if team_info["Logo_URL"].strip():
-                st.image(team_info["Logo_URL"].strip(), width=100)
-            else:
-                st.markdown("### 🏀")
-        with col2:
-            st.markdown(f"### {selected_team}")
-            st.markdown(
-                f"**PTS:** {m_sel['PTS']} · **Record (V-S):** {m_sel['V']}-{m_sel['S']} · "
-                f"**PG:** {m_sel['PG']} · **DP:** {format_dp(m_sel['DP'])} · **Streak:** {m_sel['STREAK']}"
-            )
-            if team_info["Note_Tattiche"].strip():
-                st.info(f"**Note tattiche:** {team_info['Note_Tattiche']}")
-
-        roster_df = compute_roster_stats(selected_team, girone_sel, box_df)
-        st.markdown("#### Roster e Statistiche Giocatori")
-        if roster_df.empty:
-            st.warning("Nessun tabellino registrato ancora per questa squadra.")
-        else:
-            st.dataframe(roster_df, use_container_width=True, hide_index=True)
-
-# ==========================================
-# PAGINA 2: CALENDARIO & TABELLINI
-# ==========================================
-elif page == "Calendario & Tabellini":
-    st.title("Calendario & Tabellini")
-
-    girone_cal = st.selectbox("Girone", ["Girone A", "Girone B", "Girone C"], key="cal_girone")
-    cal_teams = teams_df[teams_df["Girone"] == girone_cal]["Squadra"].tolist()
-
-    with st.expander("➕ Aggiungi nuova partita al calendario"):
-        with st.form("add_game_form"):
-            c1, c2, c3 = st.columns(3)
-            giornata = c1.number_input("Giornata", min_value=1, max_value=40, value=1, step=1)
-            data_gara = c2.text_input("Data e Ora (es. 29/11/26 18:00)", value="")
-            stato = c3.selectbox("Stato", ["Da giocare", "Giocata"])
-
-            c4, c5, c6, c7 = st.columns([3, 1, 1, 3])
-            if len(cal_teams) >= 2:
-                casa = c4.selectbox("Squadra Casa", cal_teams, index=0)
-                trasferta = c7.selectbox("Squadra Trasferta", cal_teams, index=1)
-            else:
-                casa = c4.text_input("Squadra Casa")
-                trasferta = c7.text_input("Squadra Trasferta")
-
-            pts_casa = c5.number_input("Pti Casa", min_value=0, max_value=200, value=0, step=1)
-            pts_trasf = c6.number_input("Pti Trasf", min_value=0, max_value=200, value=0, step=1)
-
-            submitted = st.form_submit_button("Salva Partita")
-            if submitted:
-                if not casa or not trasferta or casa == trasferta:
-                    st.error("Seleziona due squadre differenti per Casa e Trasferta.")
-                else:
-                    game_id = f"{girone_cal.replace(' ', '')}_G{giornata}_{casa[:8]}_{trasferta[:8]}_{len(games_df)+1}"
-                    new_row = pd.DataFrame(
-                        [
-                            {
-                                "ID_Partita": game_id,
-                                "Girone": girone_cal,
-                                "Giornata": int(giornata),
-                                "Data": data_gara,
-                                "Casa": casa,
-                                "Trasferta": trasferta,
-                                "Punti_Casa": int(pts_casa),
-                                "Punti_Trasferta": int(pts_trasf),
-                                "Stato": stato,
-                            }
-                        ]
-                    )
-                    games_df = pd.concat([games_df, new_row], ignore_index=True)
-                    save_games(games_df)
-                    st.success("Partita salvata.")
-                    st.rerun()
-
-    g_games = games_df[games_df["Girone"] == girone_cal].copy()
-    if g_games.empty:
-        st.info("Nessuna partita ancora presente per questo girone.")
-    else:
-        g_games_sorted = g_games.sort_values(by=["Giornata", "ID_Partita"]).reset_index(drop=True)
-        rounds_available = sorted(g_games_sorted["Giornata"].unique().tolist())
-
-        round_filter = st.selectbox(
-            "Filtra per Giornata",
-            ["Tutte le giornate"] + [f"Giornata {r}" for r in rounds_available],
-        )
-
-        rounds_to_show = (
-            rounds_available
-            if round_filter == "Tutte le giornate"
-            else [int(round_filter.replace("Giornata ", ""))]
-        )
-
-        for r_num in rounds_to_show:
-            r_df = g_games_sorted[g_games_sorted["Giornata"] == r_num]
-            render_round_card(int(r_num), r_df, logo_lookup)
-
-        st.divider()
-        st.subheader("Inserisci / Aggiorna Risultato e Tabellino Giocatore")
-
-        game_labels = {
-            f"G{r['Giornata']} | {r['Casa']} vs {r['Trasferta']} ({r['Stato']})": r["ID_Partita"]
-            for _, r in g_games_sorted.iterrows()
-        }
-        sel_game_label = st.selectbox("Seleziona Partita", list(game_labels.keys()))
-        sel_game_id = game_labels[sel_game_label]
-        game_row = games_df[games_df["ID_Partita"] == sel_game_id].iloc[0]
-
-        with st.form("update_result_form"):
-            col_r1, col_r2, col_r3, col_r4 = st.columns(4)
-            upd_casa = col_r1.number_input("Punti Casa", min_value=0, max_value=200, value=int(game_row["Punti_Casa"]), step=1)
-            upd_trasf = col_r2.number_input("Punti Trasferta", min_value=0, max_value=200, value=int(game_row["Punti_Trasferta"]), step=1)
-            upd_stato = col_r3.selectbox("Stato Partita", ["Da giocare", "Giocata"], index=0 if game_row["Stato"] == "Da giocare" else 1)
-            if col_r4.form_submit_button("Aggiorna Risultato"):
-                idx = games_df.index[games_df["ID_Partita"] == sel_game_id][0]
-                games_df.loc[idx, "Punti_Casa"] = int(upd_casa)
-                games_df.loc[idx, "Punti_Trasferta"] = int(upd_trasf)
-                games_df.loc[idx, "Stato"] = upd_stato
-                save_games(games_df)
-                st.success("Risultato aggiornato.")
-                st.rerun()
-
-        with st.form("add_box_row_form"):
-            b1, b2, b3, b4 = st.columns([2.5, 2.5, 1.2, 1.5])
-            sq_options = [s for s in [game_row["Casa"], game_row["Trasferta"]] if s] or cal_teams
-            tab_sq = b1.selectbox("Squadra Giocatore", sq_options if sq_options else ["Squadra"])
-            giocatore = b2.text_input("Nome e Cognome")
-            numero = b3.text_input("Numero")
-            ruolo = b4.text_input("Ruolo (opz.)")
-
-            s1, s2, s3, s4, s5, s6 = st.columns(6)
-            quintetto = s1.checkbox("Quintetto Base")
-            punti = s2.number_input("Punti", min_value=0, max_value=100, value=0, step=1)
-            p2 = s3.number_input("2P Segnati", min_value=0, max_value=50, value=0, step=1)
-            p3 = s4.number_input("3P Segnati", min_value=0, max_value=30, value=0, step=1)
-            tl_m = s5.number_input("TL Segnati", min_value=0, max_value=40, value=0, step=1)
-            tl_x = s6.number_input("TL Sbagliati", min_value=0, max_value=40, value=0, step=1)
-
-            if st.form_submit_button("Aggiungi Giocatore a Tabellino"):
-                if not giocatore.strip():
-                    st.error("Inserisci Nome e Cognome del giocatore.")
-                else:
-                    new_box = pd.DataFrame(
-                        [
-                            {
-                                "ID_Partita": sel_game_id,
-                                "Girone": girone_cal,
-                                "Squadra": tab_sq,
-                                "Quintetto_Base": quintetto,
-                                "Numero": numero.strip(),
-                                "Ruolo": ruolo.strip(),
-                                "Giocatore": giocatore.strip(),
-                                "Punti": int(punti),
-                                "2P_Segnati": int(p2),
-                                "3P_Segnati": int(p3),
-                                "TL_Segnati": int(tl_m),
-                                "TL_Sbagliati": int(tl_x),
-                            }
-                        ]
-                    )
-                    box_df = pd.concat([box_df, new_box], ignore_index=True)
-                    save_box(box_df)
-                    st.success("Riga di tabellino salvata.")
-                    st.rerun()
-
-        st.markdown("#### Tabellino Registrato per la Partita Selezionata")
-        game_box = box_df[box_df["ID_Partita"] == sel_game_id]
-        if game_box.empty:
-            st.info("Nessun giocatore inserito ancora per questa partita.")
-        else:
-            st.dataframe(
-                game_box[
-                    [
-                        "Squadra",
-                        "Quintetto_Base",
-                        "Numero",
-                        "Ruolo",
-                        "Giocatore",
-                        "Punti",
-                        "2P_Segnati",
-                        "3P_Segnati",
-                        "TL_Segnati",
-                        "TL_Sbagliati",
-                    ]
-                ],
-                use_container_width=True,
-                hide_index=True,
-            )
-
-# ==========================================
-# PAGINA 3: GESTIONE SQUADRE, RIPRISTINO & EXPORT
-# ==========================================
 elif page == "Gestione Squadre":
     st.title("Gestione Squadre e Dati")
-    st.caption("Modifica squadre/loghi/note del Girone A o aggiungi squadre per eventuale post-season.")
-
-    girone_edit = st.selectbox("Girone da modificare", ["Girone A", "Girone B", "Girone C"], key="edit_girone")
-    sub_teams = teams_df[teams_df["Girone"] == girone_edit].reset_index(drop=True)
-
-    edited_df = st.data_editor(
-        sub_teams,
-        num_rows="dynamic",
-        use_container_width=True,
-        hide_index=True,
-    )
-
-    if st.button("Salva Modifiche Squadre"):
-        edited_df["Girone"] = girone_edit
-        other_teams = teams_df[teams_df["Girone"] != girone_edit]
-        updated_all = pd.concat([other_teams, edited_df], ignore_index=True)
-        save_teams(updated_all)
-        st.success("Squadre salvate.")
+    if st.button("🔄 Ripristina Tutti i Gironi e Calendari Ufficiali (A, B, C)"):
+        reset_official_data()
+        resolve_logo_src.clear()
+        st.success("Dati ufficiali ripristinati.")
         st.rerun()
-
-    st.divider()
-    st.subheader("Ripristino Dati Ufficiali Girone A")
-    st.caption(
-        "Sovrascrive squadre (con loghi) e calendario ufficiale del Girone A "
-        "con i dati precaricati nel codice."
-    )
-    if st.button("🔄 Ripristina 11 Squadre e Calendario Ufficiale"):
-        save_teams(pd.DataFrame(DEFAULT_TEAMS))
-        save_games(build_default_games_df())
-        st.success("Squadre con loghi e calendario ufficiale ripristinati.")
-        st.rerun()
-
-    st.divider()
-    st.subheader("Esporta Dati (CSV)")
-    c_exp1, c_exp2, c_exp3 = st.columns(3)
-    c_exp1.download_button("Scarica Squadre CSV", teams_df.to_csv(index=False).encode("utf-8"), "squadre.csv", "text/csv")
-    c_exp2.download_button("Scarica Partite CSV", games_df.to_csv(index=False).encode("utf-8"), "partite.csv", "text/csv")
-    c_exp3.download_button("Scarica Tabellini CSV", box_df.to_csv(index=False).encode("utf-8"), "tabellini.csv", "text/csv")
