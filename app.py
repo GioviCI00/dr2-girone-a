@@ -218,16 +218,15 @@ STANDINGS_CSS = """
     font-weight: 700;
     font-size: 14px;
 }
-/* Barra scura tipo "Ultime 5" */
 .streak-track {
     display: inline-flex;
     align-items: center;
     gap: 4px;
     background: #0d1218;
-    border: 1px solid rgba(255, 255, 255, 0.10);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 8px;
-    padding: 4px 14px 4px 6px;
-    min-width: 124px;
+    padding: 4px 12px 4px 6px;
+    min-width: 122px;
     justify-content: flex-start;
 }
 .streak-item {
@@ -252,10 +251,10 @@ a.streak-link {
     color: #ffffff;
     line-height: 1;
     cursor: pointer;
-    transition: transform 0.14s ease, filter 0.14s ease;
+    transition: transform 0.12s ease, filter 0.12s ease;
 }
 .streak-item:hover .streak-box {
-    transform: translateY(-2px) scale(1.06);
+    transform: translateY(-2px);
     filter: brightness(1.15);
 }
 .streak-w {
@@ -266,26 +265,25 @@ a.streak-link {
     background: #dc2626;
     border: 1px solid #ef4444;
 }
-/* Tooltip estetico al passaggio del mouse */
 .streak-tooltip {
     visibility: hidden;
     opacity: 0;
     pointer-events: none;
     position: absolute;
-    bottom: calc(100% + 9px);
+    bottom: calc(100% + 8px);
     left: 50%;
-    transform: translateX(-50%) translateY(4px);
+    transform: translateX(-50%);
     z-index: 9999;
-    min-width: 220px;
-    max-width: 300px;
-    background: linear-gradient(180deg, #111827 0%, #0b101b 100%);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    border-radius: 10px;
-    padding: 8px 11px;
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 212, 59, 0.08);
+    min-width: 210px;
+    max-width: 290px;
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 9px;
+    padding: 7px 10px;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
     text-align: center;
     white-space: normal;
-    transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s ease;
+    transition: opacity 0.14s ease, visibility 0.14s ease;
 }
 .streak-tooltip::after {
     content: "";
@@ -295,12 +293,11 @@ a.streak-link {
     transform: translateX(-50%);
     border-width: 6px;
     border-style: solid;
-    border-color: #0b101b transparent transparent transparent;
+    border-color: #0f172a transparent transparent transparent;
 }
 .streak-item:hover .streak-tooltip {
     visibility: visible;
     opacity: 1;
-    transform: translateX(-50%) translateY(0);
 }
 .tt-top {
     display: flex;
@@ -310,21 +307,19 @@ a.streak-link {
     font-size: 11px;
     font-weight: 700;
     color: #94a3b8;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
 }
 .tt-badge-w {
-    background: rgba(22, 163, 74, 0.22);
+    background: rgba(22, 163, 74, 0.25);
     color: #4ade80;
-    border: 1px solid rgba(34, 197, 94, 0.45);
     border-radius: 4px;
     padding: 1px 5px;
     font-size: 10px;
     font-weight: 900;
 }
 .tt-badge-l {
-    background: rgba(220, 38, 38, 0.22);
+    background: rgba(220, 38, 38, 0.25);
     color: #f87171;
-    border: 1px solid rgba(239, 68, 68, 0.45);
     border-radius: 4px;
     padding: 1px 5px;
     font-size: 10px;
@@ -644,7 +639,6 @@ def _format_tooltip_data(g) -> dict[str, str]:
 
 
 def _render_streak_html(events: list[dict], max_items: int = 5) -> str:
-    """Renderizza la barra Streak con box W/L cliccabili e tooltip estetico al passaggio del mouse."""
     recent = events[-max_items:]
     if not recent:
         return '<div class="streak-track"><span class="streak-empty">—</span></div>'
@@ -780,6 +774,7 @@ def compute_standings(girone: str, games_df: pd.DataFrame) -> list[dict]:
 
 
 def compute_thirds_standings(games_df: pd.DataFrame) -> list[dict]:
+    """Classifica delle terze classificate dei tre gironi (punti, poi differenza canestri)."""
     thirds = []
     for g_name in ("Girone A", "Girone B", "Girone C"):
         board = compute_standings(g_name, games_df)
@@ -923,7 +918,7 @@ def build_round_html(round_num: int, round_games: pd.DataFrame, logo_html_map: d
             s2 = str(away_pts) if is_played else ""
 
             parts.append(
-                f'<a class="cal-match-link" href="?match={gid_encoded}" target="_self" title="Apri scheda partita">'
+                f'<a class="cal-match-link" href="?match={gid_encoded}" target="_self">'
                 f'<div class="cal-match">'
                 f'<div class="cal-meta"><div class="cal-date">{date_str}</div>{meta_sub}</div>'
                 f'<div class="cal-teams">'
