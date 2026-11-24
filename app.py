@@ -28,6 +28,7 @@ def logo_url(filename: str) -> str:
 
 
 DEFAULT_TEAMS = [
+    # GIRONE A (11 squadre)
     {"Girone": "Girone A", "Squadra": "Angiulli Bari", "Logo_URL": logo_url("Angiulli Basket Bari.png"), "Note_Tattiche": ""},
     {"Girone": "Girone A", "Squadra": "A.G.S.D. Toritto", "Logo_URL": logo_url("A.G.S.D. TORITTO.png"), "Note_Tattiche": ""},
     {"Girone": "Girone A", "Squadra": "Orsa Capurso", "Logo_URL": logo_url("orsa capurso.png"), "Note_Tattiche": ""},
@@ -39,163 +40,442 @@ DEFAULT_TEAMS = [
     {"Girone": "Girone A", "Squadra": "Fortitudo BK Apricena", "Logo_URL": logo_url("Fortitudo Basket Apricena.png"), "Note_Tattiche": ""},
     {"Girone": "Girone A", "Squadra": "Olimpia Corato", "Logo_URL": logo_url("Olimpia Corato.png"), "Note_Tattiche": ""},
     {"Girone": "Girone A", "Squadra": "Virtus Foggia", "Logo_URL": logo_url("Virtus Foggia.png"), "Note_Tattiche": ""},
+
+    # GIRONE B (11 squadre - CU n. 92)
+    {"Girone": "Girone B", "Squadra": "ASD Scuola Basket Martinese", "Logo_URL": "", "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "Dream Basket Altamura", "Logo_URL": "", "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "Murgia Santeramo", "Logo_URL": "", "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "New Sporting Basket Mottola", "Logo_URL": "", "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "Domiti La Pinta Pulsano", "Logo_URL": "", "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "Support_o Taranto", "Logo_URL": "", "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "A.S.D. Atletica Basket Putignano", "Logo_URL": "", "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "Basket Fasano", "Logo_URL": "", "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "Messapica Basket Ceglie", "Logo_URL": "", "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "Club Giganti Cisternino", "Logo_URL": "", "Note_Tattiche": ""},
+    {"Girone": "Girone B", "Squadra": "Olympia Rutigliano", "Logo_URL": "", "Note_Tattiche": ""},
+
+    # GIRONE C (11 squadre - CU n. 93)
+    {"Girone": "Girone C", "Squadra": "Basket Tricase", "Logo_URL": "", "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "Aurora Brindisi", "Logo_URL": "", "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "All Star Francavilla", "Logo_URL": "", "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "Bellfika Mesagne", "Logo_URL": "", "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "Zero21 Calimera", "Logo_URL": "", "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "ASD Magic Galatina", "Logo_URL": "", "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "A.S.S.I. Basket Brindisi", "Logo_URL": "", "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "New Basket Carmiano", "Logo_URL": "", "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "Lupa Lecce", "Logo_URL": "", "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "Virtus Brindisi", "Logo_URL": "", "Note_Tattiche": ""},
+    {"Girone": "Girone C", "Squadra": "Polisportiva Manduria", "Logo_URL": "", "Note_Tattiche": ""},
 ]
 
-# Calendario ufficiale CU n. 91 (Squadra A = Casa, Squadra B = Trasferta)
+# Tupla: (ID_Partita, Girone, Giornata, Data_Ora, Casa, Trasferta, Punti_Casa, Punti_Trasferta, Stato)
 DEFAULT_GAMES_RAW = [
-    # 1ª Giornata di andata
-    ("G01_1867", 1, "Sab 07/11/2026 19:00", "Nuova Matteotti Corato", "Olimpia Corato", 72, 67, "Giocata"),
-    ("G01_1868", 1, "Dom 08/11/2026 18:30", "Fortitudo BK Apricena", "Mediterranea Cerignola", 50, 76, "Giocata"),
-    ("G01_1869", 1, "Dom 08/11/2026 18:00", "Angiulli Bari", "Magic Bari", 68, 50, "Giocata"),
-    ("G01_1870", 1, "Sab 07/11/2026 18:30", "Virtus Foggia", "Orsa Capurso", 78, 87, "Giocata"),
-    ("G01_1871", 1, "Dom 08/11/2026 18:30", "Basket Bitritto", "A.G.S.D. Toritto", 62, 81, "Giocata"),
+    # ==========================================================
+    # GIRONE A (CU n. 91)
+    # ==========================================================
+    ("G01_1867", "Girone A", 1, "Sab 07/11/2026 19:00", "Nuova Matteotti Corato", "Olimpia Corato", 72, 67, "Giocata"),
+    ("G01_1868", "Girone A", 1, "Dom 08/11/2026 18:30", "Fortitudo BK Apricena", "Mediterranea Cerignola", 50, 76, "Giocata"),
+    ("G01_1869", "Girone A", 1, "Dom 08/11/2026 18:00", "Angiulli Bari", "Magic Bari", 68, 50, "Giocata"),
+    ("G01_1870", "Girone A", 1, "Sab 07/11/2026 18:30", "Virtus Foggia", "Orsa Capurso", 78, 87, "Giocata"),
+    ("G01_1871", "Girone A", 1, "Dom 08/11/2026 18:30", "Basket Bitritto", "A.G.S.D. Toritto", 62, 81, "Giocata"),
 
-    # 2ª Giornata di andata
-    ("G02_1872", 2, "Sab 14/11/2026 18:00", "Virtus Foggia", "Vigor San Severo", 65, 69, "Giocata"),
-    ("G02_1873", 2, "Dom 15/11/2026 20:15", "Olimpia Corato", "Fortitudo BK Apricena", 50, 56, "Giocata"),
-    ("G02_1874", 2, "Dom 15/11/2026 19:00", "Mediterranea Cerignola", "Nuova Matteotti Corato", 49, 59, "Giocata"),
-    ("G02_1875", 2, "Dom 15/11/2026 19:00", "A.G.S.D. Toritto", "Angiulli Bari", 85, 96, "Giocata"),
-    ("G02_1876", 2, "Dom 15/11/2026 17:30", "Magic Bari", "Basket Bitritto", 56, 48, "Giocata"),
+    ("G02_1872", "Girone A", 2, "Sab 14/11/2026 18:00", "Virtus Foggia", "Vigor San Severo", 65, 69, "Giocata"),
+    ("G02_1873", "Girone A", 2, "Dom 15/11/2026 20:15", "Olimpia Corato", "Fortitudo BK Apricena", 50, 56, "Giocata"),
+    ("G02_1874", "Girone A", 2, "Dom 15/11/2026 19:00", "Mediterranea Cerignola", "Nuova Matteotti Corato", 49, 59, "Giocata"),
+    ("G02_1875", "Girone A", 2, "Dom 15/11/2026 19:00", "A.G.S.D. Toritto", "Angiulli Bari", 85, 96, "Giocata"),
+    ("G02_1876", "Girone A", 2, "Dom 15/11/2026 17:30", "Magic Bari", "Basket Bitritto", 56, 48, "Giocata"),
 
-    # 3ª Giornata di andata
-    ("G03_1877", 3, "Sab 21/11/2026 19:30", "Angiulli Bari", "Mediterranea Cerignola", 86, 75, "Giocata"),
-    ("G03_1878", 3, "Dom 22/11/2026 18:30", "Fortitudo BK Apricena", "Magic Bari", 69, 79, "Giocata"),
-    ("G03_1879", 3, "Dom 22/11/2026 18:00", "Orsa Capurso", "Vigor San Severo", 78, 75, "Giocata"),
-    ("G03_1880", 3, "Sab 21/11/2026 19:00", "Nuova Matteotti Corato", "A.G.S.D. Toritto", 64, 77, "Giocata"),
-    ("G03_1881", 3, "Dom 22/11/2026 18:30", "Basket Bitritto", "Olimpia Corato", 51, 50, "Giocata"),
+    ("G03_1877", "Girone A", 3, "Sab 21/11/2026 19:30", "Angiulli Bari", "Mediterranea Cerignola", 86, 75, "Giocata"),
+    ("G03_1878", "Girone A", 3, "Dom 22/11/2026 18:30", "Fortitudo BK Apricena", "Magic Bari", 69, 79, "Giocata"),
+    ("G03_1879", "Girone A", 3, "Dom 22/11/2026 18:00", "Orsa Capurso", "Vigor San Severo", 78, 75, "Giocata"),
+    ("G03_1880", "Girone A", 3, "Sab 21/11/2026 19:00", "Nuova Matteotti Corato", "A.G.S.D. Toritto", 64, 77, "Giocata"),
+    ("G03_1881", "Girone A", 3, "Dom 22/11/2026 18:30", "Basket Bitritto", "Olimpia Corato", 51, 50, "Giocata"),
 
-    # 4ª Giornata di andata
-    ("G04_1882", 4, "Dom 29/11/2026 17:30", "Magic Bari", "Nuova Matteotti Corato", 0, 0, "Da giocare"),
-    ("G04_1883", 4, "Dom 29/11/2026 19:00", "A.G.S.D. Toritto", "Fortitudo BK Apricena", 0, 0, "Da giocare"),
-    ("G04_1884", 4, "Sab 28/11/2026 18:30", "Virtus Foggia", "Angiulli Bari", 0, 0, "Da giocare"),
-    ("G04_1885", 4, "Dom 29/11/2026 18:00", "Orsa Capurso", "Olimpia Corato", 0, 0, "Da giocare"),
-    ("G04_1886", 4, "Sab 28/11/2026 19:45", "Vigor San Severo", "Basket Bitritto", 0, 0, "Da giocare"),
+    ("G04_1882", "Girone A", 4, "Dom 29/11/2026 17:30", "Magic Bari", "Nuova Matteotti Corato", 0, 0, "Da giocare"),
+    ("G04_1883", "Girone A", 4, "Dom 29/11/2026 19:00", "A.G.S.D. Toritto", "Fortitudo BK Apricena", 0, 0, "Da giocare"),
+    ("G04_1884", "Girone A", 4, "Sab 28/11/2026 18:30", "Virtus Foggia", "Angiulli Bari", 0, 0, "Da giocare"),
+    ("G04_1885", "Girone A", 4, "Dom 29/11/2026 18:00", "Orsa Capurso", "Olimpia Corato", 0, 0, "Da giocare"),
+    ("G04_1886", "Girone A", 4, "Sab 28/11/2026 19:45", "Vigor San Severo", "Basket Bitritto", 0, 0, "Da giocare"),
 
-    # 5ª Giornata di andata
-    ("G05_1887", 5, "Dom 06/12/2026 17:30", "Magic Bari", "Orsa Capurso", 0, 0, "Da giocare"),
-    ("G05_1888", 5, "Dom 06/12/2026 19:00", "Mediterranea Cerignola", "A.G.S.D. Toritto", 0, 0, "Da giocare"),
-    ("G05_1889", 5, "Dom 06/12/2026 20:15", "Olimpia Corato", "Vigor San Severo", 0, 0, "Da giocare"),
-    ("G05_1890", 5, "Dom 06/12/2026 18:30", "Basket Bitritto", "Virtus Foggia", 0, 0, "Da giocare"),
-    ("G05_1891", 5, "Sab 05/12/2026 19:30", "Angiulli Bari", "Nuova Matteotti Corato", 0, 0, "Da giocare"),
+    ("G05_1887", "Girone A", 5, "Dom 06/12/2026 17:30", "Magic Bari", "Orsa Capurso", 0, 0, "Da giocare"),
+    ("G05_1888", "Girone A", 5, "Dom 06/12/2026 19:00", "Mediterranea Cerignola", "A.G.S.D. Toritto", 0, 0, "Da giocare"),
+    ("G05_1889", "Girone A", 5, "Dom 06/12/2026 20:15", "Olimpia Corato", "Vigor San Severo", 0, 0, "Da giocare"),
+    ("G05_1890", "Girone A", 5, "Dom 06/12/2026 18:30", "Basket Bitritto", "Virtus Foggia", 0, 0, "Da giocare"),
+    ("G05_1891", "Girone A", 5, "Sab 05/12/2026 19:30", "Angiulli Bari", "Nuova Matteotti Corato", 0, 0, "Da giocare"),
 
-    # 6ª Giornata di andata
-    ("G06_1892", 6, "Dom 13/12/2026 18:30", "Fortitudo BK Apricena", "Basket Bitritto", 0, 0, "Da giocare"),
-    ("G06_1893", 6, "Dom 13/12/2026 20:15", "Olimpia Corato", "Magic Bari", 0, 0, "Da giocare"),
-    ("G06_1894", 6, "Sab 12/12/2026 19:00", "Nuova Matteotti Corato", "Vigor San Severo", 0, 0, "Da giocare"),
-    ("G06_1895", 6, "Dom 13/12/2026 18:00", "Orsa Capurso", "Angiulli Bari", 0, 0, "Da giocare"),
-    ("G06_1896", 6, "Gio 17/12/2026 20:00", "Virtus Foggia", "Mediterranea Cerignola", 0, 0, "Da giocare"),
+    ("G06_1892", "Girone A", 6, "Dom 13/12/2026 18:30", "Fortitudo BK Apricena", "Basket Bitritto", 0, 0, "Da giocare"),
+    ("G06_1893", "Girone A", 6, "Dom 13/12/2026 20:15", "Olimpia Corato", "Magic Bari", 0, 0, "Da giocare"),
+    ("G06_1894", "Girone A", 6, "Sab 12/12/2026 19:00", "Nuova Matteotti Corato", "Vigor San Severo", 0, 0, "Da giocare"),
+    ("G06_1895", "Girone A", 6, "Dom 13/12/2026 18:00", "Orsa Capurso", "Angiulli Bari", 0, 0, "Da giocare"),
+    ("G06_1896", "Girone A", 6, "Gio 17/12/2026 20:00", "Virtus Foggia", "Mediterranea Cerignola", 0, 0, "Da giocare"),
 
-    # 7ª Giornata di andata
-    ("G07_1897", 7, "Sab 19/12/2026 18:00", "Vigor San Severo", "Fortitudo BK Apricena", 0, 0, "Da giocare"),
-    ("G07_1898", 7, "Dom 20/12/2026 19:00", "Mediterranea Cerignola", "Olimpia Corato", 0, 0, "Da giocare"),
-    ("G07_1899", 7, "Dom 20/12/2026 18:30", "Basket Bitritto", "Nuova Matteotti Corato", 0, 0, "Da giocare"),
-    ("G07_1900", 7, "Dom 20/12/2026 19:00", "A.G.S.D. Toritto", "Orsa Capurso", 0, 0, "Da giocare"),
-    ("G07_1901", 7, "Dom 20/12/2026 17:30", "Magic Bari", "Virtus Foggia", 0, 0, "Da giocare"),
+    ("G07_1897", "Girone A", 7, "Sab 19/12/2026 18:00", "Vigor San Severo", "Fortitudo BK Apricena", 0, 0, "Da giocare"),
+    ("G07_1898", "Girone A", 7, "Dom 20/12/2026 19:00", "Mediterranea Cerignola", "Olimpia Corato", 0, 0, "Da giocare"),
+    ("G07_1899", "Girone A", 7, "Dom 20/12/2026 18:30", "Basket Bitritto", "Nuova Matteotti Corato", 0, 0, "Da giocare"),
+    ("G07_1900", "Girone A", 7, "Dom 20/12/2026 19:00", "A.G.S.D. Toritto", "Orsa Capurso", 0, 0, "Da giocare"),
+    ("G07_1901", "Girone A", 7, "Dom 20/12/2026 17:30", "Magic Bari", "Virtus Foggia", 0, 0, "Da giocare"),
 
-    # 8ª Giornata di andata
-    ("G08_1902", 8, "Dom 10/01/2027 18:30", "Fortitudo BK Apricena", "Angiulli Bari", 0, 0, "Da giocare"),
-    ("G08_1903", 8, "Dom 10/01/2027 19:00", "A.G.S.D. Toritto", "Vigor San Severo", 0, 0, "Da giocare"),
-    ("G08_1904", 8, "Dom 10/01/2027 19:00", "Mediterranea Cerignola", "Magic Bari", 0, 0, "Da giocare"),
-    ("G08_1905", 8, "Sab 09/01/2027 19:00", "Nuova Matteotti Corato", "Orsa Capurso", 0, 0, "Da giocare"),
-    ("G08_1906", 8, "Dom 10/01/2027 20:15", "Olimpia Corato", "Virtus Foggia", 0, 0, "Da giocare"),
+    ("G08_1902", "Girone A", 8, "Dom 10/01/2027 18:30", "Fortitudo BK Apricena", "Angiulli Bari", 0, 0, "Da giocare"),
+    ("G08_1903", "Girone A", 8, "Dom 10/01/2027 19:00", "A.G.S.D. Toritto", "Vigor San Severo", 0, 0, "Da giocare"),
+    ("G08_1904", "Girone A", 8, "Dom 10/01/2027 19:00", "Mediterranea Cerignola", "Magic Bari", 0, 0, "Da giocare"),
+    ("G08_1905", "Girone A", 8, "Sab 09/01/2027 19:00", "Nuova Matteotti Corato", "Orsa Capurso", 0, 0, "Da giocare"),
+    ("G08_1906", "Girone A", 8, "Dom 10/01/2027 20:15", "Olimpia Corato", "Virtus Foggia", 0, 0, "Da giocare"),
 
-    # 9ª Giornata di andata
-    ("G09_1907", 9, "Sab 16/01/2027 18:00", "Vigor San Severo", "Magic Bari", 0, 0, "Da giocare"),
-    ("G09_1908", 9, "Sab 16/01/2027 18:30", "Virtus Foggia", "A.G.S.D. Toritto", 0, 0, "Da giocare"),
-    ("G09_1909", 9, "Dom 17/01/2027 18:00", "Orsa Capurso", "Mediterranea Cerignola", 0, 0, "Da giocare"),
-    ("G09_1910", 9, "Sab 16/01/2027 19:30", "Angiulli Bari", "Basket Bitritto", 0, 0, "Da giocare"),
-    ("G09_1911", 9, "Sab 16/01/2027 17:00", "Nuova Matteotti Corato", "Fortitudo BK Apricena", 0, 0, "Da giocare"),
+    ("G09_1907", "Girone A", 9, "Sab 16/01/2027 18:00", "Vigor San Severo", "Magic Bari", 0, 0, "Da giocare"),
+    ("G09_1908", "Girone A", 9, "Sab 16/01/2027 18:30", "Virtus Foggia", "A.G.S.D. Toritto", 0, 0, "Da giocare"),
+    ("G09_1909", "Girone A", 9, "Dom 17/01/2027 18:00", "Orsa Capurso", "Mediterranea Cerignola", 0, 0, "Da giocare"),
+    ("G09_1910", "Girone A", 9, "Sab 16/01/2027 19:30", "Angiulli Bari", "Basket Bitritto", 0, 0, "Da giocare"),
+    ("G09_1911", "Girone A", 9, "Sab 16/01/2027 17:00", "Nuova Matteotti Corato", "Fortitudo BK Apricena", 0, 0, "Da giocare"),
 
-    # 10ª Giornata di andata
-    ("G10_1912", 10, "Dom 24/01/2027 19:00", "A.G.S.D. Toritto", "Olimpia Corato", 0, 0, "Da giocare"),
-    ("G10_1913", 10, "Dom 24/01/2027 19:00", "Mediterranea Cerignola", "Basket Bitritto", 0, 0, "Da giocare"),
-    ("G10_1914", 10, "Dom 24/01/2027 18:00", "Orsa Capurso", "Fortitudo BK Apricena", 0, 0, "Da giocare"),
-    ("G10_1915", 10, "Sab 23/01/2027 19:30", "Angiulli Bari", "Vigor San Severo", 0, 0, "Da giocare"),
-    ("G10_1916", 10, "Sab 23/01/2027 18:30", "Virtus Foggia", "Nuova Matteotti Corato", 0, 0, "Da giocare"),
+    ("G10_1912", "Girone A", 10, "Dom 24/01/2027 19:00", "A.G.S.D. Toritto", "Olimpia Corato", 0, 0, "Da giocare"),
+    ("G10_1913", "Girone A", 10, "Dom 24/01/2027 19:00", "Mediterranea Cerignola", "Basket Bitritto", 0, 0, "Da giocare"),
+    ("G10_1914", "Girone A", 10, "Dom 24/01/2027 18:00", "Orsa Capurso", "Fortitudo BK Apricena", 0, 0, "Da giocare"),
+    ("G10_1915", "Girone A", 10, "Sab 23/01/2027 19:30", "Angiulli Bari", "Vigor San Severo", 0, 0, "Da giocare"),
+    ("G10_1916", "Girone A", 10, "Sab 23/01/2027 18:30", "Virtus Foggia", "Nuova Matteotti Corato", 0, 0, "Da giocare"),
 
-    # 11ª Giornata di andata
-    ("G11_1917", 11, "Dom 31/01/2027 17:30", "Magic Bari", "A.G.S.D. Toritto", 0, 0, "Da giocare"),
-    ("G11_1918", 11, "Dom 31/01/2027 18:30", "Basket Bitritto", "Orsa Capurso", 0, 0, "Da giocare"),
-    ("G11_1919", 11, "Dom 31/01/2027 18:30", "Fortitudo BK Apricena", "Virtus Foggia", 0, 0, "Da giocare"),
-    ("G11_1920", 11, "Dom 31/01/2027 20:15", "Olimpia Corato", "Angiulli Bari", 0, 0, "Da giocare"),
-    ("G11_1921", 11, "Sab 30/01/2027 18:00", "Vigor San Severo", "Mediterranea Cerignola", 0, 0, "Da giocare"),
+    ("G11_1917", "Girone A", 11, "Dom 31/01/2027 17:30", "Magic Bari", "A.G.S.D. Toritto", 0, 0, "Da giocare"),
+    ("G11_1918", "Girone A", 11, "Dom 31/01/2027 18:30", "Basket Bitritto", "Orsa Capurso", 0, 0, "Da giocare"),
+    ("G11_1919", "Girone A", 11, "Dom 31/01/2027 18:30", "Fortitudo BK Apricena", "Virtus Foggia", 0, 0, "Da giocare"),
+    ("G11_1920", "Girone A", 11, "Dom 31/01/2027 20:15", "Olimpia Corato", "Angiulli Bari", 0, 0, "Da giocare"),
+    ("G11_1921", "Girone A", 11, "Sab 30/01/2027 18:00", "Vigor San Severo", "Mediterranea Cerignola", 0, 0, "Da giocare"),
 
-    # 1ª Giornata di ritorno
-    ("G12_1922", 12, "Dom 07/02/2027 18:00", "Orsa Capurso", "Virtus Foggia", 0, 0, "Da giocare"),
-    ("G12_1923", 12, "Dom 07/02/2027 19:00", "Mediterranea Cerignola", "Fortitudo BK Apricena", 0, 0, "Da giocare"),
-    ("G12_1924", 12, "Dom 07/02/2027 17:30", "Magic Bari", "Angiulli Bari", 0, 0, "Da giocare"),
-    ("G12_1925", 12, "Sab 06/02/2027 19:00", "A.G.S.D. Toritto", "Basket Bitritto", 0, 0, "Da giocare"),
-    ("G12_1926", 12, "Dom 07/02/2027 20:15", "Olimpia Corato", "Nuova Matteotti Corato", 0, 0, "Da giocare"),
+    ("G12_1922", "Girone A", 12, "Dom 07/02/2027 18:00", "Orsa Capurso", "Virtus Foggia", 0, 0, "Da giocare"),
+    ("G12_1923", "Girone A", 12, "Dom 07/02/2027 19:00", "Mediterranea Cerignola", "Fortitudo BK Apricena", 0, 0, "Da giocare"),
+    ("G12_1924", "Girone A", 12, "Dom 07/02/2027 17:30", "Magic Bari", "Angiulli Bari", 0, 0, "Da giocare"),
+    ("G12_1925", "Girone A", 12, "Sab 06/02/2027 19:00", "A.G.S.D. Toritto", "Basket Bitritto", 0, 0, "Da giocare"),
+    ("G12_1926", "Girone A", 12, "Dom 07/02/2027 20:15", "Olimpia Corato", "Nuova Matteotti Corato", 0, 0, "Da giocare"),
 
-    # 2ª Giornata di ritorno
-    ("G13_1927", 13, "Sab 13/02/2027 18:30", "Virtus Foggia", "Vigor San Severo", 0, 0, "Da giocare"),
-    ("G13_1928", 13, "Sab 13/02/2027 19:30", "Angiulli Bari", "A.G.S.D. Toritto", 0, 0, "Da giocare"),
-    ("G13_1929", 13, "Sab 13/02/2027 19:00", "Nuova Matteotti Corato", "Mediterranea Cerignola", 0, 0, "Da giocare"),
-    ("G13_1930", 13, "Dom 14/02/2027 20:15", "Basket Bitritto", "Magic Bari", 0, 0, "Da giocare"),
-    ("G13_1931", 13, "Dom 14/02/2027 18:30", "Fortitudo BK Apricena", "Olimpia Corato", 0, 0, "Da giocare"),
+    ("G13_1927", "Girone A", 13, "Sab 13/02/2027 18:30", "Virtus Foggia", "Vigor San Severo", 0, 0, "Da giocare"),
+    ("G13_1928", "Girone A", 13, "Sab 13/02/2027 19:30", "Angiulli Bari", "A.G.S.D. Toritto", 0, 0, "Da giocare"),
+    ("G13_1929", "Girone A", 13, "Sab 13/02/2027 19:00", "Nuova Matteotti Corato", "Mediterranea Cerignola", 0, 0, "Da giocare"),
+    ("G13_1930", "Girone A", 13, "Dom 14/02/2027 20:15", "Basket Bitritto", "Magic Bari", 0, 0, "Da giocare"),
+    ("G13_1931", "Girone A", 13, "Dom 14/02/2027 18:30", "Fortitudo BK Apricena", "Olimpia Corato", 0, 0, "Da giocare"),
 
-    # 3ª Giornata di ritorno
-    ("G14_1932", 14, "Sab 20/02/2027 18:00", "Orsa Capurso", "Vigor San Severo", 0, 0, "Da giocare"),
-    ("G14_1933", 14, "Dom 21/02/2027 19:00", "A.G.S.D. Toritto", "Nuova Matteotti Corato", 0, 0, "Da giocare"),
-    ("G14_1934", 14, "Dom 21/02/2027 20:15", "Olimpia Corato", "Basket Bitritto", 0, 0, "Da giocare"),
-    ("G14_1935", 14, "Dom 21/02/2027 19:00", "Mediterranea Cerignola", "Angiulli Bari", 0, 0, "Da giocare"),
-    ("G14_1936", 14, "Dom 21/02/2027 17:30", "Magic Bari", "Fortitudo BK Apricena", 0, 0, "Da giocare"),
+    ("G14_1932", "Girone A", 14, "Sab 20/02/2027 18:00", "Orsa Capurso", "Vigor San Severo", 0, 0, "Da giocare"),
+    ("G14_1933", "Girone A", 14, "Dom 21/02/2027 19:00", "A.G.S.D. Toritto", "Nuova Matteotti Corato", 0, 0, "Da giocare"),
+    ("G14_1934", "Girone A", 14, "Dom 21/02/2027 20:15", "Olimpia Corato", "Basket Bitritto", 0, 0, "Da giocare"),
+    ("G14_1935", "Girone A", 14, "Dom 21/02/2027 19:00", "Mediterranea Cerignola", "Angiulli Bari", 0, 0, "Da giocare"),
+    ("G14_1936", "Girone A", 14, "Dom 21/02/2027 17:30", "Magic Bari", "Fortitudo BK Apricena", 0, 0, "Da giocare"),
 
-    # 4ª Giornata di ritorno
-    ("G15_1937", 15, "Sab 27/02/2027 20:00", "Nuova Matteotti Corato", "Magic Bari", 0, 0, "Da giocare"),
-    ("G15_1938", 15, "Dom 28/02/2027 18:30", "Fortitudo BK Apricena", "A.G.S.D. Toritto", 0, 0, "Da giocare"),
-    ("G15_1939", 15, "Dom 28/02/2027 20:15", "Basket Bitritto", "Vigor San Severo", 0, 0, "Da giocare"),
-    ("G15_1940", 15, "Dom 28/02/2027 20:15", "Olimpia Corato", "Orsa Capurso", 0, 0, "Da giocare"),
-    ("G15_1941", 15, "Sab 27/02/2027 19:30", "Angiulli Bari", "Virtus Foggia", 0, 0, "Da giocare"),
+    ("G15_1937", "Girone A", 15, "Sab 27/02/2027 20:00", "Nuova Matteotti Corato", "Magic Bari", 0, 0, "Da giocare"),
+    ("G15_1938", "Girone A", 15, "Dom 28/02/2027 18:30", "Fortitudo BK Apricena", "A.G.S.D. Toritto", 0, 0, "Da giocare"),
+    ("G15_1939", "Girone A", 15, "Dom 28/02/2027 20:15", "Basket Bitritto", "Vigor San Severo", 0, 0, "Da giocare"),
+    ("G15_1940", "Girone A", 15, "Dom 28/02/2027 20:15", "Olimpia Corato", "Orsa Capurso", 0, 0, "Da giocare"),
+    ("G15_1941", "Girone A", 15, "Sab 27/02/2027 19:30", "Angiulli Bari", "Virtus Foggia", 0, 0, "Da giocare"),
 
-    # 5ª Giornata di ritorno
-    ("G16_1942", 16, "Sab 06/03/2027 18:00", "Vigor San Severo", "Olimpia Corato", 0, 0, "Da giocare"),
-    ("G16_1943", 16, "Dom 07/03/2027 18:00", "Orsa Capurso", "Magic Bari", 0, 0, "Da giocare"),
-    ("G16_1944", 16, "Dom 07/03/2027 19:00", "A.G.S.D. Toritto", "Mediterranea Cerignola", 0, 0, "Da giocare"),
-    ("G16_1945", 16, "Sab 06/03/2027 17:00", "Nuova Matteotti Corato", "Angiulli Bari", 0, 0, "Da giocare"),
-    ("G16_1946", 16, "Sab 06/03/2027 18:30", "Virtus Foggia", "Basket Bitritto", 0, 0, "Da giocare"),
+    ("G16_1942", "Girone A", 16, "Sab 06/03/2027 18:00", "Vigor San Severo", "Olimpia Corato", 0, 0, "Da giocare"),
+    ("G16_1943", "Girone A", 16, "Dom 07/03/2027 18:00", "Orsa Capurso", "Magic Bari", 0, 0, "Da giocare"),
+    ("G16_1944", "Girone A", 16, "Dom 07/03/2027 19:00", "A.G.S.D. Toritto", "Mediterranea Cerignola", 0, 0, "Da giocare"),
+    ("G16_1945", "Girone A", 16, "Sab 06/03/2027 17:00", "Nuova Matteotti Corato", "Angiulli Bari", 0, 0, "Da giocare"),
+    ("G16_1946", "Girone A", 16, "Sab 06/03/2027 18:30", "Virtus Foggia", "Basket Bitritto", 0, 0, "Da giocare"),
 
-    # 6ª Giornata di ritorno
-    ("G17_1947", 17, "Sab 13/03/2027 19:30", "Angiulli Bari", "Orsa Capurso", 0, 0, "Da giocare"),
-    ("G17_1948", 17, "Dom 14/03/2027 19:00", "Mediterranea Cerignola", "Virtus Foggia", 0, 0, "Da giocare"),
-    ("G17_1949", 17, "Sab 13/03/2027 18:00", "Vigor San Severo", "Nuova Matteotti Corato", 0, 0, "Da giocare"),
-    ("G17_1950", 17, "Dom 14/03/2027 17:30", "Magic Bari", "Olimpia Corato", 0, 0, "Da giocare"),
-    ("G17_1951", 17, "Dom 14/03/2027 18:30", "Basket Bitritto", "Fortitudo BK Apricena", 0, 0, "Da giocare"),
+    ("G17_1947", "Girone A", 17, "Sab 13/03/2027 19:30", "Angiulli Bari", "Orsa Capurso", 0, 0, "Da giocare"),
+    ("G17_1948", "Girone A", 17, "Dom 14/03/2027 19:00", "Mediterranea Cerignola", "Virtus Foggia", 0, 0, "Da giocare"),
+    ("G17_1949", "Girone A", 17, "Sab 13/03/2027 18:00", "Vigor San Severo", "Nuova Matteotti Corato", 0, 0, "Da giocare"),
+    ("G17_1950", "Girone A", 17, "Dom 14/03/2027 17:30", "Magic Bari", "Olimpia Corato", 0, 0, "Da giocare"),
+    ("G17_1951", "Girone A", 17, "Dom 14/03/2027 18:30", "Basket Bitritto", "Fortitudo BK Apricena", 0, 0, "Da giocare"),
 
-    # 7ª Giornata di ritorno
-    ("G18_1952", 18, "Dom 21/03/2027 18:30", "Virtus Foggia", "Magic Bari", 0, 0, "Da giocare"),
-    ("G18_1953", 18, "Dom 21/03/2027 18:00", "Orsa Capurso", "A.G.S.D. Toritto", 0, 0, "Da giocare"),
-    ("G18_1954", 18, "Dom 21/03/2027 18:30", "Fortitudo BK Apricena", "Vigor San Severo", 0, 0, "Da giocare"),
-    ("G18_1955", 18, "Sab 20/03/2027 19:00", "Nuova Matteotti Corato", "Basket Bitritto", 0, 0, "Da giocare"),
-    ("G18_1956", 18, "Dom 21/03/2027 20:15", "Olimpia Corato", "Mediterranea Cerignola", 0, 0, "Da giocare"),
+    ("G18_1952", "Girone A", 18, "Dom 21/03/2027 18:30", "Virtus Foggia", "Magic Bari", 0, 0, "Da giocare"),
+    ("G18_1953", "Girone A", 18, "Dom 21/03/2027 18:00", "Orsa Capurso", "A.G.S.D. Toritto", 0, 0, "Da giocare"),
+    ("G18_1954", "Girone A", 18, "Dom 21/03/2027 18:30", "Fortitudo BK Apricena", "Vigor San Severo", 0, 0, "Da giocare"),
+    ("G18_1955", "Girone A", 18, "Sab 20/03/2027 19:00", "Nuova Matteotti Corato", "Basket Bitritto", 0, 0, "Da giocare"),
+    ("G18_1956", "Girone A", 18, "Dom 21/03/2027 20:15", "Olimpia Corato", "Mediterranea Cerignola", 0, 0, "Da giocare"),
 
-    # 8ª Giornata di ritorno
-    ("G19_1957", 19, "Sab 03/04/2027 18:30", "Olimpia Corato", "Virtus Foggia", 0, 0, "Da giocare"),
-    ("G19_1958", 19, "Sab 03/04/2027 18:00", "Vigor San Severo", "A.G.S.D. Toritto", 0, 0, "Da giocare"),
-    ("G19_1959", 19, "Dom 04/04/2027 17:30", "Magic Bari", "Mediterranea Cerignola", 0, 0, "Da giocare"),
-    ("G19_1960", 19, "Sab 03/04/2027 19:30", "Angiulli Bari", "Fortitudo BK Apricena", 0, 0, "Da giocare"),
-    ("G19_1961", 19, "Dom 04/04/2027 18:00", "Orsa Capurso", "Nuova Matteotti Corato", 0, 0, "Da giocare"),
+    ("G19_1957", "Girone A", 19, "Sab 03/04/2027 18:30", "Olimpia Corato", "Virtus Foggia", 0, 0, "Da giocare"),
+    ("G19_1958", "Girone A", 19, "Sab 03/04/2027 18:00", "Vigor San Severo", "A.G.S.D. Toritto", 0, 0, "Da giocare"),
+    ("G19_1959", "Girone A", 19, "Dom 04/04/2027 17:30", "Magic Bari", "Mediterranea Cerignola", 0, 0, "Da giocare"),
+    ("G19_1960", "Girone A", 19, "Sab 03/04/2027 19:30", "Angiulli Bari", "Fortitudo BK Apricena", 0, 0, "Da giocare"),
+    ("G19_1961", "Girone A", 19, "Dom 04/04/2027 18:00", "Orsa Capurso", "Nuova Matteotti Corato", 0, 0, "Da giocare"),
 
-    # 9ª Giornata di ritorno
-    ("G20_1962", 20, "Dom 11/04/2027 19:00", "Mediterranea Cerignola", "Orsa Capurso", 0, 0, "Da giocare"),
-    ("G20_1963", 20, "Dom 11/04/2027 17:30", "Magic Bari", "Vigor San Severo", 0, 0, "Da giocare"),
-    ("G20_1964", 20, "Dom 11/04/2027 18:30", "Fortitudo BK Apricena", "Nuova Matteotti Corato", 0, 0, "Da giocare"),
-    ("G20_1965", 20, "Dom 11/04/2027 19:00", "A.G.S.D. Toritto", "Virtus Foggia", 0, 0, "Da giocare"),
-    ("G20_1966", 20, "Dom 11/04/2027 18:30", "Basket Bitritto", "Angiulli Bari", 0, 0, "Da giocare"),
+    ("G20_1962", "Girone A", 20, "Dom 11/04/2027 19:00", "Mediterranea Cerignola", "Orsa Capurso", 0, 0, "Da giocare"),
+    ("G20_1963", "Girone A", 20, "Dom 11/04/2027 17:30", "Magic Bari", "Vigor San Severo", 0, 0, "Da giocare"),
+    ("G20_1964", "Girone A", 20, "Dom 11/04/2027 18:30", "Fortitudo BK Apricena", "Nuova Matteotti Corato", 0, 0, "Da giocare"),
+    ("G20_1965", "Girone A", 20, "Dom 11/04/2027 19:00", "A.G.S.D. Toritto", "Virtus Foggia", 0, 0, "Da giocare"),
+    ("G20_1966", "Girone A", 20, "Dom 11/04/2027 18:30", "Basket Bitritto", "Angiulli Bari", 0, 0, "Da giocare"),
 
-    # 10ª Giornata di ritorno
-    ("G21_1967", 21, "Dom 18/04/2027 20:15", "Olimpia Corato", "A.G.S.D. Toritto", 0, 0, "Da giocare"),
-    ("G21_1968", 21, "Dom 18/04/2027 18:30", "Basket Bitritto", "Mediterranea Cerignola", 0, 0, "Da giocare"),
-    ("G21_1969", 21, "Sab 17/04/2027 18:00", "Vigor San Severo", "Angiulli Bari", 0, 0, "Da giocare"),
-    ("G21_1970", 21, "Dom 18/04/2027 18:30", "Fortitudo BK Apricena", "Orsa Capurso", 0, 0, "Da giocare"),
-    ("G21_1971", 21, "Sab 17/04/2027 19:00", "Nuova Matteotti Corato", "Virtus Foggia", 0, 0, "Da giocare"),
+    ("G21_1967", "Girone A", 21, "Dom 18/04/2027 20:15", "Olimpia Corato", "A.G.S.D. Toritto", 0, 0, "Da giocare"),
+    ("G21_1968", "Girone A", 21, "Dom 18/04/2027 18:30", "Basket Bitritto", "Mediterranea Cerignola", 0, 0, "Da giocare"),
+    ("G21_1969", "Girone A", 21, "Sab 17/04/2027 18:00", "Vigor San Severo", "Angiulli Bari", 0, 0, "Da giocare"),
+    ("G21_1970", "Girone A", 21, "Dom 18/04/2027 18:30", "Fortitudo BK Apricena", "Orsa Capurso", 0, 0, "Da giocare"),
+    ("G21_1971", "Girone A", 21, "Sab 17/04/2027 19:00", "Nuova Matteotti Corato", "Virtus Foggia", 0, 0, "Da giocare"),
 
-    # 11ª Giornata di ritorno
-    ("G22_1972", 22, "Sab 24/04/2027 18:00", "Orsa Capurso", "Basket Bitritto", 0, 0, "Da giocare"),
-    ("G22_1973", 22, "Dom 25/04/2027 19:00", "A.G.S.D. Toritto", "Magic Bari", 0, 0, "Da giocare"),
-    ("G22_1974", 22, "Dom 25/04/2027 19:00", "Mediterranea Cerignola", "Vigor San Severo", 0, 0, "Da giocare"),
-    ("G22_1975", 22, "Sab 24/04/2027 18:30", "Virtus Foggia", "Fortitudo BK Apricena", 0, 0, "Da giocare"),
-    ("G22_1976", 22, "Sab 24/04/2027 19:30", "Angiulli Bari", "Olimpia Corato", 0, 0, "Da giocare"),
+    ("G22_1972", "Girone A", 22, "Sab 24/04/2027 18:00", "Orsa Capurso", "Basket Bitritto", 0, 0, "Da giocare"),
+    ("G22_1973", "Girone A", 22, "Dom 25/04/2027 19:00", "A.G.S.D. Toritto", "Magic Bari", 0, 0, "Da giocare"),
+    ("G22_1974", "Girone A", 22, "Dom 25/04/2027 19:00", "Mediterranea Cerignola", "Vigor San Severo", 0, 0, "Da giocare"),
+    ("G22_1975", "Girone A", 22, "Sab 24/04/2027 18:30", "Virtus Foggia", "Fortitudo BK Apricena", 0, 0, "Da giocare"),
+    ("G22_1976", "Girone A", 22, "Sab 24/04/2027 19:30", "Angiulli Bari", "Olimpia Corato", 0, 0, "Da giocare"),
+
+    # ==========================================================
+    # GIRONE B (CU n. 92 + Risultati prime 3 giornate)
+    # ==========================================================
+    ("B01_2109", "Girone B", 1, "Sab 07/11/2026 18:45", "ASD Scuola Basket Martinese", "Dream Basket Altamura", 41, 62, "Giocata"),
+    ("B01_2110", "Girone B", 1, "Dom 08/11/2026 17:30", "Murgia Santeramo", "New Sporting Basket Mottola", 70, 59, "Giocata"),
+    ("B01_2111", "Girone B", 1, "Dom 08/11/2026 18:00", "Support_o Taranto", "Domiti La Pinta Pulsano", 71, 59, "Giocata"),
+    ("B01_2112", "Girone B", 1, "Sab 07/11/2026 19:00", "Basket Fasano", "A.S.D. Atletica Basket Putignano", 49, 63, "Giocata"),
+    ("B01_2113", "Girone B", 1, "Sab 07/11/2026 19:00", "Club Giganti Cisternino", "Messapica Basket Ceglie", 69, 57, "Giocata"),
+
+    ("B02_2114", "Girone B", 2, "Sab 14/11/2026 20:00", "Messapica Basket Ceglie", "Olympia Rutigliano", 65, 85, "Giocata"),
+    ("B02_2115", "Girone B", 2, "Dom 15/11/2026 18:00", "Dream Basket Altamura", "Basket Fasano", 66, 59, "Giocata"),
+    ("B02_2116", "Girone B", 2, "Sab 14/11/2026 18:00", "A.S.D. Atletica Basket Putignano", "ASD Scuola Basket Martinese", 55, 34, "Giocata"),
+    ("B02_2117", "Girone B", 2, "Dom 15/11/2026 18:30", "New Sporting Basket Mottola", "Support_o Taranto", 64, 55, "Giocata"),
+    ("B02_2118", "Girone B", 2, "Dom 15/11/2026 18:00", "Domiti La Pinta Pulsano", "Murgia Santeramo", 59, 56, "Giocata"),
+
+    ("B03_2119", "Girone B", 3, "Dom 22/11/2026 18:00", "Basket Fasano", "New Sporting Basket Mottola", 75, 61, "Giocata"),
+    ("B03_2120", "Girone B", 3, "Sab 21/11/2026 18:45", "ASD Scuola Basket Martinese", "Domiti La Pinta Pulsano", 54, 57, "Giocata"),
+    ("B03_2121", "Girone B", 3, "Dom 22/11/2026 18:00", "Olympia Rutigliano", "Club Giganti Cisternino", 76, 54, "Giocata"),
+    ("B03_2122", "Girone B", 3, "Dom 22/11/2026 18:00", "Support_o Taranto", "Dream Basket Altamura", 65, 70, "Giocata"),
+    ("B03_2123", "Girone B", 3, "Dom 22/11/2026 17:30", "Murgia Santeramo", "A.S.D. Atletica Basket Putignano", 54, 57, "Giocata"),
+
+    ("B04_2124", "Girone B", 4, "Sab 28/11/2026 19:00", "Club Giganti Cisternino", "Dream Basket Altamura", 0, 0, "Da giocare"),
+    ("B04_2125", "Girone B", 4, "Sab 28/11/2026 20:00", "Messapica Basket Ceglie", "Murgia Santeramo", 0, 0, "Da giocare"),
+    ("B04_2126", "Girone B", 4, "Dom 29/11/2026 18:00", "Domiti La Pinta Pulsano", "Basket Fasano", 0, 0, "Da giocare"),
+    ("B04_2127", "Girone B", 4, "Dom 29/11/2026 18:30", "New Sporting Basket Mottola", "ASD Scuola Basket Martinese", 0, 0, "Da giocare"),
+    ("B04_2128", "Girone B", 4, "Dom 29/11/2026 18:00", "Olympia Rutigliano", "Support_o Taranto", 0, 0, "Da giocare"),
+
+    ("B05_2129", "Girone B", 5, "Dom 06/12/2026 17:30", "Murgia Santeramo", "ASD Scuola Basket Martinese", 0, 0, "Da giocare"),
+    ("B05_2130", "Girone B", 5, "Gio 03/12/2026 20:30", "Dream Basket Altamura", "Olympia Rutigliano", 0, 0, "Da giocare"),
+    ("B05_2131", "Girone B", 5, "Dom 06/12/2026 18:00", "Support_o Taranto", "Messapica Basket Ceglie", 0, 0, "Da giocare"),
+    ("B05_2132", "Girone B", 5, "Dom 06/12/2026 18:30", "New Sporting Basket Mottola", "Club Giganti Cisternino", 0, 0, "Da giocare"),
+    ("B05_2133", "Girone B", 5, "Sab 05/12/2026 18:00", "A.S.D. Atletica Basket Putignano", "Domiti La Pinta Pulsano", 0, 0, "Da giocare"),
+
+    ("B06_2134", "Girone B", 6, "Sab 12/12/2026 18:45", "ASD Scuola Basket Martinese", "Olympia Rutigliano", 0, 0, "Da giocare"),
+    ("B06_2135", "Girone B", 6, "Sab 12/12/2026 19:00", "Basket Fasano", "Support_o Taranto", 0, 0, "Da giocare"),
+    ("B06_2136", "Girone B", 6, "Dom 13/12/2026 18:00", "Dream Basket Altamura", "New Sporting Basket Mottola", 0, 0, "Da giocare"),
+    ("B06_2137", "Girone B", 6, "Sab 12/12/2026 20:00", "Messapica Basket Ceglie", "A.S.D. Atletica Basket Putignano", 0, 0, "Da giocare"),
+    ("B06_2138", "Girone B", 6, "Sab 12/12/2026 19:00", "Club Giganti Cisternino", "Murgia Santeramo", 0, 0, "Da giocare"),
+
+    ("B07_2139", "Girone B", 7, "Sab 19/12/2026 18:00", "A.S.D. Atletica Basket Putignano", "Dream Basket Altamura", 0, 0, "Da giocare"),
+    ("B07_2140", "Girone B", 7, "Dom 20/12/2026 18:30", "New Sporting Basket Mottola", "Messapica Basket Ceglie", 0, 0, "Da giocare"),
+    ("B07_2141", "Girone B", 7, "Sab 19/12/2026 19:30", "Domiti La Pinta Pulsano", "Club Giganti Cisternino", 0, 0, "Da giocare"),
+    ("B07_2142", "Girone B", 7, "Dom 20/12/2026 18:00", "Support_o Taranto", "ASD Scuola Basket Martinese", 0, 0, "Da giocare"),
+    ("B07_2143", "Girone B", 7, "Dom 20/12/2026 18:00", "Olympia Rutigliano", "Basket Fasano", 0, 0, "Da giocare"),
+
+    ("B08_2144", "Girone B", 8, "Sab 09/01/2027 19:00", "Murgia Santeramo", "Basket Fasano", 0, 0, "Da giocare"),
+    ("B08_2145", "Girone B", 8, "Sab 09/01/2027 18:00", "A.S.D. Atletica Basket Putignano", "New Sporting Basket Mottola", 0, 0, "Da giocare"),
+    ("B08_2146", "Girone B", 8, "Sab 09/01/2027 18:45", "ASD Scuola Basket Martinese", "Club Giganti Cisternino", 0, 0, "Da giocare"),
+    ("B08_2147", "Girone B", 8, "Dom 10/01/2027 18:00", "Domiti La Pinta Pulsano", "Olympia Rutigliano", 0, 0, "Da giocare"),
+    ("B08_2148", "Girone B", 8, "Dom 10/01/2027 18:00", "Messapica Basket Ceglie", "Dream Basket Altamura", 0, 0, "Da giocare"),
+
+    ("B09_2149", "Girone B", 9, "Sab 16/01/2027 20:00", "Domiti La Pinta Pulsano", "Messapica Basket Ceglie", 0, 0, "Da giocare"),
+    ("B09_2150", "Girone B", 9, "Dom 17/01/2027 18:00", "Olympia Rutigliano", "New Sporting Basket Mottola", 0, 0, "Da giocare"),
+    ("B09_2151", "Girone B", 9, "Sab 16/01/2027 19:00", "A.S.D. Atletica Basket Putignano", "Club Giganti Cisternino", 0, 0, "Da giocare"),
+    ("B09_2152", "Girone B", 9, "Dom 17/01/2027 18:30", "Murgia Santeramo", "Support_o Taranto", 0, 0, "Da giocare"),
+    ("B09_2153", "Girone B", 9, "Sab 16/01/2027 18:45", "ASD Scuola Basket Martinese", "Basket Fasano", 0, 0, "Da giocare"),
+
+    ("B10_2154", "Girone B", 10, "Sab 23/01/2027 19:00", "Club Giganti Cisternino", "Basket Fasano", 0, 0, "Da giocare"),
+    ("B10_2155", "Girone B", 10, "Dom 24/01/2027 18:00", "Domiti La Pinta Pulsano", "Dream Basket Altamura", 0, 0, "Da giocare"),
+    ("B10_2156", "Girone B", 10, "Sab 23/01/2027 19:30", "A.S.D. Atletica Basket Putignano", "Support_o Taranto", 0, 0, "Da giocare"),
+    ("B10_2157", "Girone B", 10, "Ven 22/01/2027 21:00", "Messapica Basket Ceglie", "ASD Scuola Basket Martinese", 0, 0, "Da giocare"),
+    ("B10_2158", "Girone B", 10, "Dom 24/01/2027 18:30", "Murgia Santeramo", "Olympia Rutigliano", 0, 0, "Da giocare"),
+
+    ("B11_2159", "Girone B", 11, "Dom 31/01/2027 18:00", "Dream Basket Altamura", "Murgia Santeramo", 0, 0, "Da giocare"),
+    ("B11_2160", "Girone B", 11, "Dom 31/01/2027 18:00", "Support_o Taranto", "Club Giganti Cisternino", 0, 0, "Da giocare"),
+    ("B11_2161", "Girone B", 11, "Dom 31/01/2027 18:00", "Basket Fasano", "Messapica Basket Ceglie", 0, 0, "Da giocare"),
+    ("B11_2162", "Girone B", 11, "Dom 31/01/2027 18:00", "A.S.D. Atletica Basket Putignano", "Olympia Rutigliano", 0, 0, "Da giocare"),
+    ("B11_2163", "Girone B", 11, "Dom 31/01/2027 18:30", "Domiti La Pinta Pulsano", "New Sporting Basket Mottola", 0, 0, "Da giocare"),
+
+    # Girone B - Ritorno (G12-G22)
+    ("B12_2164", "Girone B", 12, "Sab 06/02/2027 20:00", "Messapica Basket Ceglie", "Club Giganti Cisternino", 0, 0, "Da giocare"),
+    ("B12_2165", "Girone B", 12, "Dom 07/02/2027 18:00", "Domiti La Pinta Pulsano", "Support_o Taranto", 0, 0, "Da giocare"),
+    ("B12_2166", "Girone B", 12, "Sab 06/02/2027 18:00", "A.S.D. Atletica Basket Putignano", "Basket Fasano", 0, 0, "Da giocare"),
+    ("B12_2167", "Girone B", 12, "Dom 07/02/2027 18:30", "New Sporting Basket Mottola", "Murgia Santeramo", 0, 0, "Da giocare"),
+    ("B12_2168", "Girone B", 12, "Dom 07/02/2027 18:00", "ASD Scuola Basket Martinese", "Dream Basket Altamura", 0, 0, "Da giocare"),
+
+    ("B13_2169", "Girone B", 13, "Sab 13/02/2027 19:00", "Basket Fasano", "Dream Basket Altamura", 0, 0, "Da giocare"),
+    ("B13_2170", "Girone B", 13, "Dom 14/02/2027 18:30", "Murgia Santeramo", "Domiti La Pinta Pulsano", 0, 0, "Da giocare"),
+    ("B13_2171", "Girone B", 13, "Sab 13/02/2027 18:45", "A.S.D. Atletica Basket Putignano", "ASD Scuola Basket Martinese", 0, 0, "Da giocare"),
+    ("B13_2172", "Girone B", 13, "Dom 14/02/2027 18:00", "Messapica Basket Ceglie", "Olympia Rutigliano", 0, 0, "Da giocare"),
+    ("B13_2173", "Girone B", 13, "Dom 14/02/2027 18:00", "New Sporting Basket Mottola", "Support_o Taranto", 0, 0, "Da giocare"),
+
+    ("B14_2174", "Girone B", 14, "Dom 21/02/2027 18:00", "Dream Basket Altamura", "Support_o Taranto", 0, 0, "Da giocare"),
+    ("B14_2175", "Girone B", 14, "Dom 21/02/2027 18:00", "Domiti La Pinta Pulsano", "ASD Scuola Basket Martinese", 0, 0, "Da giocare"),
+    ("B14_2176", "Girone B", 14, "Sab 20/02/2027 18:00", "A.S.D. Atletica Basket Putignano", "Murgia Santeramo", 0, 0, "Da giocare"),
+    ("B14_2177", "Girone B", 14, "Sab 20/02/2027 19:00", "Club Giganti Cisternino", "Olympia Rutigliano", 0, 0, "Da giocare"),
+    ("B14_2178", "Girone B", 14, "Dom 21/02/2027 18:30", "New Sporting Basket Mottola", "Basket Fasano", 0, 0, "Da giocare"),
+
+    ("B15_2179", "Girone B", 15, "Dom 28/02/2027 18:30", "Messapica Basket Ceglie", "Murgia Santeramo", 0, 0, "Da giocare"),
+    ("B15_2180", "Girone B", 15, "Sab 27/02/2027 18:45", "New Sporting Basket Mottola", "ASD Scuola Basket Martinese", 0, 0, "Da giocare"),
+    ("B15_2181", "Girone B", 15, "Dom 28/02/2027 18:00", "Dream Basket Altamura", "Club Giganti Cisternino", 0, 0, "Da giocare"),
+    ("B15_2182", "Girone B", 15, "Dom 28/02/2027 18:00", "Support_o Taranto", "Olympia Rutigliano", 0, 0, "Da giocare"),
+    ("B15_2183", "Girone B", 15, "Dom 28/02/2027 18:00", "Domiti La Pinta Pulsano", "Basket Fasano", 0, 0, "Da giocare"),
+
+    ("B16_2184", "Girone B", 16, "Dom 07/03/2027 18:00", "Dream Basket Altamura", "Olympia Rutigliano", 0, 0, "Da giocare"),
+    ("B16_2185", "Girone B", 16, "Sab 06/03/2027 18:45", "Murgia Santeramo", "ASD Scuola Basket Martinese", 0, 0, "Da giocare"),
+    ("B16_2186", "Girone B", 16, "Ven 05/03/2027 19:00", "Messapica Basket Ceglie", "Support_o Taranto", 0, 0, "Da giocare"),
+    ("B16_2187", "Girone B", 16, "Dom 07/03/2027 18:00", "Domiti La Pinta Pulsano", "A.S.D. Atletica Basket Putignano", 0, 0, "Da giocare"),
+    ("B16_2188", "Girone B", 16, "Sab 06/03/2027 19:00", "Club Giganti Cisternino", "New Sporting Basket Mottola", 0, 0, "Da giocare"),
+
+    ("B17_2189", "Girone B", 17, "Dom 14/03/2027 18:00", "Olympia Rutigliano", "ASD Scuola Basket Martinese", 0, 0, "Da giocare"),
+    ("B17_2190", "Girone B", 17, "Dom 14/03/2027 18:30", "Murgia Santeramo", "Club Giganti Cisternino", 0, 0, "Da giocare"),
+    ("B17_2191", "Girone B", 17, "Dom 14/03/2027 18:00", "Support_o Taranto", "Basket Fasano", 0, 0, "Da giocare"),
+    ("B17_2192", "Girone B", 17, "Gio 11/03/2027 21:00", "New Sporting Basket Mottola", "Dream Basket Altamura", 0, 0, "Da giocare"),
+    ("B17_2193", "Girone B", 17, "Sab 13/03/2027 18:00", "A.S.D. Atletica Basket Putignano", "Messapica Basket Ceglie", 0, 0, "Da giocare"),
+
+    ("B18_2194", "Girone B", 18, "Sab 20/03/2027 19:00", "Club Giganti Cisternino", "Domiti La Pinta Pulsano", 0, 0, "Da giocare"),
+    ("B18_2195", "Girone B", 18, "Sab 20/03/2027 18:45", "ASD Scuola Basket Martinese", "Support_o Taranto", 0, 0, "Da giocare"),
+    ("B18_2196", "Girone B", 18, "Ven 19/03/2027 21:00", "Messapica Basket Ceglie", "New Sporting Basket Mottola", 0, 0, "Da giocare"),
+    ("B18_2197", "Girone B", 18, "Dom 21/03/2027 18:00", "Basket Fasano", "Olympia Rutigliano", 0, 0, "Da giocare"),
+    ("B18_2198", "Girone B", 18, "Dom 21/03/2027 18:00", "A.S.D. Atletica Basket Putignano", "Dream Basket Altamura", 0, 0, "Da giocare"),
+
+    ("B19_2199", "Girone B", 19, "Dom 04/04/2027 18:30", "New Sporting Basket Mottola", "A.S.D. Atletica Basket Putignano", 0, 0, "Da giocare"),
+    ("B19_2200", "Girone B", 19, "Dom 04/04/2027 18:30", "Murgia Santeramo", "Basket Fasano", 0, 0, "Da giocare"),
+    ("B19_2201", "Girone B", 19, "Dom 04/04/2027 18:00", "Domiti La Pinta Pulsano", "Olympia Rutigliano", 0, 0, "Da giocare"),
+    ("B19_2202", "Girone B", 19, "Sab 03/04/2027 20:00", "Messapica Basket Ceglie", "Dream Basket Altamura", 0, 0, "Da giocare"),
+    ("B19_2203", "Girone B", 19, "Sab 03/04/2027 19:00", "Club Giganti Cisternino", "ASD Scuola Basket Martinese", 0, 0, "Da giocare"),
+
+    ("B20_2204", "Girone B", 20, "Dom 11/04/2027 18:00", "Domiti La Pinta Pulsano", "Messapica Basket Ceglie", 0, 0, "Da giocare"),
+    ("B20_2205", "Girone B", 20, "Dom 11/04/2027 18:00", "Support_o Taranto", "Murgia Santeramo", 0, 0, "Da giocare"),
+    ("B20_2206", "Girone B", 20, "Sab 10/04/2027 19:00", "Basket Fasano", "ASD Scuola Basket Martinese", 0, 0, "Da giocare"),
+    ("B20_2207", "Girone B", 20, "Dom 11/04/2027 18:30", "New Sporting Basket Mottola", "Olympia Rutigliano", 0, 0, "Da giocare"),
+    ("B20_2208", "Girone B", 20, "Sab 10/04/2027 18:00", "A.S.D. Atletica Basket Putignano", "Club Giganti Cisternino", 0, 0, "Da giocare"),
+
+    ("B21_2209", "Girone B", 21, "Dom 18/04/2027 18:00", "Domiti La Pinta Pulsano", "Dream Basket Altamura", 0, 0, "Da giocare"),
+    ("B21_2210", "Girone B", 21, "Dom 18/04/2027 18:00", "Olympia Rutigliano", "Murgia Santeramo", 0, 0, "Da giocare"),
+    ("B21_2211", "Girone B", 21, "Sab 17/04/2027 18:45", "ASD Scuola Basket Martinese", "Messapica Basket Ceglie", 0, 0, "Da giocare"),
+    ("B21_2212", "Girone B", 21, "Sab 17/04/2027 19:00", "Club Giganti Cisternino", "Basket Fasano", 0, 0, "Da giocare"),
+    ("B21_2213", "Girone B", 21, "Dom 18/04/2027 18:00", "Support_o Taranto", "A.S.D. Atletica Basket Putignano", 0, 0, "Da giocare"),
+
+    ("B22_2214", "Girone B", 22, "Dom 25/04/2027 18:00", "Domiti La Pinta Pulsano", "New Sporting Basket Mottola", 0, 0, "Da giocare"),
+    ("B22_2215", "Girone B", 22, "Dom 25/04/2027 18:30", "Murgia Santeramo", "Dream Basket Altamura", 0, 0, "Da giocare"),
+    ("B22_2216", "Girone B", 22, "Sab 24/04/2027 20:00", "Messapica Basket Ceglie", "Basket Fasano", 0, 0, "Da giocare"),
+    ("B22_2217", "Girone B", 22, "Sab 24/04/2027 18:00", "A.S.D. Atletica Basket Putignano", "Olympia Rutigliano", 0, 0, "Da giocare"),
+    ("B22_2218", "Girone B", 22, "Sab 24/04/2027 19:00", "Club Giganti Cisternino", "Support_o Taranto", 0, 0, "Da giocare"),
+
+    # ==========================================================
+    # GIRONE C (CU n. 93 + Risultati prime 3 giornate)
+    # ==========================================================
+    ("C01_2219", "Girone C", 1, "Dom 08/11/2026 18:00", "Basket Tricase", "Aurora Brindisi", 51, 57, "Giocata"),
+    ("C01_2220", "Girone C", 1, "Sab 07/11/2026 18:00", "All Star Francavilla", "Bellfika Mesagne", 72, 67, "Giocata"),
+    ("C01_2221", "Girone C", 1, "Dom 08/11/2026 18:30", "Zero21 Calimera", "ASD Magic Galatina", 77, 51, "Giocata"),
+    ("C01_2222", "Girone C", 1, "Dom 08/11/2026 18:00", "A.S.S.I. Basket Brindisi", "New Basket Carmiano", 73, 47, "Giocata"),
+    ("C01_2223", "Girone C", 1, "Dom 08/11/2026 18:30", "Lupa Lecce", "Virtus Brindisi", 91, 75, "Giocata"),
+
+    ("C02_2224", "Girone C", 2, "Sab 14/11/2026 18:00", "New Basket Carmiano", "All Star Francavilla", 89, 70, "Giocata"),
+    ("C02_2225", "Girone C", 2, "Sab 14/11/2026 18:30", "ASD Magic Galatina", "Basket Tricase", 100, 58, "Giocata"),
+    ("C02_2226", "Girone C", 2, "Sab 14/11/2026 16:30", "Virtus Brindisi", "Polisportiva Manduria", 57, 63, "Giocata"),
+    ("C02_2227", "Girone C", 2, "Dom 15/11/2026 18:00", "Bellfika Mesagne", "A.S.S.I. Basket Brindisi", 75, 71, "Giocata"),
+    ("C02_2228", "Girone C", 2, "Sab 14/11/2026 18:00", "Aurora Brindisi", "Zero21 Calimera", 37, 60, "Giocata"),
+
+    ("C03_2229", "Girone C", 3, "Sab 21/11/2026 18:00", "All Star Francavilla", "ASD Magic Galatina", 91, 78, "Giocata"),
+    ("C03_2230", "Girone C", 3, "Sab 21/11/2026 18:00", "Aurora Brindisi", "A.S.S.I. Basket Brindisi", 64, 95, "Giocata"),
+    ("C03_2231", "Girone C", 3, "Dom 22/11/2026 18:30", "Zero21 Calimera", "Bellfika Mesagne", 52, 57, "Giocata"),
+    ("C03_2232", "Girone C", 3, "Dom 22/11/2026 18:00", "Polisportiva Manduria", "Lupa Lecce", 53, 59, "Giocata"),
+    ("C03_2233", "Girone C", 3, "Dom 22/11/2026 18:00", "Basket Tricase", "New Basket Carmiano", 28, 81, "Giocata"),
+
+    ("C04_2234", "Girone C", 4, "Dom 29/11/2026 17:00", "Bellfika Mesagne", "Basket Tricase", 0, 0, "Da giocare"),
+    ("C04_2235", "Girone C", 4, "Dom 29/11/2026 18:00", "Polisportiva Manduria", "All Star Francavilla", 0, 0, "Da giocare"),
+    ("C04_2236", "Girone C", 4, "Sab 28/11/2026 18:00", "New Basket Carmiano", "Zero21 Calimera", 0, 0, "Da giocare"),
+    ("C04_2237", "Girone C", 4, "Sab 28/11/2026 16:30", "Virtus Brindisi", "A.S.S.I. Basket Brindisi", 0, 0, "Da giocare"),
+    ("C04_2238", "Girone C", 4, "Sab 28/11/2026 16:30", "Lupa Lecce", "ASD Magic Galatina", 0, 0, "Da giocare"),
+
+    ("C05_2239", "Girone C", 5, "Dom 06/12/2026 18:30", "Zero21 Calimera", "A.S.S.I. Basket Brindisi", 0, 0, "Da giocare"),
+    ("C05_2240", "Girone C", 5, "Sab 05/12/2026 18:30", "ASD Magic Galatina", "Polisportiva Manduria", 0, 0, "Da giocare"),
+    ("C05_2241", "Girone C", 5, "Sab 05/12/2026 18:00", "Aurora Brindisi", "Bellfika Mesagne", 0, 0, "Da giocare"),
+    ("C05_2242", "Girone C", 5, "Sab 05/12/2026 18:30", "Lupa Lecce", "New Basket Carmiano", 0, 0, "Da giocare"),
+    ("C05_2243", "Girone C", 5, "Sab 05/12/2026 18:00", "All Star Francavilla", "Virtus Brindisi", 0, 0, "Da giocare"),
+
+    ("C06_2244", "Girone C", 6, "Sab 12/12/2026 16:30", "Virtus Brindisi", "Aurora Brindisi", 0, 0, "Da giocare"),
+    ("C06_2245", "Girone C", 6, "Dom 13/12/2026 18:30", "Zero21 Calimera", "Polisportiva Manduria", 0, 0, "Da giocare"),
+    ("C06_2246", "Girone C", 6, "Dom 13/12/2026 18:00", "ASD Magic Galatina", "New Basket Carmiano", 0, 0, "Da giocare"),
+    ("C06_2247", "Girone C", 6, "Dom 13/12/2026 18:00", "Basket Tricase", "All Star Francavilla", 0, 0, "Da giocare"),
+    ("C06_2248", "Girone C", 6, "Sab 12/12/2026 18:00", "A.S.S.I. Basket Brindisi", "Lupa Lecce", 0, 0, "Da giocare"),
+
+    ("C07_2249", "Girone C", 7, "Sab 19/12/2026 18:00", "All Star Francavilla", "Zero21 Calimera", 0, 0, "Da giocare"),
+    ("C07_2250", "Girone C", 7, "Dom 20/12/2026 20:00", "New Basket Carmiano", "Virtus Brindisi", 0, 0, "Da giocare"),
+    ("C07_2251", "Girone C", 7, "Ven 18/12/2026 20:30", "Polisportiva Manduria", "Basket Tricase", 0, 0, "Da giocare"),
+    ("C07_2252", "Girone C", 7, "Sab 19/12/2026 18:30", "Lupa Lecce", "Bellfika Mesagne", 0, 0, "Da giocare"),
+    ("C07_2253", "Girone C", 7, "Sab 19/12/2026 18:00", "Aurora Brindisi", "ASD Magic Galatina", 0, 0, "Da giocare"),
+
+    ("C08_2254", "Girone C", 8, "Dom 10/01/2027 18:00", "Bellfika Mesagne", "Polisportiva Manduria", 0, 0, "Da giocare"),
+    ("C08_2255", "Girone C", 8, "Sab 09/01/2027 18:00", "Aurora Brindisi", "New Basket Carmiano", 0, 0, "Da giocare"),
+    ("C08_2256", "Girone C", 8, "Dom 10/01/2027 18:00", "Basket Tricase", "A.S.S.I. Basket Brindisi", 0, 0, "Da giocare"),
+    ("C08_2257", "Girone C", 8, "Dom 10/01/2027 18:30", "Zero21 Calimera", "Lupa Lecce", 0, 0, "Da giocare"),
+    ("C08_2258", "Girone C", 8, "Sab 09/01/2027 18:30", "ASD Magic Galatina", "Virtus Brindisi", 0, 0, "Da giocare"),
+
+    ("C09_2259", "Girone C", 9, "Sab 16/01/2027 18:30", "Lupa Lecce", "Aurora Brindisi", 0, 0, "Da giocare"),
+    ("C09_2260", "Girone C", 9, "Sab 16/01/2027 16:30", "Virtus Brindisi", "Bellfika Mesagne", 0, 0, "Da giocare"),
+    ("C09_2261", "Girone C", 9, "Dom 17/01/2027 18:00", "Polisportiva Manduria", "New Basket Carmiano", 0, 0, "Da giocare"),
+    ("C09_2262", "Girone C", 9, "Sab 16/01/2027 18:00", "A.S.S.I. Basket Brindisi", "All Star Francavilla", 0, 0, "Da giocare"),
+    ("C09_2263", "Girone C", 9, "Dom 17/01/2027 18:30", "Zero21 Calimera", "Basket Tricase", 0, 0, "Da giocare"),
+
+    ("C10_2264", "Girone C", 10, "Sab 23/01/2027 16:30", "Lupa Lecce", "Basket Tricase", 0, 0, "Da giocare"),
+    ("C10_2265", "Girone C", 10, "Sab 23/01/2027 18:00", "Polisportiva Manduria", "A.S.S.I. Basket Brindisi", 0, 0, "Da giocare"),
+    ("C10_2266", "Girone C", 10, "Dom 24/01/2027 17:00", "Bellfika Mesagne", "ASD Magic Galatina", 0, 0, "Da giocare"),
+    ("C10_2267", "Girone C", 10, "Sab 23/01/2027 18:00", "Aurora Brindisi", "All Star Francavilla", 0, 0, "Da giocare"),
+    ("C10_2268", "Girone C", 10, "Sab 23/01/2027 16:30", "Virtus Brindisi", "Zero21 Calimera", 0, 0, "Da giocare"),
+
+    ("C11_2269", "Girone C", 11, "Dom 31/01/2027 20:00", "Bellfika Mesagne", "New Basket Carmiano", 0, 0, "Da giocare"),
+    ("C11_2270", "Girone C", 11, "Sab 30/01/2027 18:00", "All Star Francavilla", "Lupa Lecce", 0, 0, "Da giocare"),
+    ("C11_2271", "Girone C", 11, "Dom 31/01/2027 18:00", "Aurora Brindisi", "Polisportiva Manduria", 0, 0, "Da giocare"),
+    ("C11_2272", "Girone C", 11, "Dom 31/01/2027 18:00", "ASD Magic Galatina", "A.S.S.I. Basket Brindisi", 0, 0, "Da giocare"),
+    ("C11_2273", "Girone C", 11, "Dom 31/01/2027 18:00", "Basket Tricase", "Virtus Brindisi", 0, 0, "Da giocare"),
+
+    # Girone C - Ritorno (G12-G22)
+    ("C12_2274", "Girone C", 12, "Sab 06/02/2027 18:00", "Basket Tricase", "Aurora Brindisi", 0, 0, "Da giocare"),
+    ("C12_2275", "Girone C", 12, "Sab 06/02/2027 16:30", "Virtus Brindisi", "Lupa Lecce", 0, 0, "Da giocare"),
+    ("C12_2276", "Girone C", 12, "Dom 07/02/2027 18:00", "New Basket Carmiano", "A.S.S.I. Basket Brindisi", 0, 0, "Da giocare"),
+    ("C12_2277", "Girone C", 12, "Dom 07/02/2027 18:00", "All Star Francavilla", "Bellfika Mesagne", 0, 0, "Da giocare"),
+    ("C12_2278", "Girone C", 12, "Sab 06/02/2027 18:30", "Zero21 Calimera", "ASD Magic Galatina", 0, 0, "Da giocare"),
+
+    ("C13_2279", "Girone C", 13, "Sab 13/02/2027 18:00", "All Star Francavilla", "New Basket Carmiano", 0, 0, "Da giocare"),
+    ("C13_2280", "Girone C", 13, "Dom 14/02/2027 18:00", "Basket Tricase", "ASD Magic Galatina", 0, 0, "Da giocare"),
+    ("C13_2281", "Girone C", 13, "Dom 14/02/2027 18:30", "Zero21 Calimera", "Aurora Brindisi", 0, 0, "Da giocare"),
+    ("C13_2282", "Girone C", 13, "Sab 13/02/2027 18:00", "Bellfika Mesagne", "A.S.S.I. Basket Brindisi", 0, 0, "Da giocare"),
+    ("C13_2283", "Girone C", 13, "Dom 14/02/2027 18:00", "Virtus Brindisi", "Polisportiva Manduria", 0, 0, "Da giocare"),
+
+    ("C14_2284", "Girone C", 14, "Dom 21/02/2027 18:00", "New Basket Carmiano", "Basket Tricase", 0, 0, "Da giocare"),
+    ("C14_2285", "Girone C", 14, "Sab 20/02/2027 18:00", "Aurora Brindisi", "A.S.S.I. Basket Brindisi", 0, 0, "Da giocare"),
+    ("C14_2286", "Girone C", 14, "Dom 21/02/2027 17:00", "Bellfika Mesagne", "Zero21 Calimera", 0, 0, "Da giocare"),
+    ("C14_2287", "Girone C", 14, "Sab 20/02/2027 18:30", "All Star Francavilla", "ASD Magic Galatina", 0, 0, "Da giocare"),
+    ("C14_2288", "Girone C", 14, "Sab 20/02/2027 18:30", "Lupa Lecce", "Polisportiva Manduria", 0, 0, "Da giocare"),
+
+    ("C15_2289", "Girone C", 15, "Dom 28/02/2027 18:00", "Virtus Brindisi", "A.S.S.I. Basket Brindisi", 0, 0, "Da giocare"),
+    ("C15_2290", "Girone C", 15, "Dom 28/02/2027 18:00", "Bellfika Mesagne", "Basket Tricase", 0, 0, "Da giocare"),
+    ("C15_2291", "Girone C", 15, "Dom 28/02/2027 18:00", "Lupa Lecce", "ASD Magic Galatina", 0, 0, "Da giocare"),
+    ("C15_2292", "Girone C", 15, "Sab 27/02/2027 18:00", "Polisportiva Manduria", "All Star Francavilla", 0, 0, "Da giocare"),
+    ("C15_2293", "Girone C", 15, "Sab 27/02/2027 18:30", "Zero21 Calimera", "New Basket Carmiano", 0, 0, "Da giocare"),
+
+    ("C16_2294", "Girone C", 16, "Dom 07/03/2027 18:00", "ASD Magic Galatina", "Polisportiva Manduria", 0, 0, "Da giocare"),
+    ("C16_2295", "Girone C", 16, "Dom 07/03/2027 17:00", "Bellfika Mesagne", "Aurora Brindisi", 0, 0, "Da giocare"),
+    ("C16_2296", "Girone C", 16, "Dom 07/03/2027 18:00", "Lupa Lecce", "New Basket Carmiano", 0, 0, "Da giocare"),
+    ("C16_2297", "Girone C", 16, "Sab 06/03/2027 16:30", "Virtus Brindisi", "All Star Francavilla", 0, 0, "Da giocare"),
+    ("C16_2298", "Girone C", 16, "Sab 06/03/2027 18:00", "Zero21 Calimera", "A.S.S.I. Basket Brindisi", 0, 0, "Da giocare"),
+
+    ("C17_2299", "Girone C", 17, "Sab 13/03/2027 18:00", "All Star Francavilla", "Basket Tricase", 0, 0, "Da giocare"),
+    ("C17_2300", "Girone C", 17, "Dom 14/03/2027 18:30", "Lupa Lecce", "A.S.S.I. Basket Brindisi", 0, 0, "Da giocare"),
+    ("C17_2301", "Girone C", 17, "Dom 14/03/2027 18:00", "Zero21 Calimera", "Polisportiva Manduria", 0, 0, "Da giocare"),
+    ("C17_2302", "Girone C", 17, "Sab 13/03/2027 18:00", "Virtus Brindisi", "Aurora Brindisi", 0, 0, "Da giocare"),
+    ("C17_2303", "Girone C", 17, "Sab 13/03/2027 18:00", "New Basket Carmiano", "ASD Magic Galatina", 0, 0, "Da giocare"),
+
+    ("C18_2304", "Girone C", 18, "Dom 21/03/2027 17:00", "Bellfika Mesagne", "Lupa Lecce", 0, 0, "Da giocare"),
+    ("C18_2305", "Girone C", 18, "Dom 21/03/2027 18:30", "Zero21 Calimera", "All Star Francavilla", 0, 0, "Da giocare"),
+    ("C18_2306", "Girone C", 18, "Sab 20/03/2027 16:30", "Virtus Brindisi", "New Basket Carmiano", 0, 0, "Da giocare"),
+    ("C18_2307", "Girone C", 18, "Dom 21/03/2027 18:00", "Basket Tricase", "Polisportiva Manduria", 0, 0, "Da giocare"),
+    ("C18_2308", "Girone C", 18, "Sab 20/03/2027 18:30", "ASD Magic Galatina", "Aurora Brindisi", 0, 0, "Da giocare"),
+
+    ("C19_2309", "Girone C", 19, "Dom 04/04/2027 18:30", "Lupa Lecce", "Zero21 Calimera", 0, 0, "Da giocare"),
+    ("C19_2310", "Girone C", 19, "Sab 03/04/2027 18:00", "Aurora Brindisi", "New Basket Carmiano", 0, 0, "Da giocare"),
+    ("C19_2311", "Girone C", 19, "Sab 03/04/2027 16:30", "Virtus Brindisi", "ASD Magic Galatina", 0, 0, "Da giocare"),
+    ("C19_2312", "Girone C", 19, "Sab 03/04/2027 16:30", "Bellfika Mesagne", "Polisportiva Manduria", 0, 0, "Da giocare"),
+    ("C19_2313", "Girone C", 19, "Sab 03/04/2027 18:00", "A.S.S.I. Basket Brindisi", "Basket Tricase", 0, 0, "Da giocare"),
+
+    ("C20_2314", "Girone C", 20, "Sab 10/04/2027 18:00", "Aurora Brindisi", "Lupa Lecce", 0, 0, "Da giocare"),
+    ("C20_2315", "Girone C", 20, "Dom 11/04/2027 18:00", "Zero21 Calimera", "Basket Tricase", 0, 0, "Da giocare"),
+    ("C20_2316", "Girone C", 20, "Dom 11/04/2027 17:00", "Bellfika Mesagne", "Virtus Brindisi", 0, 0, "Da giocare"),
+    ("C20_2317", "Girone C", 20, "Sab 10/04/2027 18:00", "New Basket Carmiano", "Polisportiva Manduria", 0, 0, "Da giocare"),
+    ("C20_2318", "Girone C", 20, "Sab 10/04/2027 18:00", "All Star Francavilla", "A.S.S.I. Basket Brindisi", 0, 0, "Da giocare"),
+
+    ("C21_2319", "Girone C", 21, "Sab 17/04/2027 18:30", "ASD Magic Galatina", "Bellfika Mesagne", 0, 0, "Da giocare"),
+    ("C21_2320", "Girone C", 21, "Dom 18/04/2027 18:30", "Zero21 Calimera", "Virtus Brindisi", 0, 0, "Da giocare"),
+    ("C21_2321", "Girone C", 21, "Dom 18/04/2027 18:00", "Lupa Lecce", "Basket Tricase", 0, 0, "Da giocare"),
+    ("C21_2322", "Girone C", 21, "Dom 18/04/2027 18:00", "Polisportiva Manduria", "A.S.S.I. Basket Brindisi", 0, 0, "Da giocare"),
+    ("C21_2323", "Girone C", 21, "Sab 17/04/2027 18:00", "All Star Francavilla", "Aurora Brindisi", 0, 0, "Da giocare"),
+
+    ("C22_2324", "Girone C", 22, "Sab 24/04/2027 18:00", "ASD Magic Galatina", "A.S.S.I. Basket Brindisi", 0, 0, "Da giocare"),
+    ("C22_2325", "Girone C", 22, "Sab 24/04/2027 16:30", "Virtus Brindisi", "Basket Tricase", 0, 0, "Da giocare"),
+    ("C22_2326", "Girone C", 22, "Sab 24/04/2027 18:00", "Aurora Brindisi", "Polisportiva Manduria", 0, 0, "Da giocare"),
+    ("C22_2327", "Girone C", 22, "Sab 24/04/2027 18:30", "Lupa Lecce", "All Star Francavilla", 0, 0, "Da giocare"),
+    ("C22_2328", "Girone C", 22, "Dom 25/04/2027 17:00", "Bellfika Mesagne", "New Basket Carmiano", 0, 0, "Da giocare"),
 ]
 
 GAME_COLS = [
@@ -243,7 +523,7 @@ def build_default_games_df() -> pd.DataFrame:
         [
             {
                 "ID_Partita": gid,
-                "Girone": "Girone A",
+                "Girone": girone,
                 "Giornata": giornata,
                 "Data": data_ora,
                 "Casa": casa,
@@ -263,7 +543,7 @@ def build_default_games_df() -> pd.DataFrame:
                 "OT_T": 0,
                 "Note_Gara": "",
             }
-            for gid, giornata, data_ora, casa, trasferta, pts_casa, pts_trasf, stato in DEFAULT_GAMES_RAW
+            for gid, girone, giornata, data_ora, casa, trasferta, pts_casa, pts_trasf, stato in DEFAULT_GAMES_RAW
         ]
     )
 
@@ -390,6 +670,7 @@ def compute_team_metrics(team_name: str, girone: str, games_df: pd.DataFrame) ->
         "PG": pg,
         "V": wins,
         "S": losses,
+        "PF": pf,
         "DP": dp,
         "STREAK": streak,
     }
@@ -411,11 +692,12 @@ def compute_standings_for_girone(girone: str, teams_df: pd.DataFrame, games_df: 
                 "PG": m["PG"],
                 "V": m["V"],
                 "S": m["S"],
+                "PF": m["PF"],
                 "DP": m["DP"],
                 "STREAK": m["STREAK"],
             }
         )
-    return sorted(rows, key=lambda x: (-x["PTS"], -x["DP"], -x["V"], -x["PG"], x["Squadra"]))
+    return sorted(rows, key=lambda x: (-x["PTS"], -x["DP"], -x["PF"], -x["V"], x["Squadra"]))
 
 
 def compute_best_third(teams_df: pd.DataFrame, games_df: pd.DataFrame):
@@ -426,7 +708,7 @@ def compute_best_third(teams_df: pd.DataFrame, games_df: pd.DataFrame):
             thirds.append(st_list[2])
     if not thirds:
         return None, []
-    ranked_thirds = sorted(thirds, key=lambda x: (-x["PTS"], -x["DP"], -x["V"], x["Squadra"]))
+    ranked_thirds = sorted(thirds, key=lambda x: (-x["PTS"], -x["DP"], -x["PF"], x["Squadra"]))
     return ranked_thirds[0], ranked_thirds
 
 
@@ -609,7 +891,7 @@ def render_standings_board(board: list, girone_sel: str, best_third_team: dict |
         elif idx == 3:
             is_best = best_third_team is not None and best_third_team["Girone"] == girone_sel
             if len(ranked_thirds) <= 1:
-                label_3 = "3° POSTO — MIGLIORE TERZA (IN ATTESA DATI GIRONI B/C)"
+                label_3 = "3° POSTO — MIGLIORE TERZA (IN ATTESA DATI ALTRI GIRONI)"
                 tag_cls = "zone-terza-no"
             elif is_best:
                 label_3 = "3° POSTO — ATTUALE MIGLIORE TERZA (PLAY-OFF)"
@@ -650,7 +932,7 @@ def render_standings_board(board: list, girone_sel: str, best_third_team: dict |
     st.markdown("".join(html_parts), unsafe_allow_html=True)
 
     if ranked_thirds:
-        st.markdown("#### Confronto Automatico Migliore Terza (Punti → Differenza Punti)")
+        st.markdown("#### Confronto Automatico Migliore Terza (Punti → Differenza Punti → Punti Segnati)")
         t_rows = []
         for rank_i, t_item in enumerate(ranked_thirds, start=1):
             t_rows.append(
@@ -662,6 +944,7 @@ def render_standings_board(board: list, girone_sel: str, best_third_team: dict |
                     "PG": t_item["PG"],
                     "V": t_item["V"],
                     "S": t_item["S"],
+                    "PF": t_item["PF"],
                     "DP": format_dp(t_item["DP"]),
                     "Stato": "QUALIFICATA PLAY-OFF" if rank_i == 1 else "FUORI PLAY-OFF",
                 }
@@ -1207,17 +1490,14 @@ if page == "Gironi":
     if "game" in st.query_params:
         del st.query_params["game"]
     st.title("Gironi — Divisione Regionale 2 Puglia")
-    st.caption("Classifica calcolata automaticamente dai risultati finali · Migliore 3ª calcolata per Punti e Differenza Punti.")
+    st.caption("1ª sale in DR1 · 2ª Play-off · 3ª Play-off solo migliore terza · Ultime 4 Playout.")
 
     girone_sel = st.selectbox("Seleziona Girone", ["Girone A", "Girone B", "Girone C"])
     board = compute_standings_for_girone(girone_sel, teams_df, games_df)
     best_third_team, ranked_thirds = compute_best_third(teams_df, games_df)
 
     if not board:
-        st.info(
-            f"Nessuna squadra inserita in **{girone_sel}** al momento. "
-            "Quando caricheremo calendario e risultati di Girone B e Girone C, classifica e migliore terza si aggiorneranno in automatico."
-        )
+        st.info(f"Nessuna squadra inserita in **{girone_sel}** al momento.")
     else:
         st.subheader(f"Classifica — {girone_sel}")
         render_standings_board(board, girone_sel, best_third_team, ranked_thirds)
@@ -1374,7 +1654,7 @@ elif page == "Gestione Squadre":
     if "game" in st.query_params:
         del st.query_params["game"]
     st.title("Gestione Squadre e Dati")
-    st.caption("Modifica squadre/loghi/note o aggiungi squadre per Gironi B e C.")
+    st.caption("Modifica squadre/loghi/note o ripristina tutti i gironi ufficiali.")
 
     girone_edit = st.selectbox("Girone da modificare", ["Girone A", "Girone B", "Girone C"], key="edit_girone")
     sub_teams = teams_df[teams_df["Girone"] == girone_edit].reset_index(drop=True)
@@ -1395,11 +1675,11 @@ elif page == "Gestione Squadre":
         st.rerun()
 
     st.divider()
-    st.subheader("Ripristino Dati Ufficiali Girone A")
-    if st.button("🔄 Ripristina 11 Squadre e Calendario Ufficiale"):
+    st.subheader("Ripristino Dati Ufficiali (Gironi A, B e C)")
+    if st.button("🔄 Ripristina Tutti i Gironi e Calendari Ufficiali (A, B, C)"):
         save_teams(pd.DataFrame(DEFAULT_TEAMS))
         save_games(build_default_games_df())
-        st.success("Squadre con loghi e calendario ufficiale ripristinati.")
+        st.success("33 squadre e calendari ufficiali di Gironi A, B e C ripristinati.")
         st.rerun()
 
     st.divider()
