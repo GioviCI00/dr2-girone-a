@@ -19,7 +19,7 @@ st.set_page_config(
 # ==========================================
 # CONFIGURAZIONE
 # ==========================================
-DATA_VERSION = "2026-11-25-v7-match-menus-court-history"
+DATA_VERSION = "2026-11-25-v9-full-clean-build"
 OUR_TEAM = "AGS DIL. TORITTO"
 STAFF_PASSWORD = os.environ.get("DR2_STAFF_PASSWORD", "dr2puglia")
 DEFAULT_GITHUB_OWNER = "GioviCI00"
@@ -1501,62 +1501,99 @@ table.lba-box tr.total-row td.pct-val {
     color: #b45309;
 }
 
-/* Campetto da basket e canotte Formazioni */
-.court-wrapper {
-    background: linear-gradient(180deg, #0b192d 0%, #091322 100%);
-    border: 1px solid rgba(148, 163, 184, 0.24);
-    border-radius: 16px;
-    padding: 18px;
-    margin-bottom: 18px;
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.38);
-}
-.court-headers {
+/* Formazioni a 3 colonne + campetto compatto */
+.formation-3col {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(205px, 1fr) minmax(380px, 560px) minmax(205px, 1fr);
     gap: 14px;
-    margin-bottom: 12px;
+    align-items: center;
 }
-.court-side-badge {
-    background: rgba(15, 23, 42, 0.9);
+@media (max-width: 1100px) {
+    .formation-3col {
+        grid-template-columns: 1fr;
+    }
+}
+.roster-side-card {
+    background: #0d1624;
     border: 1px solid rgba(148, 163, 184, 0.22);
-    border-radius: 10px;
-    padding: 8px 12px;
+    border-radius: 12px;
+    padding: 12px 14px;
+    height: 100%;
+}
+.roster-side-head {
     display: flex;
     align-items: center;
-    gap: 10px;
-}
-.court-side-badge.right {
-    justify-content: flex-end;
-    text-align: right;
-}
-.court-side-badge img {
-    width: 28px;
-    height: 28px;
-    object-fit: contain;
-    background: #ffffff;
-    border-radius: 6px;
-    padding: 2px;
-}
-.court-side-title {
-    font-size: 12.5px;
+    gap: 8px;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+    font-size: 12px;
     font-weight: 900;
     color: #f8fafc;
     text-transform: uppercase;
 }
-.court-side-sub {
-    font-size: 10.5px;
-    font-weight: 700;
+.roster-side-head img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    background: #ffffff;
+    border-radius: 5px;
+    padding: 2px;
+}
+.roster-group-lbl {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
     color: #fbbf24;
+    margin-bottom: 6px;
+}
+.roster-player-line {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 4px 6px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin-bottom: 3px;
+    background: rgba(15, 23, 42, 0.75);
+}
+.roster-player-line.starter {
+    border-left: 3px solid #22c55e;
+}
+.roster-num-pill {
+    min-width: 24px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 900;
+    color: #fbbf24;
+    background: rgba(30, 41, 59, 0.95);
+    border-radius: 4px;
+    padding: 1px 4px;
+}
+.roster-divider {
+    border: none;
+    border-top: 1px dashed rgba(148, 163, 184, 0.35);
+    margin: 8px 0;
+}
+.court-compact-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
 }
 .court-stage {
     position: relative;
     width: 100%;
-    min-height: 410px;
-    border-radius: 14px;
+    max-width: 560px;
+    height: 290px;
+    border-radius: 12px;
     overflow: hidden;
-    border: 3px solid #f8fafc;
+    border: 2.5px solid #f8fafc;
     background: #c86d3b;
-    box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
 }
 .court-svg-bg {
     position: absolute;
@@ -1570,21 +1607,20 @@ table.lba-box tr.total-row td.pct-val {
     z-index: 2;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    min-height: 410px;
-    padding: 16px 12px;
-    gap: 12px;
+    height: 100%;
+    padding: 10px 8px;
+    gap: 8px;
 }
 .half-court-col {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     align-items: center;
-    gap: 6px;
 }
 .half-row-top, .half-row-bot {
     display: flex;
     justify-content: center;
-    gap: 14px;
+    gap: 10px;
     flex-wrap: wrap;
 }
 .half-row-mid {
@@ -1595,21 +1631,19 @@ table.lba-box tr.total-row td.pct-val {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
-    min-width: 78px;
+    gap: 2px;
 }
 .jersey-shape {
-    position: relative;
-    width: 48px;
-    height: 52px;
-    border-radius: 10px 10px 7px 7px;
+    width: 36px;
+    height: 38px;
+    border-radius: 8px 8px 6px 6px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 900;
-    font-size: 16px;
-    box-shadow: 0 5px 12px rgba(0, 0, 0, 0.4);
-    border: 2px solid #ffffff;
+    font-size: 13px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    border: 1.5px solid #ffffff;
 }
 .jersey-home {
     background: linear-gradient(180deg, #1d4ed8 0%, #1e3a8a 100%);
@@ -1623,54 +1657,15 @@ table.lba-box tr.total-row td.pct-val {
     background: rgba(15, 23, 42, 0.92);
     color: #ffffff;
     border: 1px solid rgba(255, 255, 255, 0.25);
-    border-radius: 6px;
-    padding: 2px 8px;
-    font-size: 11px;
+    border-radius: 5px;
+    padding: 1px 6px;
+    font-size: 10px;
     font-weight: 800;
     text-transform: uppercase;
-    max-width: 115px;
+    max-width: 92px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-}
-.bench-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-top: 8px;
-}
-.bench-box {
-    background: #0d1624;
-    border: 1px solid rgba(148, 163, 184, 0.2);
-    border-radius: 12px;
-    padding: 14px;
-}
-.bench-title {
-    font-size: 12px;
-    font-weight: 900;
-    color: #fbbf24;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    margin-bottom: 10px;
-}
-.bench-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-.bench-chip {
-    background: rgba(30, 41, 59, 0.9);
-    border: 1px solid rgba(148, 163, 184, 0.28);
-    border-radius: 8px;
-    padding: 5px 10px;
-    font-size: 12px;
-    font-weight: 700;
-    color: #f8fafc;
-}
-.bench-chip span.b-num {
-    color: #fbbf24;
-    font-weight: 900;
-    margin-right: 5px;
 }
 
 /* Storico partite */
@@ -1678,6 +1673,11 @@ table.lba-box tr.total-row td.pct-val {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
+}
+@media (max-width: 850px) {
+    .hist-grid {
+        grid-template-columns: 1fr;
+    }
 }
 .hist-col {
     background: #0d1624;
@@ -1789,6 +1789,215 @@ table.lba-box tr.total-row td.pct-val {
     font-weight: 900;
     color: #fbbf24;
     margin-top: 2px;
+}
+</style>
+"""
+
+TEAM_PAGE_CSS = """
+<style>
+.tp-stats-card {
+    background: #ffffff;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.32);
+    margin-bottom: 20px;
+}
+.tp-stats-head {
+    background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%);
+    color: #ffffff;
+    padding: 12px 16px;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    border-bottom: 2px solid #f59e0b;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.tp-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    background: #ffffff;
+}
+table.tp-stats-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    color: #1e293b;
+    min-width: 780px;
+}
+table.tp-stats-table th {
+    background: #f8fafc;
+    color: #334155;
+    font-weight: 800;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    padding: 8px 7px;
+    border-bottom: 2px solid #cbd5e1;
+    border-right: 1px solid #e2e8f0;
+    text-align: center;
+    white-space: nowrap;
+}
+table.tp-stats-table th.left-col {
+    text-align: left;
+    padding-left: 12px;
+}
+table.tp-stats-table th.hi-col {
+    color: #d97706;
+}
+table.tp-stats-table td {
+    padding: 7px 7px;
+    text-align: center;
+    border-bottom: 1px solid #e2e8f0;
+    border-right: 1px solid #f1f5f9;
+    font-weight: 600;
+}
+table.tp-stats-table td.num-col {
+    font-weight: 900;
+    color: #0f172a;
+    background: #f8fafc;
+}
+table.tp-stats-table td.name-col {
+    text-align: left;
+    padding-left: 12px;
+    font-weight: 800;
+    color: #0f172a;
+    white-space: nowrap;
+}
+table.tp-stats-table td.pts-col {
+    font-weight: 900;
+    color: #d97706;
+}
+table.tp-stats-table tr:nth-child(even) td {
+    background: #fcfcfd;
+}
+table.tp-stats-table tr:nth-child(even) td.num-col {
+    background: #f1f5f9;
+}
+
+.tp-games-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+a.tp-game-link {
+    text-decoration: none !important;
+    color: inherit !important;
+    display: block;
+}
+.tp-game-card {
+    display: grid;
+    grid-template-columns: 112px 1fr 94px;
+    gap: 12px;
+    align-items: center;
+    background: linear-gradient(90deg, #0d1828 0%, #11223a 100%);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 11px;
+    padding: 11px 14px;
+    transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+.tp-game-card:hover {
+    background: linear-gradient(90deg, #132540 0%, #193154 100%);
+    border-color: rgba(251, 191, 36, 0.55);
+    transform: translateY(-1px);
+}
+.tp-game-card.win-border {
+    border-left: 4px solid #22c55e;
+}
+.tp-game-card.loss-border {
+    border-left: 4px solid #ef4444;
+}
+.tp-game-card.upcoming-border {
+    border-left: 4px solid #38bdf8;
+}
+.tp-g-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.tp-g-round {
+    font-size: 11px;
+    font-weight: 900;
+    color: #fbbf24;
+    text-transform: uppercase;
+}
+.tp-g-date {
+    font-size: 11px;
+    font-weight: 600;
+    color: #94a3b8;
+}
+.tp-g-matchup {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+.tp-g-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #cbd5e1;
+    text-transform: uppercase;
+}
+.tp-g-row.strong {
+    color: #ffffff;
+    font-weight: 900;
+}
+.tp-g-logo {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    background: #ffffff;
+    border-radius: 4px;
+    padding: 1px;
+    flex-shrink: 0;
+}
+.tp-g-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+.tp-g-score {
+    font-size: 15px;
+    font-weight: 900;
+    color: #ffffff;
+    white-space: nowrap;
+}
+.tp-g-score.win {
+    color: #fbbf24;
+}
+.tp-g-badge-w {
+    font-size: 10px;
+    font-weight: 900;
+    background: rgba(22, 163, 74, 0.25);
+    color: #4ade80;
+    border: 1px solid rgba(74, 222, 128, 0.45);
+    border-radius: 5px;
+    padding: 1px 7px;
+}
+.tp-g-badge-l {
+    font-size: 10px;
+    font-weight: 900;
+    background: rgba(220, 38, 38, 0.25);
+    color: #f87171;
+    border: 1px solid rgba(248, 113, 113, 0.45);
+    border-radius: 5px;
+    padding: 1px 7px;
+}
+.tp-g-badge-u {
+    font-size: 10px;
+    font-weight: 800;
+    background: rgba(56, 189, 248, 0.18);
+    color: #7dd3fc;
+    border: 1px solid rgba(125, 211, 252, 0.4);
+    border-radius: 5px;
+    padding: 1px 7px;
 }
 </style>
 """
@@ -2232,7 +2441,6 @@ def _extract_surname(full_name: str) -> str:
     parts = cleaned.split()
     if len(parts) == 1:
         return parts[0]
-    # Se formato "Nome Cognome" (es. "Dario Iacobone") prende l'ultimo token; se "Cognome N." prende il primo
     if len(parts[-1]) <= 2 and len(parts[0]) > 2:
         return parts[0]
     return parts[-1]
@@ -2256,7 +2464,10 @@ def _normalize_player_rows(rows: list | None) -> list[dict]:
         t3_t_val = item.get("3PT_T", max(int(pd.to_numeric(t3_r_val, errors="coerce") or 0), 0))
         tl_r_val = item.get("TL_R", 0)
         tl_sbag_val = item.get("TL_SBAG", 0)
-        tl_t_val = item.get("TL_T", int(pd.to_numeric(tl_r_val, errors="coerce") or 0) + int(pd.to_numeric(tl_sbag_val, errors="coerce") or 0))
+        tl_t_val = item.get(
+            "TL_T",
+            int(pd.to_numeric(tl_r_val, errors="coerce") or 0) + int(pd.to_numeric(tl_sbag_val, errors="coerce") or 0),
+        )
         fc_val = item.get("F_C", item.get("FALLI", 0))
         sf_val = item.get("SF", item.get("QUINTETTO", False))
         num_val = _extract_jersey_number(name, item.get("NUM", 0))
@@ -2333,7 +2544,6 @@ def _players_to_editor_df(player_list: list[dict], full_stats: bool = True, min_
     df = pd.DataFrame(rows)
     if full_stats:
         return df
-    # Senza % da 2, né tentativi/rimbalzi/stoppate/palle/valutazione
     compact_cols = ["Giocatore", "NUM", "PUN", "MIN", "SF", "F_C", "2PT_R", "SC", "3PT_R", "TL_R", "TL_T", "ASS"]
     return df[compact_cols]
 
@@ -2413,7 +2623,7 @@ def render_lba_boxscore(
 
     if full_stats:
         header_html = (
-            '<tr>'
+            "<tr>"
             '<th class="grp-empty" colspan="4"></th>'
             '<th class="grp-hdr" colspan="2">FALLI</th>'
             '<th class="grp-hdr" colspan="3">TIRI DA 2</th>'
@@ -2425,8 +2635,8 @@ def render_lba_boxscore(
             '<th class="grp-hdr" colspan="2">PALLE</th>'
             '<th class="grp-empty" colspan="1"></th>'
             '<th class="grp-hdr" colspan="2">VALUTAZIONE</th>'
-            '</tr>'
-            '<tr>'
+            "</tr>"
+            "<tr>"
             '<th class="sub-hdr left-col">GIOCATORE</th>'
             '<th class="sub-hdr pts-col">PUN</th>'
             '<th class="sub-hdr">MIN</th>'
@@ -2453,12 +2663,11 @@ def render_lba_boxscore(
             '<th class="sub-hdr">ASS</th>'
             '<th class="sub-hdr">LEGA</th>'
             '<th class="sub-hdr">OER</th>'
-            '</tr>'
+            "</tr>"
         )
     else:
-        # Senza colonna % sui tiri da 2 (mantenuta solo % sui tiri liberi)
         header_html = (
-            '<tr>'
+            "<tr>"
             '<th class="grp-empty" colspan="4"></th>'
             '<th class="grp-hdr" colspan="1">FALLI</th>'
             '<th class="grp-hdr" colspan="1">TIRI DA 2</th>'
@@ -2466,8 +2675,8 @@ def render_lba_boxscore(
             '<th class="grp-hdr" colspan="1">TIRI DA 3</th>'
             '<th class="grp-hdr" colspan="3">TIRI LIBERI</th>'
             '<th class="grp-empty" colspan="1"></th>'
-            '</tr>'
-            '<tr>'
+            "</tr>"
+            "<tr>"
             '<th class="sub-hdr left-col">GIOCATORE</th>'
             '<th class="sub-hdr pts-col">PUN</th>'
             '<th class="sub-hdr">MIN</th>'
@@ -2480,7 +2689,7 @@ def render_lba_boxscore(
             '<th class="sub-hdr">T</th>'
             '<th class="sub-hdr pts-col">%</th>'
             '<th class="sub-hdr">ASS</th>'
-            '</tr>'
+            "</tr>"
         )
 
     html = [
@@ -2489,12 +2698,12 @@ def render_lba_boxscore(
         f'<div class="lba-banner-left">{logo_tag}<div>'
         f'<div class="lba-team-title">{team_name}</div>'
         f'<div class="lba-team-coach">Allenatore: {allenatore_txt}</div>'
-        f'</div></div>',
+        f"</div></div>",
         f'<div class="lba-tag-pill">{badge_txt}</div>',
-        '</div>',
+        "</div>",
         f'<div class="lba-table-wrap"><table class="{table_cls}"><thead>',
         header_html,
-        '</thead><tbody>',
+        "</thead><tbody>",
     ]
 
     tot_pun = tot_min_num = 0
@@ -2555,51 +2764,51 @@ def render_lba_boxscore(
 
         if full_stats:
             html.append(
-                f'<tr>'
+                "<tr>"
                 f'<td class="player-name">{num_badge}{p["Giocatore"]}</td>'
                 f'<td class="pts-val">{pun}</td>'
-                f'<td>{min_str}</td>'
+                f"<td>{min_str}</td>"
                 f'<td class="sf-check">{sf_mark}</td>'
-                f'<td>{fc}</td>'
-                f'<td>{fs}</td>'
-                f'<td>{r2}</td>'
-                f'<td>{t2}</td>'
+                f"<td>{fc}</td>"
+                f"<td>{fs}</td>"
+                f"<td>{r2}</td>"
+                f"<td>{t2}</td>"
                 f'<td class="pct-val">{_fmt_pct(r2, t2)}</td>'
-                f'<td>{sc}</td>'
-                f'<td>{r3}</td>'
-                f'<td>{t3}</td>'
+                f"<td>{sc}</td>"
+                f"<td>{r3}</td>"
+                f"<td>{t3}</td>"
                 f'<td class="pct-val">{_fmt_pct(r3, t3)}</td>'
-                f'<td>{rtl}</td>'
-                f'<td>{ttl}</td>'
+                f"<td>{rtl}</td>"
+                f"<td>{ttl}</td>"
                 f'<td class="pct-val">{_fmt_pct(rtl, ttl)}</td>'
-                f'<td>{ro}</td>'
-                f'<td>{rd}</td>'
-                f'<td>{rt}</td>'
-                f'<td>{sd}</td>'
-                f'<td>{ss}</td>'
-                f'<td>{pp}</td>'
-                f'<td>{pr}</td>'
-                f'<td>{ass}</td>'
-                f'<td>{val_l}</td>'
-                f'<td>{oer_v}</td>'
-                f'</tr>'
+                f"<td>{ro}</td>"
+                f"<td>{rd}</td>"
+                f"<td>{rt}</td>"
+                f"<td>{sd}</td>"
+                f"<td>{ss}</td>"
+                f"<td>{pp}</td>"
+                f"<td>{pr}</td>"
+                f"<td>{ass}</td>"
+                f"<td>{val_l}</td>"
+                f"<td>{oer_v}</td>"
+                "</tr>"
             )
         else:
             html.append(
-                f'<tr>'
+                "<tr>"
                 f'<td class="player-name">{num_badge}{p["Giocatore"]}</td>'
                 f'<td class="pts-val">{pun}</td>'
-                f'<td>{min_str}</td>'
+                f"<td>{min_str}</td>"
                 f'<td class="sf-check">{sf_mark}</td>'
-                f'<td>{fc}</td>'
-                f'<td>{r2}</td>'
-                f'<td>{sc}</td>'
-                f'<td>{r3}</td>'
-                f'<td>{rtl}</td>'
-                f'<td>{ttl}</td>'
+                f"<td>{fc}</td>"
+                f"<td>{r2}</td>"
+                f"<td>{sc}</td>"
+                f"<td>{r3}</td>"
+                f"<td>{rtl}</td>"
+                f"<td>{ttl}</td>"
                 f'<td class="pct-val">{_fmt_pct(rtl, ttl)}</td>'
-                f'<td>{ass}</td>'
-                f'</tr>'
+                f"<td>{ass}</td>"
+                "</tr>"
             )
 
     if full_stats:
@@ -2608,214 +2817,41 @@ def render_lba_boxscore(
             '<tr class="total-row">'
             '<td class="player-name">TOTALI</td>'
             f'<td class="pts-val">{tot_pun}</td>'
-            f'<td>{tot_min_num}</td>'
-            '<td>-</td>'
-            f'<td>{tot_fc}</td><td>{tot_fs}</td>'
-            f'<td>{tot_2r}</td><td>{tot_2t}</td><td class="pct-val">{_fmt_pct(tot_2r, tot_2t)}</td>'
-            f'<td>{tot_sc}</td>'
-            f'<td>{tot_3r}</td><td>{tot_3t}</td><td class="pct-val">{_fmt_pct(tot_3r, tot_3t)}</td>'
-            f'<td>{tot_tlr}</td><td>{tot_tlt}</td><td class="pct-val">{_fmt_pct(tot_tlr, tot_tlt)}</td>'
-            f'<td>{tot_rimo}</td><td>{tot_rimd}</td><td>{tot_rimt}</td>'
-            f'<td>{tot_std}</td><td>{tot_sts}</td>'
-            f'<td>{tot_palp}</td><td>{tot_palr}</td>'
-            f'<td>{tot_ass}</td>'
-            f'<td>{tot_val}</td>'
-            f'<td>{tot_oer}</td>'
-            '</tr>'
+            f"<td>{tot_min_num}</td>"
+            "<td>-</td>"
+            f"<td>{tot_fc}</td><td>{tot_fs}</td>"
+            f"<td>{tot_2r}</td><td>{tot_2t}</td><td class=\"pct-val\">{_fmt_pct(tot_2r, tot_2t)}</td>"
+            f"<td>{tot_sc}</td>"
+            f"<td>{tot_3r}</td><td>{tot_3t}</td><td class=\"pct-val\">{_fmt_pct(tot_3r, tot_3t)}</td>"
+            f"<td>{tot_tlr}</td><td>{tot_tlt}</td><td class=\"pct-val\">{_fmt_pct(tot_tlr, tot_tlt)}</td>"
+            f"<td>{tot_rimo}</td><td>{tot_rimd}</td><td>{tot_rimt}</td>"
+            f"<td>{tot_std}</td><td>{tot_sts}</td>"
+            f"<td>{tot_palp}</td><td>{tot_palr}</td>"
+            f"<td>{tot_ass}</td>"
+            f"<td>{tot_val}</td>"
+            f"<td>{tot_oer}</td>"
+            "</tr>"
         )
     else:
         html.append(
             '<tr class="total-row">'
             '<td class="player-name">TOTALI</td>'
             f'<td class="pts-val">{tot_pun}</td>'
-            f'<td>{tot_min_num}</td>'
-            '<td>-</td>'
-            f'<td>{tot_fc}</td>'
-            f'<td>{tot_2r}</td>'
-            f'<td>{tot_sc}</td>'
-            f'<td>{tot_3r}</td>'
-            f'<td>{tot_tlr}</td>'
-            f'<td>{tot_tlt}</td>'
+            f"<td>{tot_min_num}</td>"
+            "<td>-</td>"
+            f"<td>{tot_fc}</td>"
+            f"<td>{tot_2r}</td>"
+            f"<td>{tot_sc}</td>"
+            f"<td>{tot_3r}</td>"
+            f"<td>{tot_tlr}</td>"
+            f"<td>{tot_tlt}</td>"
             f'<td class="pct-val">{_fmt_pct(tot_tlr, tot_tlt)}</td>'
-            f'<td>{tot_ass}</td>'
-            '</tr>'
+            f"<td>{tot_ass}</td>"
+            "</tr>"
         )
 
     html.append("</tbody></table></div></div>")
     st.markdown("".join(html), unsafe_allow_html=True)
-
-
-# --- Aggiorna questi stili dentro MATCH_DETAIL_CSS ---
-FORMATION_LAYOUT_CSS = """
-<style>
-.formation-3col {
-    display: grid;
-    grid-template-columns: minmax(205px, 1fr) minmax(380px, 560px) minmax(205px, 1fr);
-    gap: 14px;
-    align-items: center;
-}
-@media (max-width: 1100px) {
-    .formation-3col {
-        grid-template-columns: 1fr;
-    }
-}
-.roster-side-card {
-    background: #0d1624;
-    border: 1px solid rgba(148, 163, 184, 0.22);
-    border-radius: 12px;
-    padding: 12px 14px;
-    height: 100%;
-}
-.roster-side-head {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding-bottom: 8px;
-    margin-bottom: 8px;
-    border-bottom: 1px solid rgba(148, 163, 184, 0.18);
-    font-size: 12px;
-    font-weight: 900;
-    color: #f8fafc;
-    text-transform: uppercase;
-}
-.roster-side-head img {
-    width: 24px;
-    height: 24px;
-    object-fit: contain;
-    background: #ffffff;
-    border-radius: 5px;
-    padding: 2px;
-}
-.roster-group-lbl {
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 0.6px;
-    text-transform: uppercase;
-    color: #fbbf24;
-    margin-bottom: 6px;
-}
-.roster-player-line {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    padding: 4px 6px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 700;
-    color: #f1f5f9;
-    margin-bottom: 3px;
-    background: rgba(15, 23, 42, 0.75);
-}
-.roster-player-line.starter {
-    border-left: 3px solid #22c55e;
-}
-.roster-num-pill {
-    min-width: 24px;
-    text-align: center;
-    font-size: 11px;
-    font-weight: 900;
-    color: #fbbf24;
-    background: rgba(30, 41, 59, 0.95);
-    border-radius: 4px;
-    padding: 1px 4px;
-}
-.roster-divider {
-    border: none;
-    border-top: 1px dashed rgba(148, 163, 184, 0.35);
-    margin: 8px 0;
-}
-
-.court-compact-wrap {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-}
-.court-stage {
-    position: relative;
-    width: 100%;
-    max-width: 560px;
-    height: 290px;
-    border-radius: 12px;
-    overflow: hidden;
-    border: 2.5px solid #f8fafc;
-    background: #c86d3b;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
-}
-.court-svg-bg {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
-}
-.court-players-layer {
-    position: relative;
-    z-index: 2;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    height: 100%;
-    padding: 10px 8px;
-    gap: 8px;
-}
-.half-court-col {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: center;
-}
-.half-row-top, .half-row-bot {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-.half-row-mid {
-    display: flex;
-    justify-content: center;
-}
-.jersey-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-}
-.jersey-shape {
-    width: 36px;
-    height: 38px;
-    border-radius: 8px 8px 6px 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 900;
-    font-size: 13px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
-    border: 1.5px solid #ffffff;
-}
-.jersey-home {
-    background: linear-gradient(180deg, #1d4ed8 0%, #1e3a8a 100%);
-    color: #ffffff;
-}
-.jersey-away {
-    background: linear-gradient(180deg, #dc2626 0%, #991b1b 100%);
-    color: #ffffff;
-}
-.jersey-name {
-    background: rgba(15, 23, 42, 0.92);
-    color: #ffffff;
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    border-radius: 5px;
-    padding: 1px 6px;
-    font-size: 10px;
-    font-weight: 800;
-    text-transform: uppercase;
-    max-width: 92px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-</style>
-"""
 
 
 def _render_court_formation(
@@ -2825,8 +2861,6 @@ def _render_court_formation(
     away_players: list[dict],
     logo_html_map: dict[str, str],
 ) -> None:
-    st.markdown(FORMATION_LAYOUT_CSS, unsafe_allow_html=True)
-
     def _prepare_roster(plist: list[dict]) -> tuple[list[dict], list[dict]]:
         norm = sorted(
             _normalize_player_rows(plist),
@@ -2864,7 +2898,7 @@ def _render_court_formation(
                 f'<div class="roster-player-line{cls_st}">'
                 f'<span class="roster-num-pill">#{num_txt}</span>'
                 f'<span>{p["Giocatore"]}</span>'
-                f'</div>'
+                f"</div>"
             )
 
         st_html = "".join(_line(p, True) for p in starters) or '<div style="color:#94a3b8;font-size:11.5px;">Nessun quintetto</div>'
@@ -2874,21 +2908,21 @@ def _render_court_formation(
             '<div class="roster-side-card">'
             f'<div class="roster-side-head"{align_style}>{logo_img}<span>{team_name}</span></div>'
             '<div class="roster-group-lbl">Quintetto Base (Primi 5)</div>'
-            f'{st_html}'
+            f"{st_html}"
             '<hr class="roster-divider" />'
             '<div class="roster-group-lbl">Altri Atleti</div>'
-            f'{bn_html}'
-            '</div>'
+            f"{bn_html}"
+            "</div>"
         )
 
     def _jersey_html(p: dict, team_cls: str) -> str:
         num_txt = str(int(p.get("NUM", 0))) if int(p.get("NUM", 0)) < 999 else "?"
         cognome = _extract_surname(str(p.get("Giocatore", ""))) or str(p.get("Giocatore", ""))
         return (
-            f'<div class="jersey-card">'
+            '<div class="jersey-card">'
             f'<div class="jersey-shape {team_cls}">{num_txt}</div>'
             f'<div class="jersey-name">{cognome}</div>'
-            f'</div>'
+            "</div>"
         )
 
     def _half_court_col_html(starters: list[dict], team_cls: str) -> str:
@@ -2900,7 +2934,7 @@ def _render_court_formation(
             f'<div class="half-row-top">{top_html}</div>'
             f'<div class="half-row-mid">{mid_html}</div>'
             f'<div class="half-row-bot">{bot_html}</div>'
-            '</div>'
+            "</div>"
         )
 
     court_svg = (
@@ -2918,46 +2952,29 @@ def _render_court_formation(
         '<path d="M 1000 62 L 845 62 A 230 230 0 0 0 845 458 L 1000 458" fill="none" stroke="#ffffff" stroke-width="4"/>'
         '<circle cx="946" cy="260" r="9" fill="none" stroke="#f59e0b" stroke-width="3.5"/>'
         '<line x1="958" y1="220" x2="958" y2="300" stroke="#ffffff" stroke-width="4"/>'
-        '</svg>'
+        "</svg>"
     )
 
     center_court_html = (
         '<div class="court-compact-wrap">'
         '<div class="court-stage">'
-        f'{court_svg}'
+        f"{court_svg}"
         '<div class="court-players-layer">'
         f'{_half_court_col_html(h_starters, "jersey-home")}'
         f'{_half_court_col_html(a_starters, "jersey-away")}'
-        '</div>'
-        '</div>'
-        '</div>'
+        "</div>"
+        "</div>"
+        "</div>"
     )
 
     full_html = (
         '<div class="formation-3col">'
-        f'{_roster_col_html(home_name, h_starters, h_bench, is_right=False)}'
-        f'{center_court_html}'
-        f'{_roster_col_html(away_name, a_starters, a_bench, is_right=True)}'
-        '</div>'
+        f"{_roster_col_html(home_name, h_starters, h_bench, is_right=False)}"
+        f"{center_court_html}"
+        f"{_roster_col_html(away_name, a_starters, a_bench, is_right=True)}"
+        "</div>"
     )
     st.markdown(full_html, unsafe_allow_html=True)
-
-    def _bench_chips_html(bench: list[dict]) -> str:
-        if not bench:
-            return '<span style="color:#94a3b8;font-size:12px;">Nessun altro atleta in lista.</span>'
-        chips = []
-        for p in bench:
-            num_txt = f"#{int(p.get('NUM', 0))}" if int(p.get("NUM", 0)) < 999 else "#"
-            chips.append(f'<div class="bench-chip"><span class="b-num">{num_txt}</span>{p["Giocatore"]}</div>')
-        return "".join(chips)
-
-    bench_html = (
-        '<div class="bench-grid">'
-        f'<div class="bench-box"><div class="bench-title">Panchina / Altri Atleti — {home_name} (per numero)</div><div class="bench-list">{_bench_chips_html(h_bench)}</div></div>'
-        f'<div class="bench-box"><div class="bench-title">Panchina / Altri Atleti — {away_name} (per numero)</div><div class="bench-list">{_bench_chips_html(a_bench)}</div></div>'
-        '</div>'
-    )
-    st.markdown(bench_html, unsafe_allow_html=True)
 
 
 def _render_team_history_column(
@@ -2989,234 +3006,25 @@ def _render_team_history_column(
         badge_txt = "V" if won else "P"
         place_tag = "Casa" if is_home else "Trasf."
         items_html.append(
-            f'<div class="hist-item">'
+            '<div class="hist-item">'
             f'<div class="{badge_cls}">{badge_txt} • G{int(g.Giornata)}</div>'
-            f'<div><strong>{place_tag}</strong> vs {opp}</div>'
+            f"<div><strong>{place_tag}</strong> vs {opp}</div>"
             f'<div class="hist-score">{int(g.Punti_Casa)} - {int(g.Punti_Trasferta)}</div>'
-            f'</div>'
+            "</div>"
         )
 
-    if not items_html:
-        body_html = '<div style="color:#94a3b8;font-size:12.5px;">Nessuna partita disputata in precedenza.</div>'
-    else:
-        body_html = "".join(items_html)
+    body_html = (
+        "".join(items_html)
+        if items_html
+        else '<div style="color:#94a3b8;font-size:12.5px;">Nessuna partita disputata in precedenza.</div>'
+    )
 
     return (
         '<div class="hist-col">'
         f'<div class="hist-col-head">{logo_img}<div>{label_side}: {team_name}</div></div>'
-        f'{body_html}'
-        '</div>'
+        f"{body_html}"
+        "</div>"
     )
-
-
-TEAM_PAGE_CSS = """
-<style>
-.tp-stats-card {
-    background: #ffffff;
-    border-radius: 14px;
-    overflow: hidden;
-    border: 1px solid rgba(148, 163, 184, 0.28);
-    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.32);
-    margin-bottom: 20px;
-}
-.tp-stats-head {
-    background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%);
-    color: #ffffff;
-    padding: 12px 16px;
-    font-size: 13px;
-    font-weight: 900;
-    letter-spacing: 0.6px;
-    text-transform: uppercase;
-    border-bottom: 2px solid #f59e0b;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.tp-table-wrap {
-    width: 100%;
-    overflow-x: auto;
-    background: #ffffff;
-}
-table.tp-stats-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-    color: #1e293b;
-    min-width: 780px;
-}
-table.tp-stats-table th {
-    background: #f8fafc;
-    color: #334155;
-    font-weight: 800;
-    font-size: 10.5px;
-    text-transform: uppercase;
-    padding: 8px 7px;
-    border-bottom: 2px solid #cbd5e1;
-    border-right: 1px solid #e2e8f0;
-    text-align: center;
-    white-space: nowrap;
-}
-table.tp-stats-table th.left-col {
-    text-align: left;
-    padding-left: 12px;
-}
-table.tp-stats-table th.hi-col {
-    color: #d97706;
-}
-table.tp-stats-table td {
-    padding: 7px 7px;
-    text-align: center;
-    border-bottom: 1px solid #e2e8f0;
-    border-right: 1px solid #f1f5f9;
-    font-weight: 600;
-}
-table.tp-stats-table td.num-col {
-    font-weight: 900;
-    color: #0f172a;
-    background: #f8fafc;
-}
-table.tp-stats-table td.name-col {
-    text-align: left;
-    padding-left: 12px;
-    font-weight: 800;
-    color: #0f172a;
-    white-space: nowrap;
-}
-table.tp-stats-table td.pts-col {
-    font-weight: 900;
-    color: #d97706;
-}
-table.tp-stats-table tr:nth-child(even) td {
-    background: #fcfcfd;
-}
-table.tp-stats-table tr:nth-child(even) td.num-col {
-    background: #f1f5f9;
-}
-
-.tp-games-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-bottom: 16px;
-}
-a.tp-game-link {
-    text-decoration: none !important;
-    color: inherit !important;
-    display: block;
-}
-.tp-game-card {
-    display: grid;
-    grid-template-columns: 112px 1fr 94px;
-    gap: 12px;
-    align-items: center;
-    background: linear-gradient(90deg, #0d1828 0%, #11223a 100%);
-    border: 1px solid rgba(148, 163, 184, 0.2);
-    border-radius: 11px;
-    padding: 11px 14px;
-    transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
-}
-.tp-game-card:hover {
-    background: linear-gradient(90deg, #132540 0%, #193154 100%);
-    border-color: rgba(251, 191, 36, 0.55);
-    transform: translateY(-1px);
-}
-.tp-game-card.win-border {
-    border-left: 4px solid #22c55e;
-}
-.tp-game-card.loss-border {
-    border-left: 4px solid #ef4444;
-}
-.tp-game-card.upcoming-border {
-    border-left: 4px solid #38bdf8;
-}
-.tp-g-meta {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-}
-.tp-g-round {
-    font-size: 11px;
-    font-weight: 900;
-    color: #fbbf24;
-    text-transform: uppercase;
-}
-.tp-g-date {
-    font-size: 11px;
-    font-weight: 600;
-    color: #94a3b8;
-}
-.tp-g-matchup {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    min-width: 0;
-}
-.tp-g-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12.5px;
-    font-weight: 700;
-    color: #cbd5e1;
-    text-transform: uppercase;
-}
-.tp-g-row.strong {
-    color: #ffffff;
-    font-weight: 900;
-}
-.tp-g-logo {
-    width: 20px;
-    height: 20px;
-    object-fit: contain;
-    background: #ffffff;
-    border-radius: 4px;
-    padding: 1px;
-    flex-shrink: 0;
-}
-.tp-g-right {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 4px;
-}
-.tp-g-score {
-    font-size: 15px;
-    font-weight: 900;
-    color: #ffffff;
-    white-space: nowrap;
-}
-.tp-g-score.win {
-    color: #fbbf24;
-}
-.tp-g-badge-w {
-    font-size: 10px;
-    font-weight: 900;
-    background: rgba(22, 163, 74, 0.25);
-    color: #4ade80;
-    border: 1px solid rgba(74, 222, 128, 0.45);
-    border-radius: 5px;
-    padding: 1px 7px;
-}
-.tp-g-badge-l {
-    font-size: 10px;
-    font-weight: 900;
-    background: rgba(220, 38, 38, 0.25);
-    color: #f87171;
-    border: 1px solid rgba(248, 113, 113, 0.45);
-    border-radius: 5px;
-    padding: 1px 7px;
-}
-.tp-g-badge-u {
-    font-size: 10px;
-    font-weight: 800;
-    background: rgba(56, 189, 248, 0.18);
-    color: #7dd3fc;
-    border: 1px solid rgba(125, 211, 252, 0.4);
-    border-radius: 5px;
-    padding: 1px 7px;
-}
-</style>
-"""
 
 
 def compute_team_player_stats(team_name: str, games_df: pd.DataFrame) -> pd.DataFrame:
@@ -3307,49 +3115,49 @@ def _render_team_player_stats_html(team_name: str, p_df: pd.DataFrame) -> str:
     html = [
         '<div class="tp-stats-card">',
         '<div class="tp-stats-head">'
-        f'<span>STATISTICHE GIOCATORI — {team_name}</span>'
+        f"<span>STATISTICHE GIOCATORI — {team_name}</span>"
         '<span style="color:#fbbf24;font-size:11px;">ORDINATO PER PUNTI</span>'
-        '</div>',
+        "</div>",
         '<div class="tp-table-wrap"><table class="tp-stats-table"><thead><tr>'
-        '<th>#</th>'
+        "<th>#</th>"
         '<th class="left-col">GIOCATORE</th>'
-        '<th>G</th>'
+        "<th>G</th>"
         '<th class="hi-col">PUN</th>'
         '<th class="hi-col">PPG</th>'
-        '<th>2PT R</th>'
-        '<th>2PT T</th>'
-        '<th>3PT R</th>'
-        '<th>3PT T</th>'
-        '<th>TL R</th>'
-        '<th>TL T</th>'
-        '<th>RIM</th>'
-        '<th>ASS</th>'
-        '<th>FALLI</th>'
-        '<th>VAL</th>'
-        '</tr></thead><tbody>',
+        "<th>2PT R</th>"
+        "<th>2PT T</th>"
+        "<th>3PT R</th>"
+        "<th>3PT T</th>"
+        "<th>TL R</th>"
+        "<th>TL T</th>"
+        "<th>RIM</th>"
+        "<th>ASS</th>"
+        "<th>FALLI</th>"
+        "<th>VAL</th>"
+        "</tr></thead><tbody>",
     ]
 
     for r in p_df.itertuples(index=False):
         num_int = int(getattr(r, "NUM", 999))
         num_disp = f"#{num_int}" if num_int < 999 else "—"
         html.append(
-            '<tr>'
+            "<tr>"
             f'<td class="num-col">{num_disp}</td>'
             f'<td class="name-col">{r.Giocatore}</td>'
-            f'<td>{int(r.G)}</td>'
+            f"<td>{int(r.G)}</td>"
             f'<td class="pts-col">{int(r.PUN)}</td>'
             f'<td class="pts-col">{float(r.PPG):.1f}</td>'
-            f'<td>{int(getattr(r, "_5"))}</td>'
-            f'<td>{int(getattr(r, "_6"))}</td>'
-            f'<td>{int(getattr(r, "_7"))}</td>'
-            f'<td>{int(getattr(r, "_8"))}</td>'
-            f'<td>{int(getattr(r, "_9"))}</td>'
-            f'<td>{int(getattr(r, "_10"))}</td>'
-            f'<td>{int(r.RIM)}</td>'
-            f'<td>{int(r.ASS)}</td>'
-            f'<td>{int(r.F_C)}</td>'
-            f'<td>{int(r.VAL)}</td>'
-            '</tr>'
+            f"<td>{int(getattr(r, '_5'))}</td>"
+            f"<td>{int(getattr(r, '_6'))}</td>"
+            f"<td>{int(getattr(r, '_7'))}</td>"
+            f"<td>{int(getattr(r, '_8'))}</td>"
+            f"<td>{int(getattr(r, '_9'))}</td>"
+            f"<td>{int(getattr(r, '_10'))}</td>"
+            f"<td>{int(r.RIM)}</td>"
+            f"<td>{int(r.ASS)}</td>"
+            f"<td>{int(r.F_C)}</td>"
+            f"<td>{int(r.VAL)}</td>"
+            "</tr>"
         )
 
     html.append("</tbody></table></div></div>")
@@ -3395,17 +3203,17 @@ def _render_team_games_interactive_html(team_name: str, games_df: pd.DataFrame, 
         cards.append(
             f'<a class="tp-game-link" href="?match={gid_encoded}" target="_self">'
             f'<div class="tp-game-card {card_cls}">'
-            f'<div class="tp-g-meta">'
+            '<div class="tp-g-meta">'
             f'<div class="tp-g-round">GIORNATA {int(g.Giornata)}</div>'
             f'<div class="tp-g-date">{g.Data}</div>'
-            f'</div>'
-            f'<div class="tp-g-matchup">'
+            "</div>"
+            '<div class="tp-g-matchup">'
             f'<div class="tp-g-row {h_strong}">{h_logo}<span>{home_name}</span></div>'
             f'<div class="tp-g-row {a_strong}">{a_logo}<span>{away_name}</span></div>'
-            f'</div>'
+            "</div>"
             f'<div class="tp-g-right">{score_html}{badge_html}</div>'
-            f'</div>'
-            f'</a>'
+            "</div>"
+            "</a>"
         )
 
     cards.append("</div>")
@@ -3437,26 +3245,26 @@ def render_team_page(team_name: str, games_df: pd.DataFrame, logo_html_map: dict
     diff_str = f"+{diff_val}" if diff_val > 0 else str(diff_val)
 
     st.markdown(
-        f'<div class="team-hero">'
-        f'{hero_logo}'
-        f'<div>'
+        '<div class="team-hero">'
+        f"{hero_logo}"
+        "<div>"
         f'<div class="team-hero-title">{team_name}</div>'
         f'<div class="team-hero-sub">{girone} • Posizione attuale: #{pos}</div>'
-        f'</div>'
-        f'</div>',
+        "</div>"
+        "</div>",
         unsafe_allow_html=True,
     )
 
     if t_row:
         st.markdown(
-            f'<div class="kpi-grid">'
+            '<div class="kpi-grid">'
             f'<div class="kpi-card"><div class="kpi-label">Punti</div><div class="kpi-val">{t_row["pts"]}</div></div>'
             f'<div class="kpi-card"><div class="kpi-label">Giocate</div><div class="kpi-val">{t_row["p"]}</div></div>'
             f'<div class="kpi-card"><div class="kpi-label">Vittorie</div><div class="kpi-val">{t_row["w"]}</div></div>'
             f'<div class="kpi-card"><div class="kpi-label">Sconfitte</div><div class="kpi-val">{t_row["l"]}</div></div>'
             f'<div class="kpi-card"><div class="kpi-label">PF / PS</div><div class="kpi-val">{t_row["pf"]}/{t_row["ps"]}</div></div>'
             f'<div class="kpi-card"><div class="kpi-label">Diff</div><div class="kpi-val">{diff_str}</div></div>'
-            f'</div>',
+            "</div>",
             unsafe_allow_html=True,
         )
         st.markdown("**Forma recente (Streak):**")
@@ -3472,7 +3280,6 @@ def render_team_page(team_name: str, games_df: pd.DataFrame, logo_html_map: dict
     st.subheader("Calendario e Risultati Squadra")
     st.caption("Clicca su una partita per aprire direttamente tabellino, parziali e dettagli gara.")
     st.markdown(_render_team_games_interactive_html(team_name, games_df, logo_html_map), unsafe_allow_html=True)
-    st.rerun()
 
 
 def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: dict[str, str]) -> None:
@@ -3505,17 +3312,17 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
     score_text = f"{home_pts} - {away_pts}" if is_played else "VS"
 
     st.markdown(
-        f'<div class="md-hero">'
-        f'<div class="md-grid">'
+        '<div class="md-hero">'
+        '<div class="md-grid">'
         f'<div class="md-team-block">{h_hero_logo}<div class="md-team-name">{home_name}</div></div>'
-        f'<div class="md-center">'
+        '<div class="md-center">'
         f'<div class="md-date">{g["Data"]} • {g["Girone"]} (Giornata {round_num})</div>'
         f'<div class="md-score">{score_text}</div>'
         f'<div class="md-status">{status_label}</div>'
-        f'</div>'
+        "</div>"
         f'<div class="md-team-block">{a_hero_logo}<div class="md-team-name">{away_name}</div></div>'
-        f'</div>'
-        f'</div>',
+        "</div>"
+        "</div>",
         unsafe_allow_html=True,
     )
 
@@ -3565,10 +3372,9 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
                     )
                     if ok:
                         st.session_state["flash_msg"] = ("success", msg)
-                        st.rerun()
                     else:
                         st.session_state["flash_msg"] = ("warning", msg)
-                        st.rerun()
+                    st.rerun()
 
     if "flash_msg" in st.session_state:
         kind, text = st.session_state.pop("flash_msg")
@@ -3579,7 +3385,6 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
 
     detail = _get_match_detail(match_id)
 
-    # Sotto-menù aggiornati (rimosso STATISTICHE e rinominato Cronologia dell'Incontro -> STORICO)
     sezioni_gara = st.radio(
         "Sezione partita",
         ("RIASSUNTO", "STATS GIOCATORE", "FORMAZIONI", "STORICO"),
@@ -3599,14 +3404,14 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
         ot_td_a = f"<td>{ot_a}</td>" if has_ot else ""
 
         st.markdown(
-            f'<div class="md-sec-card">'
-            f'<div class="md-sec-title">RISULTATO PARZIALE QUARTI</div>'
-            f'<table class="md-res-table">'
+            '<div class="md-sec-card">'
+            '<div class="md-sec-title">RISULTATO PARZIALE QUARTI</div>'
+            '<table class="md-res-table">'
             f'<thead><tr><th class="team-col">SQUADRA</th><th>TOT</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th>{ot_th}</tr></thead>'
-            f'<tbody>'
+            "<tbody>"
             f'<tr><td class="team-col">{home_name}</td><td class="tot-col">{home_pts}</td><td>{q_h[0]}</td><td>{q_h[1]}</td><td>{q_h[2]}</td><td>{q_h[3]}</td>{ot_td_h}</tr>'
             f'<tr><td class="team-col">{away_name}</td><td class="tot-col">{away_pts}</td><td>{q_a[0]}</td><td>{q_a[1]}</td><td>{q_a[2]}</td><td>{q_a[3]}</td>{ot_td_a}</tr>'
-            f'</tbody></table></div>',
+            "</tbody></table></div>",
             unsafe_allow_html=True,
         )
         with st.expander("✏️ Modifica parziali quarti"):
@@ -3628,7 +3433,6 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
                 st.session_state["flash_msg"] = ("success" if ok else "warning", msg)
                 st.rerun()
 
-        # Statistiche di squadra integrate in RIASSUNTO
         hp = _normalize_player_rows(detail["home_players"])
         ap = _normalize_player_rows(detail["away_players"])
 
@@ -3727,7 +3531,7 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
             '<div class="hist-grid">'
             f'{_render_team_history_column(home_name, "Squadra Casa", match_id, round_num, games_df, logo_html_map)}'
             f'{_render_team_history_column(away_name, "Squadra Fuori Casa", match_id, round_num, games_df, logo_html_map)}'
-            '</div>'
+            "</div>"
         )
         st.markdown(hist_html, unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
@@ -3739,7 +3543,7 @@ def render_calendar_page(games_df: pd.DataFrame, logo_html_map: dict[str, str]) 
         '<div class="topbar-card">'
         '<div class="topbar-title">Calendario e Risultati</div>'
         '<div class="topbar-sub">Seleziona il girone e il turno. Clicca su una partita per aprire tabellini, parziali e modifiche.</div>'
-        '</div>',
+        "</div>",
         unsafe_allow_html=True,
     )
 
@@ -3801,93 +3605,98 @@ if st.session_state.get("games_df_version") != DATA_VERSION or "games_df" not in
     st.session_state["games_df"] = load_full_games_df()
     st.session_state["games_df_version"] = DATA_VERSION
 
-if "calendar_girone" not in st.session_state:
-    st.session_state["calendar_girone"] = "Girone A"
+if not st.session_state.authenticated:
+    col1, col2, col3 = st.columns([1, 1.35, 1])
+    with col2:
+        st.markdown(
+            '<div class="topbar-card" style="text-align:center;margin-top:40px;">'
+            '<div class="topbar-title">🏀 DR2 Puglia — Area Riservata</div>'
+            '<div class="topbar-sub">Inserisci la password per accedere a classifiche, calendari e tabellini</div>'
+            "</div>",
+            unsafe_allow_html=True,
+        )
+        with st.form("login_form"):
+            pwd = st.text_input("Password", type="password", placeholder="Inserisci password...")
+            submitted = st.form_submit_button("Accedi", use_container_width=True)
+            if submitted:
+                if pwd == STAFF_PASSWORD:
+                    st.session_state.authenticated = True
+                    st.rerun()
+                else:
+                    st.error("Password non valida.")
+    st.stop()
+
+games_df: pd.DataFrame = st.session_state["games_df"]
+logo_html_map = build_team_logo_html_map(GITHUB_RAW_BASE)
+
+query_match = st.query_params.get("match")
+if isinstance(query_match, list):
+    query_match = query_match[0] if query_match else None
+
+query_team = st.query_params.get("team")
+if isinstance(query_team, list):
+    query_team = query_team[0] if query_team else None
 
 if "selected_match_id" not in st.session_state:
     st.session_state["selected_match_id"] = None
-
 if "selected_team_name" not in st.session_state:
     st.session_state["selected_team_name"] = None
+if "active_page" not in st.session_state:
+    st.session_state["active_page"] = "Classifica"
+if "calendar_girone" not in st.session_state:
+    st.session_state["calendar_girone"] = "Girone A"
 
-query_match = st.query_params.get("match")
 if query_match:
     st.session_state["selected_match_id"] = str(query_match)
     st.session_state["selected_team_name"] = None
-
-query_team = st.query_params.get("team")
-if query_team and not query_match:
+elif query_team:
     st.session_state["selected_team_name"] = str(query_team)
     st.session_state["selected_match_id"] = None
 
-if not st.session_state.authenticated:
-    st.markdown(
-        '<div class="topbar-card">'
-        '<div class="topbar-title">🏀 DR2 Puglia — Login Staff</div>'
-        '<div class="topbar-sub">Accesso riservato alla gestione classifiche, calendario e tabellini.</div>'
-        '</div>',
-        unsafe_allow_html=True,
-    )
-    pwd = st.text_input("Password", type="password")
-    if st.button("Accedi"):
-        if pwd == STAFF_PASSWORD:
-            st.session_state.authenticated = True
-            st.rerun()
-        else:
-            st.error("Password non valida.")
-    st.stop()
-
 with st.sidebar:
-    st.title("🏀 DR2 Puglia")
-    sezione = st.radio(
-        "Sezione",
-        ("Classifiche", "Calendario e Risultati"),
-        key="nav_sezione",
-        on_change=lambda: (
-            st.session_state.update({"selected_match_id": None, "selected_team_name": None}),
-            st.query_params.pop("match", None),
-            st.query_params.pop("team", None),
-        ),
+    st.markdown("### 🏀 DR2 Puglia")
+    st.caption("Portale Stagione 2026/2027")
+    st.divider()
+
+    nav_choice = st.radio(
+        "Navigazione",
+        ("Classifica", "Calendario"),
+        index=0 if st.session_state["active_page"] == "Classifica" else 1,
     )
-    if st.button("🔄 Ricarica dati salvati"):
-        st.session_state["match_details_store"] = load_match_details_store()
-        st.session_state["games_df"] = load_full_games_df()
-        st.session_state["games_df_version"] = DATA_VERSION
+    if nav_choice != st.session_state["active_page"]:
+        st.session_state["active_page"] = nav_choice
+        st.session_state["selected_match_id"] = None
+        st.session_state["selected_team_name"] = None
+        for qp in ("match", "team"):
+            if qp in st.query_params:
+                del st.query_params[qp]
         st.rerun()
 
-    cfg_status = _get_github_config()
-    if cfg_status["token"]:
-        st.caption(f"☁️ Salvataggio permanente attivo ({cfg_status['owner']}/{cfg_status['repo']})")
-    else:
-        st.warning("Token GitHub non configurato nei Secrets: le modifiche non sopravvivono al riavvio del server.")
-
-    if st.button("Esci"):
+    st.divider()
+    if st.button("Esci", use_container_width=True):
         st.session_state.authenticated = False
         st.session_state["selected_match_id"] = None
         st.session_state["selected_team_name"] = None
-        if "match" in st.query_params:
-            del st.query_params["match"]
-        if "team" in st.query_params:
-            del st.query_params["team"]
+        for qp in ("match", "team"):
+            if qp in st.query_params:
+                del st.query_params[qp]
         st.rerun()
 
-logo_html_map = build_team_logo_html_map(GITHUB_RAW_BASE)
-
 if st.session_state["selected_match_id"]:
-    render_match_detail(st.session_state["selected_match_id"], st.session_state["games_df"], logo_html_map)
+    render_match_detail(st.session_state["selected_match_id"], games_df, logo_html_map)
 elif st.session_state["selected_team_name"]:
-    render_team_page(st.session_state["selected_team_name"], st.session_state["games_df"], logo_html_map)
-elif sezione == "Classifiche":
+    render_team_page(st.session_state["selected_team_name"], games_df, logo_html_map)
+elif st.session_state["active_page"] == "Classifica":
     st.markdown(
         '<div class="topbar-card">'
-        '<div class="topbar-title">DR2 Puglia — Classifiche Gironi</div>'
-        '<div class="topbar-sub">Promozione diretta, zona Play-off, mini-classifica terze e Play-out in tempo reale.</div>'
-        '</div>',
+        '<div class="topbar-title">Classifica DR2 Puglia</div>'
+        '<div class="topbar-sub">Divisione Regionale 2 • Gironi A, B e C • Classifica avulsa e mini-classifica terze</div>'
+        "</div>",
         unsafe_allow_html=True,
     )
-    girone_classifica = st.selectbox("Seleziona Girone", ("Girone A", "Girone B", "Girone C"))
-    classifica = compute_standings(girone_classifica, st.session_state["games_df"])
-    terze_classificate = compute_thirds_standings(st.session_state["games_df"])
-    render_standings(girone_classifica, classifica, terze_classificate, logo_html_map)
+    girone_cls = st.selectbox("Seleziona Girone", ("Girone A", "Girone B", "Girone C"), key="cls_girone_select")
+    board = compute_standings(girone_cls, games_df)
+    thirds_board = compute_thirds_standings(games_df)
+    render_standings(girone_cls, board, thirds_board, logo_html_map)
 else:
-    render_calendar_page(st.session_state["games_df"], logo_html_map)
+    render_calendar_page(games_df, logo_html_map)
