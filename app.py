@@ -3472,7 +3472,7 @@ def render_team_page(team_name: str, games_df: pd.DataFrame, logo_html_map: dict
     st.subheader("Calendario e Risultati Squadra")
     st.caption("Clicca su una partita per aprire direttamente tabellino, parziali e dettagli gara.")
     st.markdown(_render_team_games_interactive_html(team_name, games_df, logo_html_map), unsafe_allow_html=True)
-            st.rerun()
+    st.rerun()
 
 
 def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: dict[str, str]) -> None:
