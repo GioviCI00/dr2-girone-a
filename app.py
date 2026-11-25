@@ -1,7 +1,10 @@
 import base64
+import json
 import os
 from pathlib import Path
+from urllib.error import HTTPError
 from urllib.parse import quote
+from urllib.request import Request, urlopen
 
 import pandas as pd
 import streamlit as st
@@ -15,9 +18,18 @@ st.set_page_config(
 # ==========================================
 # CONFIGURAZIONE
 # ==========================================
-DATA_VERSION = "2026-11-25-v3"
+DATA_VERSION = "2026-11-25-v4"
 STAFF_PASSWORD = os.environ.get("DR2_STAFF_PASSWORD", "dr2puglia")
-GITHUB_RAW_BASE = os.environ.get("DR2_GITHUB_RAW_BASE", "").strip()
+DEFAULT_GITHUB_OWNER = "GioviCI00"
+DEFAULT_GITHUB_REPO = "dr2-girone-a"
+DEFAULT_GITHUB_BRANCH = "main"
+GITHUB_RAW_BASE = os.environ.get(
+    "DR2_GITHUB_RAW_BASE",
+    f"https://raw.githubusercontent.com/{DEFAULT_GITHUB_OWNER}/{DEFAULT_GITHUB_REPO}/{DEFAULT_GITHUB_BRANCH}",
+).strip()
+
+OVERRIDES_PATH = "modifiche_partita.json"
+LOCAL_OVERRIDES_FILE = Path(OVERRIDES_PATH)
 
 GIRONI_TEAMS: dict[str, list[dict[str, str]]] = {
     "Girone A": [
@@ -404,6 +416,180 @@ DEFAULT_GAMES_RAW = [
     ("C22_2327", "Girone C", 22, "Sab 24/04/2027 18:30", "SENSI PALLACANESTRO LUPA LECCE", "ALL STAR BASKET FRANCAVILLA", 0, 0, "Da giocare"),
     ("C22_2328", "Girone C", 22, "Dom 25/04/2027 17:00", "ASD BELLFIKA MESAGNE", "ASD NEW BASKET CARMIANO", 0, 0, "Da giocare"),
 ]
+
+# ==========================================
+# PERSISTENZA SU GITHUB (modifiche_partita.json)
+# ==========================================
+def _get_github_config() -> dict[str, str]:
+    token = ""
+    owner = DEFAULT_GITHUB_OWNER
+    repo = DEFAULT_GITHUB_REPO
+    branch = DEFAULT_GITHUB_BRANCH
+
+    try:
+        if "GITHUB_TOKEN" in st.secrets:
+            token = str(st.secrets["GITHUB_TOKEN"]).strip()
+        if "GITHUB_OWNER" in st.secrets and str(st.secrets["GITHUB_OWNER"]).strip():
+            owner = str(st.secrets["GITHUB_OWNER"]).strip()
+        if "GITHUB_REPO" in st.secrets and str(st.secrets["GITHUB_REPO"]).strip():
+            repo = str(st.secrets["GITHUB_REPO"]).strip()
+        if "GITHUB_BRANCH" in st.secrets and str(st.secrets["GITHUB_BRANCH"]).strip():
+            branch = str(st.secrets["GITHUB_BRANCH"]).strip()
+    except Exception:
+        pass
+
+    token = token or os.environ.get("GITHUB_TOKEN", "").strip()
+    owner = os.environ.get("GITHUB_OWNER", owner).strip() or DEFAULT_GITHUB_OWNER
+    repo = os.environ.get("GITHUB_REPO", repo).strip() or DEFAULT_GITHUB_REPO
+    branch = os.environ.get("GITHUB_BRANCH", branch).strip() or DEFAULT_GITHUB_BRANCH
+
+    # Gestisce eventuale formato "owner/repo" dentro GITHUB_REPO
+    if "/" in repo:
+        parts = [p for p in repo.split("/") if p]
+        if len(parts) >= 2:
+            owner, repo = parts[0], parts[1]
+
+    return {"token": token, "owner": owner, "repo": repo, "branch": branch}
+
+
+def _github_get_overrides_file(cfg: dict[str, str]) -> tuple[dict[str, dict], str | None]:
+    if not cfg["token"]:
+        return {}, None
+
+    url = (
+        f"https://api.github.com/repos/{cfg['owner']}/{cfg['repo']}/contents/{OVERRIDES_PATH}"
+        f"?ref={quote(cfg['branch'], safe='')}"
+    )
+    req = Request(
+        url,
+        headers={
+            "Authorization": f"Bearer {cfg['token']}",
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+            "User-Agent": "dr2-puglia-app",
+        },
+        method="GET",
+    )
+    try:
+        with urlopen(req, timeout=10) as resp:
+            payload = json.loads(resp.read().decode("utf-8"))
+            sha = payload.get("sha")
+            raw_b64 = payload.get("content", "")
+            decoded = base64.b64decode(raw_b64).decode("utf-8") if raw_b64 else "{}"
+            parsed = json.loads(decoded)
+            return (parsed if isinstance(parsed, dict) else {}), sha
+    except HTTPError as err:
+        if err.code == 404:
+            return {}, None
+        raise
+
+
+def load_game_overrides() -> dict[str, dict]:
+    cfg = _get_github_config()
+    if cfg["token"]:
+        try:
+            data, _ = _github_get_overrides_file(cfg)
+            LOCAL_OVERRIDES_FILE.write_text(
+                json.dumps(data, indent=2, ensure_ascii=False),
+                encoding="utf-8",
+            )
+            return data
+        except Exception:
+            pass
+
+    if LOCAL_OVERRIDES_FILE.is_file():
+        try:
+            data = json.loads(LOCAL_OVERRIDES_FILE.read_text(encoding="utf-8"))
+            return data if isinstance(data, dict) else {}
+        except Exception:
+            return {}
+    return {}
+
+
+def save_game_override_persistent(match_id: str, values: dict) -> tuple[bool, str, dict[str, dict]]:
+    cfg = _get_github_config()
+    if not cfg["token"]:
+        overrides = load_game_overrides()
+        overrides[str(match_id)] = values
+        LOCAL_OVERRIDES_FILE.write_text(
+            json.dumps(overrides, indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
+        return (
+            False,
+            "GITHUB_TOKEN non trovato nei Secrets: modifica salvata solo temporaneamente in sessione.",
+            overrides,
+        )
+
+    try:
+        overrides, current_sha = _github_get_overrides_file(cfg)
+        overrides[str(match_id)] = values
+        content_str = json.dumps(overrides, indent=2, ensure_ascii=False) + "\n"
+        content_b64 = base64.b64encode(content_str.encode("utf-8")).decode("ascii")
+
+        body: dict[str, str] = {
+            "message": f"Aggiorna partita {match_id}",
+            "content": content_b64,
+            "branch": cfg["branch"],
+        }
+        if current_sha:
+            body["sha"] = current_sha
+
+        url = f"https://api.github.com/repos/{cfg['owner']}/{cfg['repo']}/contents/{OVERRIDES_PATH}"
+        req = Request(
+            url,
+            data=json.dumps(body).encode("utf-8"),
+            headers={
+                "Authorization": f"Bearer {cfg['token']}",
+                "Accept": "application/vnd.github+json",
+                "Content-Type": "application/json",
+                "X-GitHub-Api-Version": "2022-11-28",
+                "User-Agent": "dr2-puglia-app",
+            },
+            method="PUT",
+        )
+        with urlopen(req, timeout=12) as resp:
+            _ = resp.read()
+
+        LOCAL_OVERRIDES_FILE.write_text(content_str, encoding="utf-8")
+        return True, "Modifica salvata in modo permanente su GitHub!", overrides
+    except HTTPError as err:
+        detail = ""
+        try:
+            detail = err.read().decode("utf-8")
+        except Exception:
+            pass
+        overrides = load_game_overrides()
+        overrides[str(match_id)] = values
+        return (
+            False,
+            f"Errore GitHub ({err.code}): verifica che GITHUB_REPO sia 'dr2-girone-a' e che il token abbia permesso Contents: Read and write. {detail}",
+            overrides,
+        )
+    except Exception as exc:
+        overrides = load_game_overrides()
+        overrides[str(match_id)] = values
+        return False, f"Errore durante il salvataggio su GitHub: {exc}", overrides
+
+
+def apply_overrides_to_df(df: pd.DataFrame, overrides: dict[str, dict]) -> pd.DataFrame:
+    out = df.copy()
+    if not overrides:
+        return out
+    for idx, row in out.iterrows():
+        gid = str(row["ID_Partita"])
+        if gid in overrides:
+            ov = overrides[gid]
+            if "Data" in ov:
+                out.loc[idx, "Data"] = str(ov["Data"])
+            if "Stato" in ov:
+                out.loc[idx, "Stato"] = str(ov["Stato"])
+            if "Punti_Casa" in ov:
+                out.loc[idx, "Punti_Casa"] = int(ov["Punti_Casa"])
+            if "Punti_Trasferta" in ov:
+                out.loc[idx, "Punti_Trasferta"] = int(ov["Punti_Trasferta"])
+    return out
+
 
 STANDINGS_CSS = """
 <style>
@@ -852,6 +1038,13 @@ def build_games_df(version: str = DATA_VERSION) -> pd.DataFrame:
     )
 
 
+def load_full_games_df() -> pd.DataFrame:
+    base_df = build_games_df(DATA_VERSION).copy()
+    overrides = load_game_overrides()
+    st.session_state["game_overrides"] = overrides
+    return apply_overrides_to_df(base_df, overrides)
+
+
 @st.cache_data(show_spinner=False)
 def resolve_logo_src(logo_filename: str, github_base: str) -> str:
     clean_name = (logo_filename or "").strip()
@@ -1138,7 +1331,7 @@ def render_standings(girone: str, rows: list[dict], thirds_board: list[dict], lo
                 f'<div class="b-val">{diff_str}</div>'
                 f'<div style="text-align:center;">{streak_html}</div>'
                 f'<div class="b-pts">{t["pts"]}</div>'
-                '</div>'
+                f'</div>'
             )
         t_html.append("</div>")
         st.markdown("".join(t_html), unsafe_allow_html=True)
@@ -1252,7 +1445,6 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
         return
 
     g = rows.iloc[0]
-    row_idx = rows.index[0]
     home_name = str(g["Casa"])
     away_name = str(g["Trasferta"])
     home_pts = int(g["Punti_Casa"])
@@ -1280,8 +1472,8 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
         unsafe_allow_html=True,
     )
 
-    # Modifica rapida Data/Ora, Stato e Risultato senza toccare il codice
-    with st.expander("✏️ Modifica data, ora e risultato partita", expanded=False):
+    # Pannello modifica rapida: salva su GitHub (modifiche_partita.json) in modo permanente
+    with st.expander("✏️ Modifica data, ora e risultato partita (salvataggio permanente)", expanded=True):
         with st.form(f"edit_game_form_{match_id}"):
             c1, c2 = st.columns([2, 1])
             new_date = c1.text_input(
@@ -1309,18 +1501,34 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
                 step=1,
             )
 
-            if st.form_submit_button("💾 Salva modifiche partita"):
+            if st.form_submit_button("💾 Salva modifiche per sempre"):
                 if new_stato == "Giocata" and int(new_pts_h) == int(new_pts_a):
                     st.error("Nel basket una partita 'Giocata' non può terminare in parità.")
                 else:
-                    df_curr = st.session_state["games_df"].copy()
-                    df_curr.loc[row_idx, "Data"] = new_date.strip()
-                    df_curr.loc[row_idx, "Stato"] = new_stato
-                    df_curr.loc[row_idx, "Punti_Casa"] = int(new_pts_h)
-                    df_curr.loc[row_idx, "Punti_Trasferta"] = int(new_pts_a)
-                    st.session_state["games_df"] = df_curr
-                    st.success("Partita aggiornata!")
-                    st.rerun()
+                    payload = {
+                        "Data": new_date.strip(),
+                        "Stato": new_stato,
+                        "Punti_Casa": int(new_pts_h),
+                        "Punti_Trasferta": int(new_pts_a),
+                    }
+                    with st.spinner("Salvataggio su GitHub in corso..."):
+                        ok, msg, updated_overrides = save_game_override_persistent(match_id, payload)
+                    st.session_state["game_overrides"] = updated_overrides
+                    st.session_state["games_df"] = apply_overrides_to_df(
+                        build_games_df(DATA_VERSION).copy(), updated_overrides
+                    )
+                    if ok:
+                        st.session_state["flash_msg"] = ("success", msg)
+                        st.rerun()
+                    else:
+                        st.error(msg)
+
+    if "flash_msg" in st.session_state:
+        kind, text = st.session_state.pop("flash_msg")
+        if kind == "success":
+            st.success(text)
+        else:
+            st.warning(text)
 
     meta = _ensure_match_meta(match_id)
 
@@ -1505,7 +1713,7 @@ if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
 if st.session_state.get("games_df_version") != DATA_VERSION or "games_df" not in st.session_state:
-    st.session_state["games_df"] = build_games_df(DATA_VERSION).copy()
+    st.session_state["games_df"] = load_full_games_df()
     st.session_state["games_df_version"] = DATA_VERSION
 
 if "calendar_girone" not in st.session_state:
@@ -1540,22 +1748,23 @@ with st.sidebar:
             st.query_params.pop("match", None),
         ),
     )
-    if st.button("🔄 Ripristina dati ufficiali"):
-        st.session_state["games_df"] = build_games_df(DATA_VERSION).copy()
+    if st.button("🔄 Ricarica dati salvati"):
+        st.session_state["games_df"] = load_full_games_df()
         st.session_state["games_df_version"] = DATA_VERSION
         st.rerun()
+
+    cfg_status = _get_github_config()
+    if cfg_status["token"]:
+        st.caption(f"☁️ Salvataggio permanente attivo ({cfg_status['owner']}/{cfg_status['repo']})")
+    else:
+        st.warning("Token GitHub non configurato nei Secrets: le modifiche non sopravvivono al riavvio del server.")
+
     if st.button("Esci"):
         st.session_state.authenticated = False
         st.session_state["selected_match_id"] = None
         if "match" in st.query_params:
             del st.query_params["match"]
         st.rerun()
-
-if not GITHUB_RAW_BASE:
-    st.info(
-        "Suggerimento: imposta la variabile d'ambiente `DR2_GITHUB_RAW_BASE` "
-        "(es. `https://raw.githubusercontent.com/GioviCI00/<NOME_REPO>/main`) per caricare i loghi direttamente da GitHub."
-    )
 
 logo_html_map = build_team_logo_html_map(GITHUB_RAW_BASE)
 
