@@ -3137,26 +3137,26 @@ def _render_team_player_stats_html(team_name: str, p_df: pd.DataFrame) -> str:
         "</tr></thead><tbody>",
     ]
 
-    for r in p_df.itertuples(index=False):
-        num_int = int(getattr(r, "NUM", 999))
+    for row in p_df.to_dict("records"):
+        num_int = int(row.get("NUM", 999))
         num_disp = f"#{num_int}" if num_int < 999 else "—"
         html.append(
             "<tr>"
             f'<td class="num-col">{num_disp}</td>'
-            f'<td class="name-col">{r.Giocatore}</td>'
-            f"<td>{int(r.G)}</td>"
-            f'<td class="pts-col">{int(r.PUN)}</td>'
-            f'<td class="pts-col">{float(r.PPG):.1f}</td>'
-            f"<td>{int(getattr(r, '_5'))}</td>"
-            f"<td>{int(getattr(r, '_6'))}</td>"
-            f"<td>{int(getattr(r, '_7'))}</td>"
-            f"<td>{int(getattr(r, '_8'))}</td>"
-            f"<td>{int(getattr(r, '_9'))}</td>"
-            f"<td>{int(getattr(r, '_10'))}</td>"
-            f"<td>{int(r.RIM)}</td>"
-            f"<td>{int(r.ASS)}</td>"
-            f"<td>{int(r.F_C)}</td>"
-            f"<td>{int(r.VAL)}</td>"
+            f'<td class="name-col">{row.get("Giocatore", "")}</td>'
+            f"<td>{int(row.get('G', 0))}</td>"
+            f'<td class="pts-col">{int(row.get("PUN", 0))}</td>'
+            f'<td class="pts-col">{float(row.get("PPG", 0.0)):.1f}</td>'
+            f"<td>{int(row.get('2PT_R', 0))}</td>"
+            f"<td>{int(row.get('2PT_T', 0))}</td>"
+            f"<td>{int(row.get('3PT_R', 0))}</td>"
+            f"<td>{int(row.get('3PT_T', 0))}</td>"
+            f"<td>{int(row.get('TL_R', 0))}</td>"
+            f"<td>{int(row.get('TL_T', 0))}</td>"
+            f"<td>{int(row.get('RIM', 0))}</td>"
+            f"<td>{int(row.get('ASS', 0))}</td>"
+            f"<td>{int(row.get('F_C', 0))}</td>"
+            f"<td>{int(row.get('VAL', 0))}</td>"
             "</tr>"
         )
 
