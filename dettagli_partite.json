@@ -195,8 +195,8 @@
     ],
     "away_players": [
       {
-        "Giocatore": "Provaroni F.",
-        "NUM": 999,
+        "Giocatore": "Provaroni Ferdinando",
+        "NUM": 0,
         "PUN": 3,
         "MIN": "13:03",
         "SF": true,
@@ -220,8 +220,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Derosa L.",
-        "NUM": 999,
+        "Giocatore": "Derosa Leonardo",
+        "NUM": 1,
         "PUN": 23,
         "MIN": "35:42",
         "SF": true,
@@ -245,8 +245,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Desiante V.",
-        "NUM": 999,
+        "Giocatore": "Desiante Vincenzo",
+        "NUM": 4,
         "PUN": 5,
         "MIN": "15:24",
         "SF": false,
@@ -270,8 +270,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "D'Erasmo F.",
-        "NUM": 999,
+        "Giocatore": "D'Erasmo Federico",
+        "NUM": 13,
         "PUN": 15,
         "MIN": "30:18",
         "SF": true,
@@ -295,8 +295,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Housni Z.",
-        "NUM": 999,
+        "Giocatore": "Housni Zakaria",
+        "NUM": 15,
         "PUN": 9,
         "MIN": "36:17",
         "SF": true,
@@ -320,8 +320,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Silletti D.",
-        "NUM": 999,
+        "Giocatore": "Silletti Dario",
+        "NUM": 18,
         "PUN": 8,
         "MIN": "30:33",
         "SF": false,
@@ -345,8 +345,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Micunco M.",
-        "NUM": 999,
+        "Giocatore": "Micunco Matteo",
+        "NUM": 19,
         "PUN": 2,
         "MIN": "02:27",
         "SF": false,
@@ -370,8 +370,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Colangelo A.",
-        "NUM": 999,
+        "Giocatore": "Colangelo Antonello",
+        "NUM": 30,
         "PUN": 12,
         "MIN": "29:52",
         "SF": true,
@@ -396,7 +396,7 @@
       },
       {
         "Giocatore": "Dario Iacobone",
-        "NUM": 999,
+        "NUM": 3,
         "PUN": 0,
         "MIN": "03:53",
         "SF": false,
@@ -420,8 +420,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Fraccalvieri A.",
-        "NUM": 999,
+        "Giocatore": "Fraccalvieri Antonello",
+        "NUM": 6,
         "PUN": 0,
         "MIN": "02:31",
         "SF": false,
@@ -446,7 +446,7 @@
       },
       {
         "Giocatore": "Vero Antonio",
-        "NUM": 999,
+        "NUM": 8,
         "PUN": 0,
         "MIN": "0",
         "SF": false,
@@ -471,7 +471,7 @@
       },
       {
         "Giocatore": "Calabrese Gianpiero",
-        "NUM": 999,
+        "NUM": 11,
         "PUN": 0,
         "MIN": "0",
         "SF": false,
