@@ -1134,6 +1134,25 @@ a.streak-link {
 """
 
 CALENDAR_CSS = """
+.cal-two-cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: start;
+}
+.cal-col-title {
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 0.7px;
+    text-transform: uppercase;
+    color: #fbbf24;
+    margin: 4px 0 8px 2px;
+}
+@media (max-width: 960px) {
+    .cal-two-cols {
+        grid-template-columns: 1fr;
+    }
+}
 <style>
 .cal-board {
     background: #0d1624;
