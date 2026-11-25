@@ -15,7 +15,7 @@ st.set_page_config(
 # ==========================================
 # CONFIGURAZIONE
 # ==========================================
-DATA_VERSION = "2026-11-25-v2"
+DATA_VERSION = "2026-11-25-v3"
 STAFF_PASSWORD = os.environ.get("DR2_STAFF_PASSWORD", "dr2puglia")
 GITHUB_RAW_BASE = os.environ.get("DR2_GITHUB_RAW_BASE", "").strip()
 
@@ -1252,6 +1252,7 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
         return
 
     g = rows.iloc[0]
+    row_idx = rows.index[0]
     home_name = str(g["Casa"])
     away_name = str(g["Trasferta"])
     home_pts = int(g["Punti_Casa"])
@@ -1278,6 +1279,48 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
         f'</div>',
         unsafe_allow_html=True,
     )
+
+    # Modifica rapida Data/Ora, Stato e Risultato senza toccare il codice
+    with st.expander("✏️ Modifica data, ora e risultato partita", expanded=False):
+        with st.form(f"edit_game_form_{match_id}"):
+            c1, c2 = st.columns([2, 1])
+            new_date = c1.text_input(
+                "Data e Ora (es. Dom 29/11/2026 18:00)",
+                value=str(g["Data"]),
+            )
+            stati_opts = ("Da giocare", "Giocata")
+            curr_stato = str(g["Stato"]).strip()
+            stato_idx = stati_opts.index(curr_stato) if curr_stato in stati_opts else 0
+            new_stato = c2.selectbox("Stato gara", stati_opts, index=stato_idx)
+
+            c3, c4 = st.columns(2)
+            new_pts_h = c3.number_input(
+                f"Punti {home_name}",
+                min_value=0,
+                max_value=250,
+                value=home_pts,
+                step=1,
+            )
+            new_pts_a = c4.number_input(
+                f"Punti {away_name}",
+                min_value=0,
+                max_value=250,
+                value=away_pts,
+                step=1,
+            )
+
+            if st.form_submit_button("💾 Salva modifiche partita"):
+                if new_stato == "Giocata" and int(new_pts_h) == int(new_pts_a):
+                    st.error("Nel basket una partita 'Giocata' non può terminare in parità.")
+                else:
+                    df_curr = st.session_state["games_df"].copy()
+                    df_curr.loc[row_idx, "Data"] = new_date.strip()
+                    df_curr.loc[row_idx, "Stato"] = new_stato
+                    df_curr.loc[row_idx, "Punti_Casa"] = int(new_pts_h)
+                    df_curr.loc[row_idx, "Punti_Trasferta"] = int(new_pts_a)
+                    st.session_state["games_df"] = df_curr
+                    st.success("Partita aggiornata!")
+                    st.rerun()
 
     meta = _ensure_match_meta(match_id)
 
@@ -1410,51 +1453,12 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
 def render_calendar_page(games_df: pd.DataFrame, logo_html_map: dict[str, str]) -> pd.DataFrame:
     st.markdown(CALENDAR_CSS, unsafe_allow_html=True)
     st.title("Calendario e Risultati")
-    st.caption("Seleziona il girone e il turno per visualizzare o aggiungere gare di Andata e Ritorno.")
+    st.caption("Seleziona il girone e il turno. Clicca su una partita per modificare data/ora o inserire il risultato.")
 
     gironi_list = ("Girone A", "Girone B", "Girone C")
     current_idx = gironi_list.index(st.session_state["calendar_girone"])
     girone = st.selectbox("Filtra per Girone", gironi_list, index=current_idx, key="cal_girone_select")
     st.session_state["calendar_girone"] = girone
-
-    teams_in_girone = [t["squadra"] for t in GIRONI_TEAMS.get(girone, [])]
-
-    with st.expander("➕ Aggiungi nuova partita al calendario"):
-        with st.form(f"add_game_{girone}"):
-            c1, c2, c3 = st.columns(3)
-            giornata = c1.number_input("Giornata (1-11 Andata, 12-22 Ritorno)", min_value=1, max_value=22, value=1, step=1)
-            data_gara = c2.text_input("Data e Ora (es. Dom 29/11/2026 18:00)", value="")
-            stato = c3.selectbox("Stato", ("Da giocare", "Giocata"))
-
-            c4, c5, c6, c7 = st.columns([3, 1, 1, 3])
-            casa = c4.selectbox("Squadra Casa", teams_in_girone, index=0)
-            trasferta = c7.selectbox("Squadra Trasferta", teams_in_girone, index=1 if len(teams_in_girone) > 1 else 0)
-            pts_casa = c5.number_input("Pti Casa", min_value=0, max_value=200, value=0, step=1)
-            pts_trasf = c6.number_input("Pti Trasf", min_value=0, max_value=200, value=0, step=1)
-
-            if st.form_submit_button("Salva Partita"):
-                if casa == trasferta:
-                    st.error("Seleziona due squadre differenti per Casa e Trasferta.")
-                else:
-                    new_game = pd.DataFrame(
-                        [
-                            {
-                                "ID_Partita": f"{girone.replace(' ', '')}_G{int(giornata)}_{len(games_df) + 1}",
-                                "Girone": girone,
-                                "Giornata": int(giornata),
-                                "Data": data_gara.strip(),
-                                "Casa": casa,
-                                "Trasferta": trasferta,
-                                "Punti_Casa": int(pts_casa),
-                                "Punti_Trasferta": int(pts_trasf),
-                                "Stato": stato,
-                            }
-                        ]
-                    )
-                    games_df = pd.concat([games_df, new_game], ignore_index=True)
-                    st.session_state["games_df"] = games_df
-                    st.success("Partita aggiunta al calendario.")
-                    st.rerun()
 
     g_games = games_df[games_df["Girone"] == girone]
     if g_games.empty:
@@ -1501,7 +1505,7 @@ if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
 if st.session_state.get("games_df_version") != DATA_VERSION or "games_df" not in st.session_state:
-    st.session_state["games_df"] = build_games_df(DATA_VERSION)
+    st.session_state["games_df"] = build_games_df(DATA_VERSION).copy()
     st.session_state["games_df_version"] = DATA_VERSION
 
 if "calendar_girone" not in st.session_state:
