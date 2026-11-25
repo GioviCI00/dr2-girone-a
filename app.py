@@ -3009,6 +3009,216 @@ def _render_team_history_column(
     )
 
 
+TEAM_PAGE_CSS = """
+<style>
+.tp-stats-card {
+    background: #ffffff;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.32);
+    margin-bottom: 20px;
+}
+.tp-stats-head {
+    background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%);
+    color: #ffffff;
+    padding: 12px 16px;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    border-bottom: 2px solid #f59e0b;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.tp-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    background: #ffffff;
+}
+table.tp-stats-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    color: #1e293b;
+    min-width: 780px;
+}
+table.tp-stats-table th {
+    background: #f8fafc;
+    color: #334155;
+    font-weight: 800;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    padding: 8px 7px;
+    border-bottom: 2px solid #cbd5e1;
+    border-right: 1px solid #e2e8f0;
+    text-align: center;
+    white-space: nowrap;
+}
+table.tp-stats-table th.left-col {
+    text-align: left;
+    padding-left: 12px;
+}
+table.tp-stats-table th.hi-col {
+    color: #d97706;
+}
+table.tp-stats-table td {
+    padding: 7px 7px;
+    text-align: center;
+    border-bottom: 1px solid #e2e8f0;
+    border-right: 1px solid #f1f5f9;
+    font-weight: 600;
+}
+table.tp-stats-table td.num-col {
+    font-weight: 900;
+    color: #0f172a;
+    background: #f8fafc;
+}
+table.tp-stats-table td.name-col {
+    text-align: left;
+    padding-left: 12px;
+    font-weight: 800;
+    color: #0f172a;
+    white-space: nowrap;
+}
+table.tp-stats-table td.pts-col {
+    font-weight: 900;
+    color: #d97706;
+}
+table.tp-stats-table tr:nth-child(even) td {
+    background: #fcfcfd;
+}
+table.tp-stats-table tr:nth-child(even) td.num-col {
+    background: #f1f5f9;
+}
+
+.tp-games-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+a.tp-game-link {
+    text-decoration: none !important;
+    color: inherit !important;
+    display: block;
+}
+.tp-game-card {
+    display: grid;
+    grid-template-columns: 112px 1fr 94px;
+    gap: 12px;
+    align-items: center;
+    background: linear-gradient(90deg, #0d1828 0%, #11223a 100%);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 11px;
+    padding: 11px 14px;
+    transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+.tp-game-card:hover {
+    background: linear-gradient(90deg, #132540 0%, #193154 100%);
+    border-color: rgba(251, 191, 36, 0.55);
+    transform: translateY(-1px);
+}
+.tp-game-card.win-border {
+    border-left: 4px solid #22c55e;
+}
+.tp-game-card.loss-border {
+    border-left: 4px solid #ef4444;
+}
+.tp-game-card.upcoming-border {
+    border-left: 4px solid #38bdf8;
+}
+.tp-g-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.tp-g-round {
+    font-size: 11px;
+    font-weight: 900;
+    color: #fbbf24;
+    text-transform: uppercase;
+}
+.tp-g-date {
+    font-size: 11px;
+    font-weight: 600;
+    color: #94a3b8;
+}
+.tp-g-matchup {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+.tp-g-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #cbd5e1;
+    text-transform: uppercase;
+}
+.tp-g-row.strong {
+    color: #ffffff;
+    font-weight: 900;
+}
+.tp-g-logo {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    background: #ffffff;
+    border-radius: 4px;
+    padding: 1px;
+    flex-shrink: 0;
+}
+.tp-g-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+.tp-g-score {
+    font-size: 15px;
+    font-weight: 900;
+    color: #ffffff;
+    white-space: nowrap;
+}
+.tp-g-score.win {
+    color: #fbbf24;
+}
+.tp-g-badge-w {
+    font-size: 10px;
+    font-weight: 900;
+    background: rgba(22, 163, 74, 0.25);
+    color: #4ade80;
+    border: 1px solid rgba(74, 222, 128, 0.45);
+    border-radius: 5px;
+    padding: 1px 7px;
+}
+.tp-g-badge-l {
+    font-size: 10px;
+    font-weight: 900;
+    background: rgba(220, 38, 38, 0.25);
+    color: #f87171;
+    border: 1px solid rgba(248, 113, 113, 0.45);
+    border-radius: 5px;
+    padding: 1px 7px;
+}
+.tp-g-badge-u {
+    font-size: 10px;
+    font-weight: 800;
+    background: rgba(56, 189, 248, 0.18);
+    color: #7dd3fc;
+    border: 1px solid rgba(125, 211, 252, 0.4);
+    border-radius: 5px;
+    padding: 1px 7px;
+}
+</style>
+"""
+
+
 def compute_team_player_stats(team_name: str, games_df: pd.DataFrame) -> pd.DataFrame:
     played_ids = set(
         games_df[
@@ -3029,8 +3239,10 @@ def compute_team_player_stats(team_name: str, games_df: pd.DataFrame) -> pd.Data
             if not raw_name:
                 continue
             key = raw_name.lower()
+            num_val = _extract_jersey_number(raw_name, p.get("NUM", 999))
             if key not in agg:
                 agg[key] = {
+                    "NUM": num_val,
                     "Giocatore": raw_name,
                     "G": 0,
                     "PUN": 0,
@@ -3045,6 +3257,9 @@ def compute_team_player_stats(team_name: str, games_df: pd.DataFrame) -> pd.Data
                     "F_C": 0,
                     "VAL": 0,
                 }
+            elif agg[key]["NUM"] == 999 and num_val < 999:
+                agg[key]["NUM"] = num_val
+
             agg[key]["G"] += 1
             agg[key]["PUN"] += int(p.get("PUN", 0))
             agg[key]["2PT_R"] += int(p.get("2PT_R", 0))
@@ -3059,13 +3274,16 @@ def compute_team_player_stats(team_name: str, games_df: pd.DataFrame) -> pd.Data
             agg[key]["VAL"] += int(p.get("VAL", 0))
 
     if not agg:
-        return pd.DataFrame(columns=["Giocatore", "G", "PUN", "PPG", "2PT_R", "2PT_T", "3PT_R", "3PT_T", "TL_R", "TL_T", "RIM", "ASS", "F_C", "VAL"])
+        return pd.DataFrame(
+            columns=["NUM", "Giocatore", "G", "PUN", "PPG", "2PT_R", "2PT_T", "3PT_R", "3PT_T", "TL_R", "TL_T", "RIM", "ASS", "F_C", "VAL"]
+        )
 
     rows = []
     for item in agg.values():
         g_cnt = max(int(item["G"]), 1)
         rows.append(
             {
+                "NUM": int(item["NUM"]),
                 "Giocatore": item["Giocatore"],
                 "G": item["G"],
                 "PUN": item["PUN"],
@@ -3085,8 +3303,119 @@ def compute_team_player_stats(team_name: str, games_df: pd.DataFrame) -> pd.Data
     return pd.DataFrame(rows).sort_values(by=["PUN", "Giocatore"], ascending=[False, True]).reset_index(drop=True)
 
 
+def _render_team_player_stats_html(team_name: str, p_df: pd.DataFrame) -> str:
+    html = [
+        '<div class="tp-stats-card">',
+        '<div class="tp-stats-head">'
+        f'<span>STATISTICHE GIOCATORI — {team_name}</span>'
+        '<span style="color:#fbbf24;font-size:11px;">ORDINATO PER PUNTI</span>'
+        '</div>',
+        '<div class="tp-table-wrap"><table class="tp-stats-table"><thead><tr>'
+        '<th>#</th>'
+        '<th class="left-col">GIOCATORE</th>'
+        '<th>G</th>'
+        '<th class="hi-col">PUN</th>'
+        '<th class="hi-col">PPG</th>'
+        '<th>2PT R</th>'
+        '<th>2PT T</th>'
+        '<th>3PT R</th>'
+        '<th>3PT T</th>'
+        '<th>TL R</th>'
+        '<th>TL T</th>'
+        '<th>RIM</th>'
+        '<th>ASS</th>'
+        '<th>FALLI</th>'
+        '<th>VAL</th>'
+        '</tr></thead><tbody>',
+    ]
+
+    for r in p_df.itertuples(index=False):
+        num_int = int(getattr(r, "NUM", 999))
+        num_disp = f"#{num_int}" if num_int < 999 else "—"
+        html.append(
+            '<tr>'
+            f'<td class="num-col">{num_disp}</td>'
+            f'<td class="name-col">{r.Giocatore}</td>'
+            f'<td>{int(r.G)}</td>'
+            f'<td class="pts-col">{int(r.PUN)}</td>'
+            f'<td class="pts-col">{float(r.PPG):.1f}</td>'
+            f'<td>{int(getattr(r, "_5"))}</td>'
+            f'<td>{int(getattr(r, "_6"))}</td>'
+            f'<td>{int(getattr(r, "_7"))}</td>'
+            f'<td>{int(getattr(r, "_8"))}</td>'
+            f'<td>{int(getattr(r, "_9"))}</td>'
+            f'<td>{int(getattr(r, "_10"))}</td>'
+            f'<td>{int(r.RIM)}</td>'
+            f'<td>{int(r.ASS)}</td>'
+            f'<td>{int(r.F_C)}</td>'
+            f'<td>{int(r.VAL)}</td>'
+            '</tr>'
+        )
+
+    html.append("</tbody></table></div></div>")
+    return "".join(html)
+
+
+def _render_team_games_interactive_html(team_name: str, games_df: pd.DataFrame, logo_html_map: dict[str, str]) -> str:
+    team_games = games_df[(games_df["Casa"] == team_name) | (games_df["Trasferta"] == team_name)].sort_values(
+        by=["Giornata", "ID_Partita"]
+    )
+    cards = ['<div class="tp-games-list">']
+
+    for g in team_games.itertuples(index=False):
+        gid_encoded = quote(str(g.ID_Partita), safe="")
+        is_played = str(g.Stato).strip().lower() == "giocata"
+        home_name = str(g.Casa)
+        away_name = str(g.Trasferta)
+        home_pts = int(g.Punti_Casa)
+        away_pts = int(g.Punti_Trasferta)
+        is_home = home_name == team_name
+
+        h_logo_src = logo_html_map.get(f"raw_src::{home_name}", "")
+        a_logo_src = logo_html_map.get(f"raw_src::{away_name}", "")
+        h_logo = f'<img class="tp-g-logo" src="{h_logo_src}" alt="" />' if h_logo_src else "🏀"
+        a_logo = f'<img class="tp-g-logo" src="{a_logo_src}" alt="" />' if a_logo_src else "🏀"
+
+        if is_played:
+            t_pts = home_pts if is_home else away_pts
+            o_pts = away_pts if is_home else home_pts
+            won = t_pts > o_pts
+            card_cls = "win-border" if won else "loss-border"
+            badge_html = '<span class="tp-g-badge-w">VITTORIA</span>' if won else '<span class="tp-g-badge-l">SCONFITTA</span>'
+            score_html = f'<div class="tp-g-score {"win" if won else ""}">{home_pts} - {away_pts}</div>'
+            h_strong = "strong" if home_pts > away_pts else ""
+            a_strong = "strong" if away_pts > home_pts else ""
+        else:
+            card_cls = "upcoming-border"
+            badge_html = '<span class="tp-g-badge-u">DA GIOCARE</span>'
+            score_html = '<div class="tp-g-score" style="font-size:12px;color:#93c5fd;">VS</div>'
+            h_strong = "strong" if is_home else ""
+            a_strong = "strong" if not is_home else ""
+
+        cards.append(
+            f'<a class="tp-game-link" href="?match={gid_encoded}" target="_self">'
+            f'<div class="tp-game-card {card_cls}">'
+            f'<div class="tp-g-meta">'
+            f'<div class="tp-g-round">GIORNATA {int(g.Giornata)}</div>'
+            f'<div class="tp-g-date">{g.Data}</div>'
+            f'</div>'
+            f'<div class="tp-g-matchup">'
+            f'<div class="tp-g-row {h_strong}">{h_logo}<span>{home_name}</span></div>'
+            f'<div class="tp-g-row {a_strong}">{a_logo}<span>{away_name}</span></div>'
+            f'</div>'
+            f'<div class="tp-g-right">{score_html}{badge_html}</div>'
+            f'</div>'
+            f'</a>'
+        )
+
+    cards.append("</div>")
+    return "".join(cards)
+
+
 def render_team_page(team_name: str, games_df: pd.DataFrame, logo_html_map: dict[str, str]) -> None:
     st.markdown(MATCH_DETAIL_CSS, unsafe_allow_html=True)
+    st.markdown(STANDINGS_CSS, unsafe_allow_html=True)
+    st.markdown(TEAM_PAGE_CSS, unsafe_allow_html=True)
 
     if st.button("← Torna alla classifica"):
         st.session_state["selected_team_name"] = None
@@ -3138,23 +3467,11 @@ def render_team_page(team_name: str, games_df: pd.DataFrame, logo_html_map: dict
     if p_df.empty:
         st.info("Nessun tabellino inserito ancora per questa squadra.")
     else:
-        st.dataframe(p_df, use_container_width=True, hide_index=True)
+        st.markdown(_render_team_player_stats_html(team_name, p_df), unsafe_allow_html=True)
 
     st.subheader("Calendario e Risultati Squadra")
-    team_games = games_df[(games_df["Casa"] == team_name) | (games_df["Trasferta"] == team_name)].sort_values(
-        by=["Giornata", "ID_Partita"]
-    )
-    for g in team_games.itertuples(index=False):
-        is_played = str(g.Stato).strip().lower() == "giocata"
-        score_txt = f"{int(g.Punti_Casa)} - {int(g.Punti_Trasferta)}" if is_played else str(g.Data)
-        c_a, c_b = st.columns([4, 1])
-        c_a.markdown(f"**Giornata {int(g.Giornata)}** — {g.Casa} vs {g.Trasferta} ({score_txt})")
-        if c_b.button("Apri gara", key=f"open_team_game_{g.ID_Partita}"):
-            st.session_state["selected_team_name"] = None
-            if "team" in st.query_params:
-                del st.query_params["team"]
-            st.session_state["selected_match_id"] = str(g.ID_Partita)
-            st.query_params["match"] = str(g.ID_Partita)
+    st.caption("Clicca su una partita per aprire direttamente tabellino, parziali e dettagli gara.")
+    st.markdown(_render_team_games_interactive_html(team_name, games_df, logo_html_map), unsafe_allow_html=True)
             st.rerun()
 
 
