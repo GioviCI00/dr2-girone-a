@@ -18,7 +18,7 @@ st.set_page_config(
 # ==========================================
 # CONFIGURAZIONE
 # ==========================================
-DATA_VERSION = "2026-11-25-v4-boxscore"
+DATA_VERSION = "2026-11-25-v4-boxscore-ui"
 STAFF_PASSWORD = os.environ.get("DR2_STAFF_PASSWORD", "dr2puglia")
 DEFAULT_GITHUB_OWNER = "GioviCI00"
 DEFAULT_GITHUB_REPO = "dr2-girone-a"
@@ -847,6 +847,11 @@ STANDINGS_CSS = """
     padding: 8px 10px;
     margin-bottom: 6px;
     color: #ffffff;
+    transition: transform 0.12s ease, background 0.12s ease;
+}
+.board-row:hover {
+    background: rgba(11, 52, 108, 0.92);
+    transform: translateX(2px);
 }
 .board-row.row-promo { border-left: 6px solid #22c55e; }
 .board-row.row-po { border-left: 6px solid #f59e0b; }
@@ -875,20 +880,17 @@ a.team-link {
     font-weight: 800;
     font-size: 14px;
     text-transform: uppercase;
+    transition: color 0.12s ease;
 }
 a.team-link:hover {
     color: #ffd43b !important;
     text-decoration: underline !important;
 }
-.b-team {
-    font-weight: 800;
-    font-size: 14px;
-    text-transform: uppercase;
-}
 .b-sub {
     font-size: 11px;
     font-weight: 700;
     color: #bae6fd;
+    margin-top: 2px;
 }
 .b-val {
     text-align: center;
@@ -1135,6 +1137,7 @@ MATCH_DETAIL_CSS = """
     border-radius: 14px;
     padding: 24px 20px;
     margin-bottom: 14px;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
 }
 .md-grid {
     display: grid;
@@ -1150,8 +1153,8 @@ MATCH_DETAIL_CSS = """
     gap: 10px;
 }
 .md-logo-box {
-    width: 76px;
-    height: 76px;
+    width: 78px;
+    height: 78px;
     background: #ffffff;
     border-radius: 16px;
     padding: 8px;
@@ -1174,7 +1177,7 @@ MATCH_DETAIL_CSS = """
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 5px;
 }
 .md-date {
     font-size: 13px;
@@ -1184,21 +1187,25 @@ MATCH_DETAIL_CSS = """
 .md-score {
     font-size: 46px;
     font-weight: 900;
-    color: #ffffff;
+    color: #ffd43b;
     letter-spacing: 2px;
     line-height: 1.1;
 }
 .md-status {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 800;
     letter-spacing: 1.2px;
-    color: #94a3b8;
+    color: #e2e8f0;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 999px;
+    padding: 3px 12px;
     text-transform: uppercase;
 }
 .md-sec-card {
     background: #071922;
     border: 1px solid #133343;
-    border-radius: 10px;
+    border-radius: 12px;
     padding: 16px;
     margin-bottom: 14px;
 }
@@ -1207,7 +1214,7 @@ MATCH_DETAIL_CSS = """
     font-weight: 800;
     letter-spacing: 0.7px;
     text-transform: uppercase;
-    color: #e2e8f0;
+    color: #ffd43b;
     margin-bottom: 12px;
 }
 .md-res-table {
@@ -1220,7 +1227,7 @@ MATCH_DETAIL_CSS = """
     text-align: center;
     color: #94a3b8;
     font-size: 12px;
-    padding: 6px 10px;
+    padding: 7px 10px;
     border-bottom: 1px solid #163b4e;
 }
 .md-res-table th.team-col, .md-res-table td.team-col {
@@ -1234,17 +1241,44 @@ MATCH_DETAIL_CSS = """
 }
 .md-res-table td.tot-col {
     font-weight: 900;
-    color: #ffffff;
+    color: #ffd43b;
+    font-size: 15px;
+}
+.box-summary-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+}
+.box-sum-pill {
+    background: #0d2432;
+    border: 1px solid #1a3f54;
+    border-radius: 9px;
+    padding: 8px 10px;
+    text-align: center;
+}
+.box-sum-lbl {
+    font-size: 10px;
+    font-weight: 800;
+    color: #94a3b8;
+    text-transform: uppercase;
+}
+.box-sum-val {
+    font-size: 16px;
+    font-weight: 900;
+    color: #f8fafc;
+    margin-top: 2px;
 }
 .team-hero {
     background: linear-gradient(135deg, #072238 0%, #0d4b84 100%);
-    border: 1px solid rgba(255,255,255,0.16);
+    border: 1px solid rgba(255,255,255,0.18);
     border-radius: 14px;
     padding: 20px;
     margin-bottom: 16px;
     display: flex;
     align-items: center;
     gap: 18px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
 }
 .team-hero-title {
     font-size: 24px;
@@ -1256,7 +1290,7 @@ MATCH_DETAIL_CSS = """
     font-size: 13px;
     font-weight: 700;
     color: #bae6fd;
-    margin-top: 2px;
+    margin-top: 4px;
 }
 .kpi-grid {
     display: grid;
@@ -1282,6 +1316,31 @@ MATCH_DETAIL_CSS = """
     font-weight: 900;
     color: #ffd43b;
     margin-top: 2px;
+}
+.team-game-row {
+    background: #0d1826;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.team-game-meta {
+    font-size: 12px;
+    font-weight: 800;
+    color: #ffd43b;
+}
+.team-game-teams {
+    font-size: 13px;
+    font-weight: 700;
+    color: #f8fafc;
+}
+.team-game-score {
+    font-size: 13px;
+    font-weight: 900;
+    color: #bae6fd;
 }
 </style>
 """
@@ -1778,6 +1837,36 @@ def _editor_df_to_players(df: pd.DataFrame) -> list[dict]:
     return out
 
 
+def _boxscore_column_config() -> dict:
+    return {
+        "Giocatore": st.column_config.TextColumn("Giocatore", width="medium"),
+        "MIN": st.column_config.TextColumn("MIN", width="small"),
+        "PTS": st.column_config.NumberColumn("PTS", min_value=0, max_value=120, step=1, width="small"),
+        "TL_SEG": st.column_config.NumberColumn("TL+", min_value=0, max_value=50, step=1, width="small"),
+        "TL_SBAG": st.column_config.NumberColumn("TL-", min_value=0, max_value=50, step=1, width="small"),
+        "2PT": st.column_config.NumberColumn("2PT", min_value=0, max_value=50, step=1, width="small"),
+        "3PT": st.column_config.NumberColumn("3PT", min_value=0, max_value=30, step=1, width="small"),
+        "FALLI": st.column_config.NumberColumn("FAL", min_value=0, max_value=5, step=1, width="small"),
+        "QUINTETTO": st.column_config.CheckboxColumn("5°", width="small"),
+    }
+
+
+def _render_team_box_summary(players: list[dict]) -> None:
+    pts_tot = sum(int(p.get("PTS", 0)) for p in players)
+    t3_tot = sum(int(p.get("3PT", 0)) for p in players)
+    tl_tot = sum(int(p.get("TL_SEG", 0)) for p in players)
+    fal_tot = sum(int(p.get("FALLI", 0)) for p in players)
+    st.markdown(
+        f'<div class="box-summary-strip">'
+        f'<div class="box-sum-pill"><div class="box-sum-lbl">Punti Tabellino</div><div class="box-sum-val">{pts_tot}</div></div>'
+        f'<div class="box-sum-pill"><div class="box-sum-lbl">Triple Segnate</div><div class="box-sum-val">{t3_tot}</div></div>'
+        f'<div class="box-sum-pill"><div class="box-sum-lbl">Liberi Segnati</div><div class="box-sum-val">{tl_tot}</div></div>'
+        f'<div class="box-sum-pill"><div class="box-sum-lbl">Falli Squadra</div><div class="box-sum-val">{fal_tot}</div></div>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+
+
 def compute_team_player_stats(team_name: str, games_df: pd.DataFrame) -> pd.DataFrame:
     played_ids = set(
         games_df[
@@ -1860,13 +1949,15 @@ def render_team_page(team_name: str, games_df: pd.DataFrame, logo_html_map: dict
     hero_logo = logo_html_map.get(f"hero::{team_name}", '<div class="md-logo-box">🏀</div>')
     diff_val = int(t_row["diff"]) if t_row else 0
     diff_str = f"+{diff_val}" if diff_val > 0 else str(diff_val)
+    played_cnt = int(t_row["p"]) if t_row else 0
+    ppg_val = round(int(t_row["pf"]) / max(played_cnt, 1), 1) if t_row else 0.0
 
     st.markdown(
         f'<div class="team-hero">'
         f'{hero_logo}'
         f'<div>'
         f'<div class="team-hero-title">{team_name}</div>'
-        f'<div class="team-hero-sub">{girone} • Posizione attuale: #{pos}</div>'
+        f'<div class="team-hero-sub">{girone} • Posizione attuale: #{pos} • Media attacco: {ppg_val} PPG</div>'
         f'</div>'
         f'</div>',
         unsafe_allow_html=True,
@@ -1892,7 +1983,22 @@ def render_team_page(team_name: str, games_df: pd.DataFrame, logo_html_map: dict
     if p_df.empty:
         st.info("Nessun tabellino inserito ancora per questa squadra.")
     else:
-        st.dataframe(p_df, use_container_width=True, hide_index=True)
+        st.dataframe(
+            p_df,
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "Giocatore": st.column_config.TextColumn("Giocatore"),
+                "G": st.column_config.NumberColumn("G"),
+                "PTS": st.column_config.NumberColumn("PTS"),
+                "PPG": st.column_config.NumberColumn("PPG", format="%.1f"),
+                "TL_SEG": st.column_config.NumberColumn("TL+"),
+                "TL_SBAG": st.column_config.NumberColumn("TL-"),
+                "2PT": st.column_config.NumberColumn("2PT"),
+                "3PT": st.column_config.NumberColumn("3PT"),
+                "FALLI": st.column_config.NumberColumn("FAL"),
+            },
+        )
 
     st.subheader("Calendario e Risultati Squadra")
     team_games = games_df[(games_df["Casa"] == team_name) | (games_df["Trasferta"] == team_name)].sort_values(
@@ -1901,8 +2007,15 @@ def render_team_page(team_name: str, games_df: pd.DataFrame, logo_html_map: dict
     for g in team_games.itertuples(index=False):
         is_played = str(g.Stato).strip().lower() == "giocata"
         score_txt = f"{int(g.Punti_Casa)} - {int(g.Punti_Trasferta)}" if is_played else str(g.Data)
-        c_a, c_b = st.columns([4, 1])
-        c_a.markdown(f"**Giornata {int(g.Giornata)}** — {g.Casa} vs {g.Trasferta} ({score_txt})")
+        c_a, c_b = st.columns([5, 1])
+        c_a.markdown(
+            f'<div class="team-game-row">'
+            f'<span class="team-game-meta">G{int(g.Giornata)}</span>'
+            f'<span class="team-game-teams">{g.Casa} vs {g.Trasferta}</span>'
+            f'<span class="team-game-score">{score_txt}</span>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
         if c_b.button("Apri gara", key=f"open_team_game_{g.ID_Partita}"):
             st.session_state["selected_team_name"] = None
             if "team" in st.query_params:
@@ -2086,17 +2199,23 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
 
         tab_h, tab_a = st.tabs([home_name, away_name])
         with tab_h:
+            _render_team_box_summary(detail["home_players"])
             edited_h = st.data_editor(
                 _players_to_editor_df(detail["home_players"]),
                 num_rows="dynamic",
                 use_container_width=True,
+                hide_index=True,
+                column_config=_boxscore_column_config(),
                 key=f"editor_h_{match_id}",
             )
         with tab_a:
+            _render_team_box_summary(detail["away_players"])
             edited_a = st.data_editor(
                 _players_to_editor_df(detail["away_players"]),
                 num_rows="dynamic",
                 use_container_width=True,
+                hide_index=True,
+                column_config=_boxscore_column_config(),
                 key=f"editor_a_{match_id}",
             )
 
