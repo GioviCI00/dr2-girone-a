@@ -2645,6 +2645,179 @@ def render_lba_boxscore(
     st.markdown("".join(html), unsafe_allow_html=True)
 
 
+# --- Aggiorna questi stili dentro MATCH_DETAIL_CSS ---
+FORMATION_LAYOUT_CSS = """
+<style>
+.formation-3col {
+    display: grid;
+    grid-template-columns: minmax(205px, 1fr) minmax(380px, 560px) minmax(205px, 1fr);
+    gap: 14px;
+    align-items: center;
+}
+@media (max-width: 1100px) {
+    .formation-3col {
+        grid-template-columns: 1fr;
+    }
+}
+.roster-side-card {
+    background: #0d1624;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 12px;
+    padding: 12px 14px;
+    height: 100%;
+}
+.roster-side-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+    font-size: 12px;
+    font-weight: 900;
+    color: #f8fafc;
+    text-transform: uppercase;
+}
+.roster-side-head img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    background: #ffffff;
+    border-radius: 5px;
+    padding: 2px;
+}
+.roster-group-lbl {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: #fbbf24;
+    margin-bottom: 6px;
+}
+.roster-player-line {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 4px 6px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin-bottom: 3px;
+    background: rgba(15, 23, 42, 0.75);
+}
+.roster-player-line.starter {
+    border-left: 3px solid #22c55e;
+}
+.roster-num-pill {
+    min-width: 24px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 900;
+    color: #fbbf24;
+    background: rgba(30, 41, 59, 0.95);
+    border-radius: 4px;
+    padding: 1px 4px;
+}
+.roster-divider {
+    border: none;
+    border-top: 1px dashed rgba(148, 163, 184, 0.35);
+    margin: 8px 0;
+}
+
+.court-compact-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+.court-stage {
+    position: relative;
+    width: 100%;
+    max-width: 560px;
+    height: 290px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2.5px solid #f8fafc;
+    background: #c86d3b;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+}
+.court-svg-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+.court-players-layer {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    height: 100%;
+    padding: 10px 8px;
+    gap: 8px;
+}
+.half-court-col {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+}
+.half-row-top, .half-row-bot {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.half-row-mid {
+    display: flex;
+    justify-content: center;
+}
+.jersey-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+.jersey-shape {
+    width: 36px;
+    height: 38px;
+    border-radius: 8px 8px 6px 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 13px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    border: 1.5px solid #ffffff;
+}
+.jersey-home {
+    background: linear-gradient(180deg, #1d4ed8 0%, #1e3a8a 100%);
+    color: #ffffff;
+}
+.jersey-away {
+    background: linear-gradient(180deg, #dc2626 0%, #991b1b 100%);
+    color: #ffffff;
+}
+.jersey-name {
+    background: rgba(15, 23, 42, 0.92);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 5px;
+    padding: 1px 6px;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    max-width: 92px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+</style>
+"""
+
+
 def _render_court_formation(
     home_name: str,
     away_name: str,
@@ -2652,24 +2825,61 @@ def _render_court_formation(
     away_players: list[dict],
     logo_html_map: dict[str, str],
 ) -> None:
-    def _split_starters_and_bench(plist: list[dict]) -> tuple[list[dict], list[dict]]:
-        norm = _normalize_player_rows(plist)
+    st.markdown(FORMATION_LAYOUT_CSS, unsafe_allow_html=True)
+
+    def _prepare_roster(plist: list[dict]) -> tuple[list[dict], list[dict]]:
+        norm = sorted(
+            _normalize_player_rows(plist),
+            key=lambda x: (int(x.get("NUM", 999)), str(x.get("Giocatore", ""))),
+        )
         starters = [p for p in norm if bool(p.get("SF"))]
-        bench_ids = {id(p) for p in starters}
+        starter_ids = {id(p) for p in starters}
         if len(starters) < 5:
             for p in norm:
-                if id(p) not in bench_ids:
+                if id(p) not in starter_ids:
                     starters.append(p)
-                    bench_ids.add(id(p))
+                    starter_ids.add(id(p))
                 if len(starters) == 5:
                     break
-        bench = [p for p in norm if id(p) not in bench_ids]
-        starters_sorted = sorted(starters, key=lambda x: (int(x.get("NUM", 999)), x.get("Giocatore", "")))
-        bench_sorted = sorted(bench, key=lambda x: (int(x.get("NUM", 999)), x.get("Giocatore", "")))
-        return starters_sorted[:5], bench_sorted
+        starters_five = sorted(
+            starters[:5],
+            key=lambda x: (int(x.get("NUM", 999)), str(x.get("Giocatore", ""))),
+        )
+        five_ids = {id(p) for p in starters_five}
+        bench = [p for p in norm if id(p) not in five_ids]
+        return starters_five, bench
 
-    h_starters, h_bench = _split_starters_and_bench(home_players)
-    a_starters, a_bench = _split_starters_and_bench(away_players)
+    h_starters, h_bench = _prepare_roster(home_players)
+    a_starters, a_bench = _prepare_roster(away_players)
+
+    def _roster_col_html(team_name: str, starters: list[dict], bench: list[dict], is_right: bool = False) -> str:
+        logo_src = logo_html_map.get(f"raw_src::{team_name}", "")
+        logo_img = f'<img src="{logo_src}" alt="" />' if logo_src else "🏀"
+        align_style = ' style="justify-content:flex-end;text-align:right;"' if is_right else ""
+
+        def _line(p: dict, is_st: bool) -> str:
+            num_txt = str(int(p.get("NUM", 0))) if int(p.get("NUM", 0)) < 999 else "?"
+            cls_st = " starter" if is_st else ""
+            return (
+                f'<div class="roster-player-line{cls_st}">'
+                f'<span class="roster-num-pill">#{num_txt}</span>'
+                f'<span>{p["Giocatore"]}</span>'
+                f'</div>'
+            )
+
+        st_html = "".join(_line(p, True) for p in starters) or '<div style="color:#94a3b8;font-size:11.5px;">Nessun quintetto</div>'
+        bn_html = "".join(_line(p, False) for p in bench) or '<div style="color:#94a3b8;font-size:11.5px;">Nessun altro atleta</div>'
+
+        return (
+            '<div class="roster-side-card">'
+            f'<div class="roster-side-head"{align_style}>{logo_img}<span>{team_name}</span></div>'
+            '<div class="roster-group-lbl">Quintetto Base (Primi 5)</div>'
+            f'{st_html}'
+            '<hr class="roster-divider" />'
+            '<div class="roster-group-lbl">Altri Atleti</div>'
+            f'{bn_html}'
+            '</div>'
+        )
 
     def _jersey_html(p: dict, team_cls: str) -> str:
         num_txt = str(int(p.get("NUM", 0))) if int(p.get("NUM", 0)) < 999 else "?"
@@ -2682,12 +2892,9 @@ def _render_court_formation(
         )
 
     def _half_court_col_html(starters: list[dict], team_cls: str) -> str:
-        top_group = starters[:2]
-        mid_group = starters[2:3]
-        bot_group = starters[3:5]
-        top_html = "".join(_jersey_html(p, team_cls) for p in top_group)
-        mid_html = "".join(_jersey_html(p, team_cls) for p in mid_group)
-        bot_html = "".join(_jersey_html(p, team_cls) for p in bot_group)
+        top_html = "".join(_jersey_html(p, team_cls) for p in starters[:2])
+        mid_html = "".join(_jersey_html(p, team_cls) for p in starters[2:3])
+        bot_html = "".join(_jersey_html(p, team_cls) for p in starters[3:5])
         return (
             '<div class="half-court-col">'
             f'<div class="half-row-top">{top_html}</div>'
@@ -2695,11 +2902,6 @@ def _render_court_formation(
             f'<div class="half-row-bot">{bot_html}</div>'
             '</div>'
         )
-
-    h_logo_src = logo_html_map.get(f"raw_src::{home_name}", "")
-    a_logo_src = logo_html_map.get(f"raw_src::{away_name}", "")
-    h_badge_img = f'<img src="{h_logo_src}" alt="" />' if h_logo_src else "🏀"
-    a_badge_img = f'<img src="{a_logo_src}" alt="" />' if a_logo_src else "🏀"
 
     court_svg = (
         '<svg class="court-svg-bg" viewBox="0 0 1000 520" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">'
@@ -2719,12 +2921,8 @@ def _render_court_formation(
         '</svg>'
     )
 
-    court_html = (
-        '<div class="court-wrapper">'
-        '<div class="court-headers">'
-        f'<div class="court-side-badge">{h_badge_img}<div><div class="court-side-title">{home_name}</div><div class="court-side-sub">Quintetto Casa (Sinistra)</div></div></div>'
-        f'<div class="court-side-badge right"><div><div class="court-side-title">{away_name}</div><div class="court-side-sub">Quintetto Ospite (Destra)</div></div>{a_badge_img}</div>'
-        '</div>'
+    center_court_html = (
+        '<div class="court-compact-wrap">'
         '<div class="court-stage">'
         f'{court_svg}'
         '<div class="court-players-layer">'
@@ -2734,7 +2932,15 @@ def _render_court_formation(
         '</div>'
         '</div>'
     )
-    st.markdown(court_html, unsafe_allow_html=True)
+
+    full_html = (
+        '<div class="formation-3col">'
+        f'{_roster_col_html(home_name, h_starters, h_bench, is_right=False)}'
+        f'{center_court_html}'
+        f'{_roster_col_html(away_name, a_starters, a_bench, is_right=True)}'
+        '</div>'
+    )
+    st.markdown(full_html, unsafe_allow_html=True)
 
     def _bench_chips_html(bench: list[dict]) -> str:
         if not bench:
