@@ -61,7 +61,7 @@ GIRONI_TEAMS: dict[str, list[dict[str, str]]] = {
 }
 
 DEFAULT_GAMES_RAW = [
-    # GIRONE A
+    # GIRONE A (allineato alla classifica ufficiale: P, W, L, DIFF, PTS)
     ("A01_1867", "Girone A", 1, "Sab 07/11/2026 19:00", "POL. DIL. NUOVA MATTEOTTI CORATO", "PALLACANESTRO OLIMPIA CORATO", 72, 67, "Giocata"),
     ("A01_1868", "Girone A", 1, "Dom 08/11/2026 18:30", "FORTITUDO BASKET APRICENA", "ECOFAN CERIGNOLA MEDITERRANEA 92", 50, 76, "Giocata"),
     ("A01_1869", "Girone A", 1, "Dom 08/11/2026 18:00", "GINNASTICA ANGIULLI BARI", "ASD MAGIC BARI", 68, 50, "Giocata"),
@@ -86,7 +86,7 @@ DEFAULT_GAMES_RAW = [
     ("A04_1885", "Girone A", 4, "Dom 29/11/2026 18:00", "POLISPORTIVA ORSA CAPURSO SSD ARL", "PALLACANESTRO OLIMPIA CORATO", 0, 0, "Da giocare"),
     ("A04_1886", "Girone A", 4, "Sab 28/11/2026 19:45", "ASD VI.G.OR BASKET SAN SEVERO", "ASD POL. BASKET BITRITTO", 0, 0, "Da giocare"),
 
-    # GIRONE B
+    # GIRONE B (allineato alla classifica ufficiale: P, W, L, DIFF, PTS)
     ("B01_2109", "Girone B", 1, "Sab 07/11/2026 18:45", "ASD SCUOLA BASKET MARTINESE", "ASD DREAM BASKET ALTAMURA", 41, 62, "Giocata"),
     ("B01_2110", "Girone B", 1, "Dom 08/11/2026 17:30", "ASD MURGIA BASKET SANTERAMO", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", 70, 59, "Giocata"),
     ("B01_2111", "Girone B", 1, "Dom 08/11/2026 18:00", "SUPPORT_O TARANTO", "DOMITI LA PINTA BASKET PULSANO", 71, 59, "Giocata"),
@@ -111,7 +111,7 @@ DEFAULT_GAMES_RAW = [
     ("B04_2127", "Girone B", 4, "Dom 29/11/2026 18:30", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", "ASD SCUOLA BASKET MARTINESE", 0, 0, "Da giocare"),
     ("B04_2128", "Girone B", 4, "Dom 29/11/2026 18:00", "POL. OLYMPIA CLUB RUTIGLIANO", "SUPPORT_O TARANTO", 0, 0, "Da giocare"),
 
-    # GIRONE C
+    # GIRONE C (allineato alla classifica ufficiale: P, W, L, DIFF, PTS)
     ("C01_2219", "Girone C", 1, "Dom 08/11/2026 18:00", "ASD BASKET TRICASE", "A.POL.DIL.AURORA BRINDISI", 51, 57, "Giocata"),
     ("C01_2220", "Girone C", 1, "Sab 07/11/2026 18:00", "ALL STAR BASKET FRANCAVILLA", "ASD BELLFIKA MESAGNE", 72, 66, "Giocata"),
     ("C01_2221", "Girone C", 1, "Dom 08/11/2026 18:30", "DIERRE ARREDAMENTI CALIMERA BASKET", "ASD MAGIC GALATINA", 77, 51, "Giocata"),
@@ -774,7 +774,6 @@ def compute_standings(girone: str, games_df: pd.DataFrame) -> list[dict]:
 
 
 def compute_thirds_standings(games_df: pd.DataFrame) -> list[dict]:
-    """Classifica delle terze classificate dei tre gironi (punti, poi differenza canestri)."""
     thirds = []
     for g_name in ("Girone A", "Girone B", "Girone C"):
         board = compute_standings(g_name, games_df)
@@ -1145,7 +1144,7 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
 def render_calendar_page(games_df: pd.DataFrame, logo_html_map: dict[str, str]) -> pd.DataFrame:
     st.markdown(CALENDAR_CSS, unsafe_allow_html=True)
     st.title("Calendario e Risultati")
-    st.caption("Seleziona il girone e il turno. Clicca su una partita per aprirne la scheda e i tabellini.")
+    st.caption("Seleziona il girone e il turno per visualizzare o aggiungere gare di Andata e Ritorno.")
 
     gironi_list = ("Girone A", "Girone B", "Girone C")
     current_idx = gironi_list.index(st.session_state["calendar_girone"])
