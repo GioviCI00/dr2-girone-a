@@ -18,7 +18,8 @@ st.set_page_config(
 # ==========================================
 # CONFIGURAZIONE
 # ==========================================
-DATA_VERSION = "2026-11-25-v5-lba-boxscore"
+DATA_VERSION = "2026-11-25-v6-lba-boxscore-filtered"
+OUR_TEAM = "AGS DIL. TORITTO"
 STAFF_PASSWORD = os.environ.get("DR2_STAFF_PASSWORD", "dr2puglia")
 DEFAULT_GITHUB_OWNER = "GioviCI00"
 DEFAULT_GITHUB_REPO = "dr2-girone-a"
@@ -1377,7 +1378,12 @@ table.lba-box {
     border-collapse: collapse;
     font-size: 12px;
     color: #1e293b;
+}
+table.lba-box.full-stats {
     min-width: 980px;
+}
+table.lba-box.compact-stats {
+    min-width: 560px;
 }
 table.lba-box th.grp-hdr {
     background: #232830;
@@ -1438,12 +1444,6 @@ table.lba-box td.sf-check {
 }
 table.lba-box tr:nth-child(even) td {
     background: #fcfcfd;
-}
-table.lba-box tr.team-row td {
-    background: #f1f5f9;
-    font-weight: 800;
-    color: #334155;
-    border-top: 1px solid #cbd5e1;
 }
 table.lba-box tr.total-row td {
     background: #e2e8f0;
@@ -1937,7 +1937,6 @@ def _normalize_player_rows(rows: list | None) -> list[dict]:
         if not name:
             continue
 
-        # Retrocompatibilità con eventuali chiavi vecchie
         pts_val = item.get("PUN", item.get("PTS", 0))
         t2_r_val = item.get("2PT_R", item.get("2PT", 0))
         t2_t_val = item.get("2PT_T", max(int(pd.to_numeric(t2_r_val, errors="coerce") or 0), 0))
@@ -2015,45 +2014,54 @@ def _get_match_detail(match_id: str) -> dict:
     }
 
 
-def _players_to_editor_df(player_list: list[dict], min_rows: int = 8) -> pd.DataFrame:
+def _players_to_editor_df(player_list: list[dict], full_stats: bool = True, min_rows: int = 8) -> pd.DataFrame:
     rows = _normalize_player_rows(player_list)
     while len(rows) < min_rows:
         rows.append(_p_row(""))
-    return pd.DataFrame(rows)
+    df = pd.DataFrame(rows)
+    if full_stats:
+        return df
+    compact_cols = ["Giocatore", "PUN", "MIN", "SF", "F_C", "2PT_R", "SC", "3PT_R", "TL_R", "TL_T", "ASS"]
+    return df[compact_cols]
 
 
-def _editor_df_to_players(df: pd.DataFrame) -> list[dict]:
+def _editor_df_to_players(df: pd.DataFrame, existing_players: list[dict] | None = None) -> list[dict]:
     if df is None or df.empty:
         return []
+    existing_by_name = {
+        str(p.get("Giocatore", "")).strip().lower(): p
+        for p in _normalize_player_rows(existing_players)
+    }
     out: list[dict] = []
     for r in df.itertuples(index=False):
         name = str(getattr(r, "Giocatore", "") or "").strip()
         if not name:
             continue
+        prev = existing_by_name.get(name.lower(), {})
         out.append(
             _p_row(
                 giocatore=name,
-                pts=int(pd.to_numeric(getattr(r, "PUN", 0), errors="coerce") or 0),
-                minuti=str(getattr(r, "MIN", "0") or "0").strip(),
-                sf=bool(getattr(r, "SF", False)),
-                falli_c=int(pd.to_numeric(getattr(r, "F_C", 0), errors="coerce") or 0),
-                falli_s=int(pd.to_numeric(getattr(r, "F_S", 0), errors="coerce") or 0),
-                t2_r=int(pd.to_numeric(getattr(r, "2PT_R", 0), errors="coerce") or 0),
-                t2_t=int(pd.to_numeric(getattr(r, "2PT_T", 0), errors="coerce") or 0),
-                sc=int(pd.to_numeric(getattr(r, "SC", 0), errors="coerce") or 0),
-                t3_r=int(pd.to_numeric(getattr(r, "3PT_R", 0), errors="coerce") or 0),
-                t3_t=int(pd.to_numeric(getattr(r, "3PT_T", 0), errors="coerce") or 0),
-                tl_r=int(pd.to_numeric(getattr(r, "TL_R", 0), errors="coerce") or 0),
-                tl_t=int(pd.to_numeric(getattr(r, "TL_T", 0), errors="coerce") or 0),
-                rim_o=int(pd.to_numeric(getattr(r, "RIM_O", 0), errors="coerce") or 0),
-                rim_d=int(pd.to_numeric(getattr(r, "RIM_D", 0), errors="coerce") or 0),
-                st_d=int(pd.to_numeric(getattr(r, "ST_D", 0), errors="coerce") or 0),
-                st_s=int(pd.to_numeric(getattr(r, "ST_S", 0), errors="coerce") or 0),
-                pal_p=int(pd.to_numeric(getattr(r, "PAL_P", 0), errors="coerce") or 0),
-                pal_r=int(pd.to_numeric(getattr(r, "PAL_R", 0), errors="coerce") or 0),
-                ass=int(pd.to_numeric(getattr(r, "ASS", 0), errors="coerce") or 0),
-                val_lega=int(pd.to_numeric(getattr(r, "VAL", 0), errors="coerce") or 0),
-                oer=float(pd.to_numeric(getattr(r, "OER", 0.0), errors="coerce") or 0.0),
+                pts=int(pd.to_numeric(getattr(r, "PUN", prev.get("PUN", 0)), errors="coerce") or 0),
+                minuti=str(getattr(r, "MIN", prev.get("MIN", "0")) or "0").strip(),
+                sf=bool(getattr(r, "SF", prev.get("SF", False))),
+                falli_c=int(pd.to_numeric(getattr(r, "F_C", prev.get("F_C", 0)), errors="coerce") or 0),
+                falli_s=int(pd.to_numeric(getattr(r, "F_S", prev.get("F_S", 0)), errors="coerce") or 0),
+                t2_r=int(pd.to_numeric(getattr(r, "2PT_R", prev.get("2PT_R", 0)), errors="coerce") or 0),
+                t2_t=int(pd.to_numeric(getattr(r, "2PT_T", prev.get("2PT_T", 0)), errors="coerce") or 0),
+                sc=int(pd.to_numeric(getattr(r, "SC", prev.get("SC", 0)), errors="coerce") or 0),
+                t3_r=int(pd.to_numeric(getattr(r, "3PT_R", prev.get("3PT_R", 0)), errors="coerce") or 0),
+                t3_t=int(pd.to_numeric(getattr(r, "3PT_T", prev.get("3PT_T", 0)), errors="coerce") or 0),
+                tl_r=int(pd.to_numeric(getattr(r, "TL_R", prev.get("TL_R", 0)), errors="coerce") or 0),
+                tl_t=int(pd.to_numeric(getattr(r, "TL_T", prev.get("TL_T", 0)), errors="coerce") or 0),
+                rim_o=int(pd.to_numeric(getattr(r, "RIM_O", prev.get("RIM_O", 0)), errors="coerce") or 0),
+                rim_d=int(pd.to_numeric(getattr(r, "RIM_D", prev.get("RIM_D", 0)), errors="coerce") or 0),
+                st_d=int(pd.to_numeric(getattr(r, "ST_D", prev.get("ST_D", 0)), errors="coerce") or 0),
+                st_s=int(pd.to_numeric(getattr(r, "ST_S", prev.get("ST_S", 0)), errors="coerce") or 0),
+                pal_p=int(pd.to_numeric(getattr(r, "PAL_P", prev.get("PAL_P", 0)), errors="coerce") or 0),
+                pal_r=int(pd.to_numeric(getattr(r, "PAL_R", prev.get("PAL_R", 0)), errors="coerce") or 0),
+                ass=int(pd.to_numeric(getattr(r, "ASS", prev.get("ASS", 0)), errors="coerce") or 0),
+                val_lega=int(pd.to_numeric(getattr(r, "VAL", prev.get("VAL", 0)), errors="coerce") or 0),
+                oer=float(pd.to_numeric(getattr(r, "OER", prev.get("OER", 0.0)), errors="coerce") or 0.0),
             )
         )
     return out
@@ -2064,6 +2072,7 @@ def render_lba_boxscore(
     coach_name: str,
     players: list[dict],
     logo_html_map: dict[str, str],
+    full_stats: bool = True,
 ) -> None:
     norm_players = _normalize_player_rows(players)
     logo_tag = logo_html_map.get(
@@ -2071,6 +2080,79 @@ def render_lba_boxscore(
         '<div class="lba-team-logo" style="display:flex;align-items:center;justify-content:center;font-size:22px;">🏀</div>',
     )
     allenatore_txt = coach_name.strip() if coach_name.strip() else "—"
+
+    table_cls = "lba-box full-stats" if full_stats else "lba-box compact-stats"
+
+    if full_stats:
+        header_html = (
+            '<tr>'
+            '<th class="grp-empty" colspan="4"></th>'
+            '<th class="grp-hdr" colspan="2">FALLI</th>'
+            '<th class="grp-hdr" colspan="3">TIRI DA 2</th>'
+            '<th class="grp-empty" colspan="1"></th>'
+            '<th class="grp-hdr" colspan="3">TIRI DA 3</th>'
+            '<th class="grp-hdr" colspan="3">TIRI LIBERI</th>'
+            '<th class="grp-hdr" colspan="3">RIMBALZI</th>'
+            '<th class="grp-hdr" colspan="2">STOPPATE</th>'
+            '<th class="grp-hdr" colspan="2">PALLE</th>'
+            '<th class="grp-empty" colspan="1"></th>'
+            '<th class="grp-hdr" colspan="2">VALUTAZIONE</th>'
+            '</tr>'
+            '<tr>'
+            '<th class="sub-hdr left-col">GIOCATORE</th>'
+            '<th class="sub-hdr pts-col">PUN</th>'
+            '<th class="sub-hdr">MIN</th>'
+            '<th class="sub-hdr">SF</th>'
+            '<th class="sub-hdr">C</th>'
+            '<th class="sub-hdr">S</th>'
+            '<th class="sub-hdr">R</th>'
+            '<th class="sub-hdr">T</th>'
+            '<th class="sub-hdr pts-col">%</th>'
+            '<th class="sub-hdr">SC</th>'
+            '<th class="sub-hdr">R</th>'
+            '<th class="sub-hdr">T</th>'
+            '<th class="sub-hdr pts-col">%</th>'
+            '<th class="sub-hdr">R</th>'
+            '<th class="sub-hdr">T</th>'
+            '<th class="sub-hdr pts-col">%</th>'
+            '<th class="sub-hdr">O</th>'
+            '<th class="sub-hdr">D</th>'
+            '<th class="sub-hdr">T</th>'
+            '<th class="sub-hdr">D</th>'
+            '<th class="sub-hdr">S</th>'
+            '<th class="sub-hdr">P</th>'
+            '<th class="sub-hdr">R</th>'
+            '<th class="sub-hdr">ASS</th>'
+            '<th class="sub-hdr">LEGA</th>'
+            '<th class="sub-hdr">OER</th>'
+            '</tr>'
+        )
+    else:
+        header_html = (
+            '<tr>'
+            '<th class="grp-empty" colspan="4"></th>'
+            '<th class="grp-hdr" colspan="1">FALLI</th>'
+            '<th class="grp-hdr" colspan="2">TIRI DA 2</th>'
+            '<th class="grp-empty" colspan="1"></th>'
+            '<th class="grp-hdr" colspan="1">TIRI DA 3</th>'
+            '<th class="grp-hdr" colspan="2">TIRI LIBERI</th>'
+            '<th class="grp-empty" colspan="1"></th>'
+            '</tr>'
+            '<tr>'
+            '<th class="sub-hdr left-col">GIOCATORE</th>'
+            '<th class="sub-hdr pts-col">PUN</th>'
+            '<th class="sub-hdr">MIN</th>'
+            '<th class="sub-hdr">SF</th>'
+            '<th class="sub-hdr">C</th>'
+            '<th class="sub-hdr">R</th>'
+            '<th class="sub-hdr pts-col">%</th>'
+            '<th class="sub-hdr">SC</th>'
+            '<th class="sub-hdr">R</th>'
+            '<th class="sub-hdr">R</th>'
+            '<th class="sub-hdr">T</th>'
+            '<th class="sub-hdr">ASS</th>'
+            '</tr>'
+        )
 
     html = [
         f'<div class="lba-team-banner">'
@@ -2080,50 +2162,8 @@ def render_lba_boxscore(
         f'<div class="lba-team-coach">Allenatore: {allenatore_txt}</div>'
         f'</div>'
         f'</div>',
-        '<div class="lba-table-wrap"><table class="lba-box"><thead>',
-        # Riga 1: gruppi
-        '<tr>'
-        '<th class="grp-empty" colspan="4"></th>'
-        '<th class="grp-hdr" colspan="2">FALLI</th>'
-        '<th class="grp-hdr" colspan="3">TIRI DA 2</th>'
-        '<th class="grp-empty" colspan="1"></th>'
-        '<th class="grp-hdr" colspan="3">TIRI DA 3</th>'
-        '<th class="grp-hdr" colspan="3">TIRI LIBERI</th>'
-        '<th class="grp-hdr" colspan="3">RIMBALZI</th>'
-        '<th class="grp-hdr" colspan="2">STOPPATE</th>'
-        '<th class="grp-hdr" colspan="2">PALLE</th>'
-        '<th class="grp-empty" colspan="1"></th>'
-        '<th class="grp-hdr" colspan="2">VALUTAZIONE</th>'
-        '</tr>',
-        # Riga 2: sotto-colonne
-        '<tr>'
-        '<th class="sub-hdr left-col">GIOCATORE</th>'
-        '<th class="sub-hdr pts-col">PUN</th>'
-        '<th class="sub-hdr">MIN</th>'
-        '<th class="sub-hdr">SF</th>'
-        '<th class="sub-hdr">C</th>'
-        '<th class="sub-hdr">S</th>'
-        '<th class="sub-hdr">R</th>'
-        '<th class="sub-hdr">T</th>'
-        '<th class="sub-hdr pts-col">%</th>'
-        '<th class="sub-hdr">SC</th>'
-        '<th class="sub-hdr">R</th>'
-        '<th class="sub-hdr">T</th>'
-        '<th class="sub-hdr pts-col">%</th>'
-        '<th class="sub-hdr">R</th>'
-        '<th class="sub-hdr">T</th>'
-        '<th class="sub-hdr pts-col">%</th>'
-        '<th class="sub-hdr">O</th>'
-        '<th class="sub-hdr">D</th>'
-        '<th class="sub-hdr">T</th>'
-        '<th class="sub-hdr">D</th>'
-        '<th class="sub-hdr">S</th>'
-        '<th class="sub-hdr">P</th>'
-        '<th class="sub-hdr">R</th>'
-        '<th class="sub-hdr">ASS</th>'
-        '<th class="sub-hdr">LEGA</th>'
-        '<th class="sub-hdr">OER</th>'
-        '</tr>',
+        f'<div class="lba-table-wrap"><table class="{table_cls}"><thead>',
+        header_html,
         '</thead><tbody>',
     ]
 
@@ -2182,75 +2222,96 @@ def render_lba_boxscore(
         tot_ass += ass
         tot_val += val_l
 
+        if full_stats:
+            html.append(
+                f'<tr>'
+                f'<td class="player-name">{p["Giocatore"]}</td>'
+                f'<td class="pts-val">{pun}</td>'
+                f'<td>{min_str}</td>'
+                f'<td class="sf-check">{sf_mark}</td>'
+                f'<td>{fc}</td>'
+                f'<td>{fs}</td>'
+                f'<td>{r2}</td>'
+                f'<td>{t2}</td>'
+                f'<td class="pct-val">{_fmt_pct(r2, t2)}</td>'
+                f'<td>{sc}</td>'
+                f'<td>{r3}</td>'
+                f'<td>{t3}</td>'
+                f'<td class="pct-val">{_fmt_pct(r3, t3)}</td>'
+                f'<td>{rtl}</td>'
+                f'<td>{ttl}</td>'
+                f'<td class="pct-val">{_fmt_pct(rtl, ttl)}</td>'
+                f'<td>{ro}</td>'
+                f'<td>{rd}</td>'
+                f'<td>{rt}</td>'
+                f'<td>{sd}</td>'
+                f'<td>{ss}</td>'
+                f'<td>{pp}</td>'
+                f'<td>{pr}</td>'
+                f'<td>{ass}</td>'
+                f'<td>{val_l}</td>'
+                f'<td>{oer_v}</td>'
+                f'</tr>'
+            )
+        else:
+            pct2_compact = _fmt_pct(r2, t2) if t2 > 0 else "0"
+            html.append(
+                f'<tr>'
+                f'<td class="player-name">{p["Giocatore"]}</td>'
+                f'<td class="pts-val">{pun}</td>'
+                f'<td>{min_str}</td>'
+                f'<td class="sf-check">{sf_mark}</td>'
+                f'<td>{fc}</td>'
+                f'<td>{r2}</td>'
+                f'<td class="pct-val">{pct2_compact}</td>'
+                f'<td>{sc}</td>'
+                f'<td>{r3}</td>'
+                f'<td>{rtl}</td>'
+                f'<td>{ttl}</td>'
+                f'<td>{ass}</td>'
+                f'</tr>'
+            )
+
+    # Riga TOTALI (nessuna riga SQUADRA)
+    if full_stats:
+        tot_oer = f"{(tot_pun / max(tot_2t + tot_3t + tot_palp, 1)):.1f}" if (tot_2t + tot_3t + tot_palp) > 0 else "0"
         html.append(
-            f'<tr>'
-            f'<td class="player-name">{p["Giocatore"]}</td>'
-            f'<td class="pts-val">{pun}</td>'
-            f'<td>{min_str}</td>'
-            f'<td class="sf-check">{sf_mark}</td>'
-            f'<td>{fc}</td>'
-            f'<td>{fs}</td>'
-            f'<td>{r2}</td>'
-            f'<td>{t2}</td>'
-            f'<td class="pct-val">{_fmt_pct(r2, t2)}</td>'
-            f'<td>{sc}</td>'
-            f'<td>{r3}</td>'
-            f'<td>{t3}</td>'
-            f'<td class="pct-val">{_fmt_pct(r3, t3)}</td>'
-            f'<td>{rtl}</td>'
-            f'<td>{ttl}</td>'
-            f'<td class="pct-val">{_fmt_pct(rtl, ttl)}</td>'
-            f'<td>{ro}</td>'
-            f'<td>{rd}</td>'
-            f'<td>{rt}</td>'
-            f'<td>{sd}</td>'
-            f'<td>{ss}</td>'
-            f'<td>{pp}</td>'
-            f'<td>{pr}</td>'
-            f'<td>{ass}</td>'
-            f'<td>{val_l}</td>'
-            f'<td>{oer_v}</td>'
-            f'</tr>'
+            '<tr class="total-row">'
+            '<td class="player-name">TOTALI</td>'
+            f'<td class="pts-val">{tot_pun}</td>'
+            f'<td>{tot_min_num}</td>'
+            '<td>-</td>'
+            f'<td>{tot_fc}</td><td>{tot_fs}</td>'
+            f'<td>{tot_2r}</td><td>{tot_2t}</td><td class="pct-val">{_fmt_pct(tot_2r, tot_2t)}</td>'
+            f'<td>{tot_sc}</td>'
+            f'<td>{tot_3r}</td><td>{tot_3t}</td><td class="pct-val">{_fmt_pct(tot_3r, tot_3t)}</td>'
+            f'<td>{tot_tlr}</td><td>{tot_tlt}</td><td class="pct-val">{_fmt_pct(tot_tlr, tot_tlt)}</td>'
+            f'<td>{tot_rimo}</td><td>{tot_rimd}</td><td>{tot_rimt}</td>'
+            f'<td>{tot_std}</td><td>{tot_sts}</td>'
+            f'<td>{tot_palp}</td><td>{tot_palr}</td>'
+            f'<td>{tot_ass}</td>'
+            f'<td>{tot_val}</td>'
+            f'<td>{tot_oer}</td>'
+            '</tr>'
         )
-
-    # Riga SQUADRA
-    html.append(
-        '<tr class="team-row">'
-        '<td class="player-name">SQUADRA</td>'
-        '<td class="pts-val">0</td><td>-</td><td>-</td>'
-        '<td>0</td><td>0</td>'
-        '<td>-</td><td>-</td><td>-</td>'
-        '<td>-</td>'
-        '<td>-</td><td>-</td><td>-</td>'
-        '<td>-</td><td>-</td><td>-</td>'
-        '<td>0</td><td>0</td><td>0</td>'
-        '<td>-</td><td>-</td>'
-        '<td>0</td><td>0</td>'
-        '<td>-</td><td>0</td><td>-</td>'
-        '</tr>'
-    )
-
-    # Riga TOTALI
-    tot_oer = f"{(tot_pun / max(tot_2t + tot_3t + tot_palp, 1)):.1f}" if (tot_2t + tot_3t + tot_palp) > 0 else "0"
-    html.append(
-        '<tr class="total-row">'
-        '<td class="player-name">TOTALI</td>'
-        f'<td class="pts-val">{tot_pun}</td>'
-        f'<td>{tot_min_num}</td>'
-        '<td>-</td>'
-        f'<td>{tot_fc}</td><td>{tot_fs}</td>'
-        f'<td>{tot_2r}</td><td>{tot_2t}</td><td class="pct-val">{_fmt_pct(tot_2r, tot_2t)}</td>'
-        f'<td>{tot_sc}</td>'
-        f'<td>{tot_3r}</td><td>{tot_3t}</td><td class="pct-val">{_fmt_pct(tot_3r, tot_3t)}</td>'
-        f'<td>{tot_tlr}</td><td>{tot_tlt}</td><td class="pct-val">{_fmt_pct(tot_tlr, tot_tlt)}</td>'
-        f'<td>{tot_rimo}</td><td>{tot_rimd}</td><td>{tot_rimt}</td>'
-        f'<td>{tot_std}</td><td>{tot_sts}</td>'
-        f'<td>{tot_palp}</td><td>{tot_palr}</td>'
-        f'<td>{tot_ass}</td>'
-        f'<td>{tot_val}</td>'
-        f'<td>{tot_oer}</td>'
-        '</tr>'
-    )
+    else:
+        pct2_tot_compact = _fmt_pct(tot_2r, tot_2t) if tot_2t > 0 else "0"
+        html.append(
+            '<tr class="total-row">'
+            '<td class="player-name">TOTALI</td>'
+            f'<td class="pts-val">{tot_pun}</td>'
+            f'<td>{tot_min_num}</td>'
+            '<td>-</td>'
+            f'<td>{tot_fc}</td>'
+            f'<td>{tot_2r}</td>'
+            f'<td class="pct-val">{pct2_tot_compact}</td>'
+            f'<td>{tot_sc}</td>'
+            f'<td>{tot_3r}</td>'
+            f'<td>{tot_tlr}</td>'
+            f'<td>{tot_tlt}</td>'
+            f'<td>{tot_ass}</td>'
+            '</tr>'
+        )
 
     html.append("</tbody></table></div>")
     st.markdown("".join(html), unsafe_allow_html=True)
@@ -2426,6 +2487,7 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
     away_pts = int(g["Punti_Trasferta"])
     is_played = str(g["Stato"]).strip().lower() == "giocata"
     status_label = "FINALE" if is_played else str(g["Stato"]).upper()
+    is_our_game = OUR_TEAM in (home_name.strip(), away_name.strip())
 
     h_hero_logo = logo_html_map.get(f"hero::{home_name}", '<div class="md-logo-box">🏀</div>')
     a_hero_logo = logo_html_map.get(f"hero::{away_name}", '<div class="md-logo-box">🏀</div>')
@@ -2574,8 +2636,11 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
                     st.rerun()
 
     elif sezioni_gara == "STATS GIOCATORE":
-        render_lba_boxscore(home_name, detail["coach_home"], detail["home_players"], logo_html_map)
-        render_lba_boxscore(away_name, detail["coach_away"], detail["away_players"], logo_html_map)
+        if not is_our_game:
+            st.caption(f"Tabellino essenziale (gara senza {OUR_TEAM}: nascoste falli subiti, tentativi 2PT/3PT, rimbalzi, stoppate, palle perse/recuperate e valutazione).")
+
+        render_lba_boxscore(home_name, detail["coach_home"], detail["home_players"], logo_html_map, full_stats=is_our_game)
+        render_lba_boxscore(away_name, detail["coach_away"], detail["away_players"], logo_html_map, full_stats=is_our_game)
 
         with st.expander("✏️ Modifica tabellini giocatori e allenatori (salvataggio permanente)", expanded=False):
             c_ch, c_ca = st.columns(2)
@@ -2585,14 +2650,14 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
             tab_h, tab_a = st.tabs([home_name, away_name])
             with tab_h:
                 edited_h = st.data_editor(
-                    _players_to_editor_df(detail["home_players"]),
+                    _players_to_editor_df(detail["home_players"], full_stats=is_our_game),
                     num_rows="dynamic",
                     use_container_width=True,
                     key=f"editor_h_{match_id}",
                 )
             with tab_a:
                 edited_a = st.data_editor(
-                    _players_to_editor_df(detail["away_players"]),
+                    _players_to_editor_df(detail["away_players"], full_stats=is_our_game),
                     num_rows="dynamic",
                     use_container_width=True,
                     key=f"editor_a_{match_id}",
@@ -2602,8 +2667,8 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
                 new_detail = dict(detail)
                 new_detail["coach_home"] = new_coach_h.strip()
                 new_detail["coach_away"] = new_coach_a.strip()
-                new_detail["home_players"] = _editor_df_to_players(edited_h)
-                new_detail["away_players"] = _editor_df_to_players(edited_a)
+                new_detail["home_players"] = _editor_df_to_players(edited_h, detail["home_players"])
+                new_detail["away_players"] = _editor_df_to_players(edited_a, detail["away_players"])
                 with st.spinner("Salvataggio tabellini su GitHub..."):
                     ok, msg, store = save_match_detail_persistent(match_id, new_detail)
                 st.session_state["match_details_store"] = store
@@ -2620,22 +2685,21 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
         tot_3pt_a = sum(int(p.get("3PT_R", 0)) for p in ap)
         tot_tl_h = sum(int(p.get("TL_R", 0)) for p in hp)
         tot_tl_a = sum(int(p.get("TL_R", 0)) for p in ap)
-        tot_rim_h = sum(int(p.get("RIM_O", 0)) + int(p.get("RIM_D", 0)) for p in hp)
-        tot_rim_a = sum(int(p.get("RIM_O", 0)) + int(p.get("RIM_D", 0)) for p in ap)
         tot_ass_h = sum(int(p.get("ASS", 0)) for p in hp)
         tot_ass_a = sum(int(p.get("ASS", 0)) for p in ap)
 
-        st.table(
-            pd.DataFrame(
-                [
-                    {"Statistica": "Punti (Tabellino / Referto)", home_name: f"{tot_pts_h} ({home_pts})", away_name: f"{tot_pts_a} ({away_pts})"},
-                    {"Statistica": "Triple segnate (3PT R)", home_name: tot_3pt_h, away_name: tot_3pt_a},
-                    {"Statistica": "Tiri liberi segnati (TL R)", home_name: tot_tl_h, away_name: tot_tl_a},
-                    {"Statistica": "Rimbalzi totali", home_name: tot_rim_h, away_name: tot_rim_a},
-                    {"Statistica": "Assist", home_name: tot_ass_h, away_name: tot_ass_a},
-                ]
-            )
-        )
+        stat_rows = [
+            {"Statistica": "Punti (Tabellino / Referto)", home_name: f"{tot_pts_h} ({home_pts})", away_name: f"{tot_pts_a} ({away_pts})"},
+            {"Statistica": "Triple segnate (3PT R)", home_name: tot_3pt_h, away_name: tot_3pt_a},
+            {"Statistica": "Tiri liberi segnati (TL R)", home_name: tot_tl_h, away_name: tot_tl_a},
+            {"Statistica": "Assist", home_name: tot_ass_h, away_name: tot_ass_a},
+        ]
+        if is_our_game:
+            tot_rim_h = sum(int(p.get("RIM_O", 0)) + int(p.get("RIM_D", 0)) for p in hp)
+            tot_rim_a = sum(int(p.get("RIM_O", 0)) + int(p.get("RIM_D", 0)) for p in ap)
+            stat_rows.insert(3, {"Statistica": "Rimbalzi totali", home_name: tot_rim_h, away_name: tot_rim_a})
+
+        st.table(pd.DataFrame(stat_rows))
         st.markdown("</div>", unsafe_allow_html=True)
 
     elif sezioni_gara == "FORMAZIONI":
