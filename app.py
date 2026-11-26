@@ -1,9 +1,3 @@
-
-
-Gemini è un'AI e può fare errori, anche in merito a persone. La tua privacy e GeminiSi apre in una nuova finestra
-
-Icona PY
-app
 import base64
 import json
 import os
@@ -4759,4 +4753,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-Elaborazione e analisi nel codice
