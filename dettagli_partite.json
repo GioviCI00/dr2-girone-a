@@ -2378,6 +2378,31 @@
         "ASS": 0,
         "VAL": 0,
         "OER": 0.0
+      },
+      {
+        "Giocatore": "Leonardo Derosa",
+        "NUM": 1,
+        "PUN": 11,
+        "MIN": "38:58",
+        "SF": true,
+        "F_C": 3,
+        "F_S": 0,
+        "2PT_R": 0,
+        "2PT_T": 0,
+        "SC": 0,
+        "3PT_R": 0,
+        "3PT_T": 0,
+        "TL_R": 4,
+        "TL_T": 5,
+        "RIM_O": 0,
+        "RIM_D": 0,
+        "ST_D": 0,
+        "ST_S": 0,
+        "PAL_P": 0,
+        "PAL_R": 0,
+        "ASS": 0,
+        "VAL": 0,
+        "OER": 0.0
       }
     ],
     "notes": ""
