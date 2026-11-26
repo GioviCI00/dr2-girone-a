@@ -80,6 +80,87 @@ GIRONI_TEAMS: dict[str, list[dict[str, str]]] = {
     ],
 }
 
+TEAM_COLORS: dict[str, dict[str, str]] = {
+    # Girone A
+    "AGS DIL. TORITTO": {"label": "Bianco - Blu", "primary": "#f8fafc", "secondary": "#1d4ed8", "text": "#0f172a"},
+    "ASD VI.G.OR BASKET SAN SEVERO": {"label": "Bianco - Rosso", "primary": "#f8fafc", "secondary": "#dc2626", "text": "#0f172a"},
+    "POLISPORTIVA ORSA CAPURSO SSD ARL": {"label": "Nero - Arancione", "primary": "#111827", "secondary": "#f97316", "text": "#ffffff"},
+    "ASD POL. BASKET BITRITTO": {"label": "Bianco - Verde", "primary": "#f8fafc", "secondary": "#16a34a", "text": "#0f172a"},
+    "GINNASTICA ANGIULLI BARI": {"label": "Azzurro - Bianco", "primary": "#0284c7", "secondary": "#f8fafc", "text": "#ffffff"},
+    "ASD MAGIC BARI": {"label": "Bianco", "primary": "#f8fafc", "secondary": "#334155", "text": "#0f172a"},
+    "ECOFAN CERIGNOLA MEDITERRANEA 92": {"label": "Bianco - Azzurro", "primary": "#f8fafc", "secondary": "#0284c7", "text": "#0f172a"},
+    "POL. DIL. NUOVA MATTEOTTI CORATO": {"label": "Bianco - Blu", "primary": "#f8fafc", "secondary": "#1d4ed8", "text": "#0f172a"},
+    "FORTITUDO BASKET APRICENA": {"label": "Bianco - Blu", "primary": "#f8fafc", "secondary": "#1d4ed8", "text": "#0f172a"},
+    "PALLACANESTRO OLIMPIA CORATO": {"label": "Bianco - Rosso", "primary": "#f8fafc", "secondary": "#dc2626", "text": "#0f172a"},
+    "ASD VIRTUS FOGGIA": {"label": "Bianco - Azzurro", "primary": "#f8fafc", "secondary": "#0284c7", "text": "#0f172a"},
+    # Girone B
+    "ASD SCUOLA BASKET MARTINESE": {"label": "Bianco - Verde", "primary": "#f8fafc", "secondary": "#16a34a", "text": "#0f172a"},
+    "POL. OLYMPIA CLUB RUTIGLIANO": {"label": "Granata - Bianco", "primary": "#881337", "secondary": "#f8fafc", "text": "#ffffff"},
+    "ASD DREAM BASKET ALTAMURA": {"label": "Bianco", "primary": "#f8fafc", "secondary": "#334155", "text": "#0f172a"},
+    "ASD MESSAPICA BASKET CEGLIE": {"label": "Giallo - Blu", "primary": "#facc15", "secondary": "#1d4ed8", "text": "#0f172a"},
+    "ASD MURGIA BASKET SANTERAMO": {"label": "Bianco - Azzurro", "primary": "#f8fafc", "secondary": "#0284c7", "text": "#0f172a"},
+    "ASD ATLETICA BASKET PUTIGNANO": {"label": "Arancione - Nero", "primary": "#ea580c", "secondary": "#111827", "text": "#ffffff"},
+    "MASSERIA SEMERARO NEW SPORTING MOTTOLA": {"label": "Blu - Giallo", "primary": "#1d4ed8", "secondary": "#facc15", "text": "#ffffff"},
+    "SUPPORT_O TARANTO": {"label": "Bianco - Blu", "primary": "#f8fafc", "secondary": "#1d4ed8", "text": "#0f172a"},
+    "ASD CLUB GIGANTI CISTERNINO": {"label": "Giallo - Blu", "primary": "#facc15", "secondary": "#1d4ed8", "text": "#0f172a"},
+    "DOMITI LA PINTA BASKET PULSANO": {"label": "Blu - Bianco", "primary": "#1d4ed8", "secondary": "#f8fafc", "text": "#ffffff"},
+    "ASD BASKET FASANO": {"label": "Bianco - Azzurro", "primary": "#f8fafc", "secondary": "#0284c7", "text": "#0f172a"},
+    # Girone C
+    "ASD ASSI BASKET BRINDISI": {"label": "Rosso - Bianco", "primary": "#dc2626", "secondary": "#f8fafc", "text": "#ffffff"},
+    "ALL STAR BASKET FRANCAVILLA": {"label": "Bianco - Arancione", "primary": "#f8fafc", "secondary": "#ea580c", "text": "#0f172a"},
+    "ASD NEW BASKET CARMIANO": {"label": "Rosso - Blu", "primary": "#dc2626", "secondary": "#1d4ed8", "text": "#ffffff"},
+    "ASD BASKET TRICASE": {"label": "Verde - Bianco", "primary": "#16a34a", "secondary": "#f8fafc", "text": "#ffffff"},
+    "A.POL.DIL.AURORA BRINDISI": {"label": "Giallo - Blu", "primary": "#facc15", "secondary": "#1d4ed8", "text": "#0f172a"},
+    "AZ DISINFESTAZIONI SRL VIRTUS BRINDISI": {"label": "Giallo - Nero", "primary": "#facc15", "secondary": "#111827", "text": "#0f172a"},
+    "ASD MAGIC GALATINA": {"label": "Bianco", "primary": "#f8fafc", "secondary": "#334155", "text": "#0f172a"},
+    "ASD BELLFIKA MESAGNE": {"label": "Blu - Bianco", "primary": "#1d4ed8", "secondary": "#f8fafc", "text": "#ffffff"},
+    "DIERRE ARREDAMENTI CALIMERA BASKET": {"label": "Giallo - Blu", "primary": "#facc15", "secondary": "#1d4ed8", "text": "#0f172a"},
+    "ASD POLISPORTIVA MANDURIA": {"label": "Verde - Nero", "primary": "#16a34a", "secondary": "#111827", "text": "#ffffff"},
+    "SENSI PALLACANESTRO LUPA LECCE": {"label": "Rosso - Giallo", "primary": "#dc2626", "secondary": "#facc15", "text": "#ffffff"},
+}
+
+
+def _hex_to_rgb(hex_color: str) -> tuple[int, int, int]:
+    h = hex_color.strip().lstrip("#")
+    if len(h) == 3:
+        h = "".join(c * 2 for c in h)
+    if len(h) != 6:
+        return (29, 78, 216)
+    return (int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16))
+
+
+def _rgba(hex_color: str, alpha: float) -> str:
+    r, g, b = _hex_to_rgb(hex_color)
+    return f"rgba({r}, {g}, {b}, {alpha:.2f})"
+
+
+def _get_team_palette(team_name: str) -> dict[str, str]:
+    clean = str(team_name or "").strip()
+    base = TEAM_COLORS.get(
+        clean,
+        {"label": "Blu - Oro", "primary": "#1d4ed8", "secondary": "#fbbf24", "text": "#ffffff"},
+    )
+    prim = base["primary"]
+    sec = base["secondary"]
+    txt = base["text"]
+    # Colore saturo principale per sfondi scuri/bordo (evita che il bianco bruci i testi chiari su card scure)
+    is_white_prim = prim.lower() in ("#f8fafc", "#ffffff")
+    rich_main = sec if is_white_prim else prim
+    rich_accent = prim if is_white_prim else sec
+    # Colore vivo garantito visibile su sfondo scuro
+    visible_accent = "#f8fafc" if rich_accent.lower() in ("#111827", "#334155") else rich_accent
+    visible_main = "#38bdf8" if rich_main.lower() in ("#111827", "#334155") else rich_main
+    return {
+        "label": base["label"],
+        "primary": prim,
+        "secondary": sec,
+        "text": txt,
+        "rich_main": rich_main,
+        "rich_accent": rich_accent,
+        "visible_main": visible_main,
+        "visible_accent": visible_accent,
+    }
+
 DEFAULT_GAMES_RAW = [
     # ==========================================
     # GIRONE A (Giornate 1-22 + Risultati G1-G3)
@@ -2059,31 +2140,19 @@ table.lba-box tr.total-row td.pct-val {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 3px;
+    gap: 2px;
     transition: transform 0.16s ease;
 }
 .jersey-card:hover {
-    transform: translateY(-3px) scale(1.06);
+    transform: translateY(-3px) scale(1.08);
 }
-.jersey-shape {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
+.jersey-svg-wrap {
+    width: 44px;
+    height: 46px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 900;
-    font-size: 13px;
-    color: #ffffff;
-    border: 2px solid rgba(255, 255, 255, 0.88);
-}
-.jersey-home {
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-    box-shadow: 0 6px 14px rgba(37, 99, 235, 0.48);
-}
-.jersey-away {
-    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
-    box-shadow: 0 6px 14px rgba(220, 38, 38, 0.48);
+    filter: drop-shadow(0 5px 8px rgba(0, 0, 0, 0.52));
 }
 .jersey-name {
     background: rgba(9, 15, 27, 0.88);
@@ -2848,9 +2917,14 @@ def render_teams_grid(girone: str, games_df: pd.DataFrame, logo_html_map: dict[s
             else:
                 pills = '<span class="ts-mini-none">Nessuna gara giocata</span>'
 
+            sq_pal = _get_team_palette(sq)
+            sq_card_style = (
+                f'style="background:radial-gradient(circle at 50% 34%, {_rgba(sq_pal["rich_main"], 0.38)} 0%, rgba(13, 29, 52, 0.96) 58%, #091323 100%);'
+                f'border-color:{_rgba(sq_pal["visible_main"], 0.45)};"'
+            )
             cards_html.append(
                 f'<a class="team-tile-link" href="?team={sq_enc}" target="_self">'
-                f'<div class="team-square-card">'
+                f'<div class="team-square-card" {sq_card_style}>'
                 f'{watermark_html}'
                 f'<div class="ts-top-row">'
                 f'<span class="ts-pos-pill">#{pos_val} CLASSIFICA</span>'
@@ -3251,9 +3325,14 @@ def render_lba_boxscore(
             "</tr>"
         )
 
+    b_pal = _get_team_palette(team_name)
+    banner_style = (
+        f'style="background:linear-gradient(90deg, {_rgba(b_pal["rich_main"], 0.65)} 0%, #0f172a 78%);'
+        f'border-bottom:2.5px solid {b_pal["visible_accent"]};"'
+    )
     html = [
         '<div class="lba-box-card">',
-        '<div class="lba-team-banner">',
+        f'<div class="lba-team-banner" {banner_style}>',
         f'<div class="lba-banner-left">{logo_tag}<div>'
         f'<div class="lba-team-title">{team_name}</div>'
         f'<div class="lba-team-coach">Allenatore: {allenatore_txt}</div>'
@@ -3463,20 +3542,46 @@ def _render_court_formation(
             "</div>"
         )
 
-    def _jersey_html(p: dict, team_cls: str) -> str:
+    h_pal = _get_team_palette(home_name)
+    a_pal = _get_team_palette(away_name)
+    # Se entrambe hanno prima maglia bianca, la squadra ospite indossa la divisa secondaria (colorata)
+    away_use_alt = (
+        h_pal["primary"].lower() in ("#f8fafc", "#ffffff")
+        and a_pal["primary"].lower() in ("#f8fafc", "#ffffff")
+    )
+    a_jersey_fill = a_pal["secondary"] if away_use_alt else a_pal["primary"]
+    a_jersey_trim = a_pal["primary"] if away_use_alt else a_pal["secondary"]
+    a_jersey_num = "#ffffff" if away_use_alt else a_pal["text"]
+
+    def _jersey_svg(num_txt: str, fill_c: str, trim_c: str, num_c: str) -> str:
+        safe_num = html_lib.escape(num_txt)
+        f_size = "15" if len(safe_num) <= 2 else "12"
+        return (
+            '<div class="jersey-svg-wrap">'
+            '<svg viewBox="0 0 64 68" width="44" height="46" xmlns="http://www.w3.org/2000/svg">'
+            f'<path d="M16 6 L23 6 C25 13, 39 13, 41 6 L48 6 L55 21 C51 24, 49 28, 50 34 L50 61 C50 63, 48 64, 46 64 L18 64 C16 64, 14 63, 14 61 L14 34 C15 28, 13 24, 9 21 Z" fill="{fill_c}" stroke="{trim_c}" stroke-width="2.6" stroke-linejoin="round"/>'
+            f'<path d="M23 6 C25 13, 39 13, 41 6" fill="none" stroke="{trim_c}" stroke-width="2.4"/>'
+            f'<line x1="15" y1="35" x2="15" y2="61" stroke="{trim_c}" stroke-width="2.2"/>'
+            f'<line x1="49" y1="35" x2="49" y2="61" stroke="{trim_c}" stroke-width="2.2"/>'
+            f'<text x="32" y="43" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="{f_size}" fill="{num_c}">{safe_num}</text>'
+            "</svg>"
+            "</div>"
+        )
+
+    def _jersey_html(p: dict, fill_c: str, trim_c: str, num_c: str) -> str:
         num_txt = _format_jersey_display(p.get("NUM"), empty_placeholder="?").lstrip("#")
         cognome = _extract_surname(str(p.get("Giocatore", ""))) or str(p.get("Giocatore", ""))
         return (
             '<div class="jersey-card">'
-            f'<div class="jersey-shape {team_cls}">{num_txt}</div>'
-            f'<div class="jersey-name">{cognome}</div>'
+            f"{_jersey_svg(num_txt, fill_c, trim_c, num_c)}"
+            f'<div class="jersey-name" style="border-color:{_rgba(trim_c, 0.55)};">{cognome}</div>'
             "</div>"
         )
 
-    def _half_court_col_html(starters: list[dict], team_cls: str) -> str:
-        top_html = "".join(_jersey_html(p, team_cls) for p in starters[:2])
-        mid_html = "".join(_jersey_html(p, team_cls) for p in starters[2:3])
-        bot_html = "".join(_jersey_html(p, team_cls) for p in starters[3:5])
+    def _half_court_col_html(starters: list[dict], fill_c: str, trim_c: str, num_c: str) -> str:
+        top_html = "".join(_jersey_html(p, fill_c, trim_c, num_c) for p in starters[:2])
+        mid_html = "".join(_jersey_html(p, fill_c, trim_c, num_c) for p in starters[2:3])
+        bot_html = "".join(_jersey_html(p, fill_c, trim_c, num_c) for p in starters[3:5])
         return (
             '<div class="half-court-col">'
             f'<div class="half-row-top">{top_html}</div>'
@@ -3485,20 +3590,23 @@ def _render_court_formation(
             "</div>"
         )
 
+    h_lane_fill = _rgba(h_pal["rich_main"], 0.22)
+    a_lane_fill = _rgba(a_pal["rich_main"], 0.22)
+
     court_svg = (
         '<svg class="court-svg-bg" viewBox="0 0 840 450" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">'
         '<line x1="420" y1="8" x2="420" y2="442" stroke="rgba(255,255,255,0.28)" stroke-width="2.5"/>'
         '<circle cx="420" cy="225" r="54" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.28)" stroke-width="2.5"/>'
         '<circle cx="420" cy="225" r="6" fill="rgba(255,255,255,0.32)"/>'
         # Lato Sinistro (Casa)
-        '<rect x="8" y="152" width="176" height="146" fill="rgba(37, 99, 235, 0.14)" stroke="rgba(255,255,255,0.32)" stroke-width="2.5"/>'
+        f'<rect x="8" y="152" width="176" height="146" fill="{h_lane_fill}" stroke="rgba(255,255,255,0.32)" stroke-width="2.5"/>'
         '<path d="M 184 152 A 54 54 0 0 1 184 298" fill="none" stroke="rgba(255,255,255,0.32)" stroke-width="2.2"/>'
         '<path d="M 184 152 A 54 54 0 0 0 184 298" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1.8" stroke-dasharray="6,6"/>'
         '<path d="M 8 38 L 95 38 A 202 202 0 0 1 95 412 L 8 412" fill="none" stroke="rgba(255,255,255,0.34)" stroke-width="2.5"/>'
         '<line x1="44" y1="198" x2="44" y2="252" stroke="#f8fafc" stroke-width="3"/>'
         '<circle cx="56" cy="225" r="8" fill="none" stroke="#f59e0b" stroke-width="2.5"/>'
         # Lato Destro (Ospiti)
-        '<rect x="656" y="152" width="176" height="146" fill="rgba(220, 38, 38, 0.14)" stroke="rgba(255,255,255,0.32)" stroke-width="2.5"/>'
+        f'<rect x="656" y="152" width="176" height="146" fill="{a_lane_fill}" stroke="rgba(255,255,255,0.32)" stroke-width="2.5"/>'
         '<path d="M 656 152 A 54 54 0 0 0 656 298" fill="none" stroke="rgba(255,255,255,0.32)" stroke-width="2.2"/>'
         '<path d="M 656 152 A 54 54 0 0 1 656 298" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1.8" stroke-dasharray="6,6"/>'
         '<path d="M 832 38 L 745 38 A 202 202 0 0 0 745 412 L 832 412" fill="none" stroke="rgba(255,255,255,0.34)" stroke-width="2.5"/>'
@@ -3512,8 +3620,8 @@ def _render_court_formation(
         '<div class="court-stage">'
         f"{court_svg}"
         '<div class="court-players-layer">'
-        f'{_half_court_col_html(h_starters, "jersey-home")}'
-        f'{_half_court_col_html(a_starters, "jersey-away")}'
+        f'{_half_court_col_html(h_starters, h_pal["primary"], h_pal["secondary"], h_pal["text"])}'
+        f'{_half_court_col_html(a_starters, a_jersey_fill, a_jersey_trim, a_jersey_num)}'
         "</div>"
         "</div>"
         "</div>"
@@ -3668,11 +3776,16 @@ def compute_team_player_stats(team_name: str, games_df: pd.DataFrame) -> pd.Data
 
 def _render_team_player_stats_html(team_name: str, p_df: pd.DataFrame) -> str:
     team_enc = quote(str(team_name), safe="")
+    pal = _get_team_palette(team_name)
+    head_style = (
+        f'style="background:linear-gradient(90deg, {_rgba(pal["rich_main"], 0.65)} 0%, #0f172a 75%);'
+        f'border-bottom:2.5px solid {pal["visible_accent"]};"'
+    )
     html = [
         '<div class="tp-stats-card">',
-        '<div class="tp-stats-head">'
+        f'<div class="tp-stats-head" {head_style}>'
         f"<span>STATISTICHE GIOCATORI — {html_lib.escape(str(team_name))}</span>"
-        '<span style="color:#fbbf24;font-size:11px;">CLICCA SUL NOME PER PROFILO • ORDINATO PER PUNTI</span>'
+        f'<span style="color:{pal["visible_accent"]};font-size:11px;">CLICCA SUL NOME PER PROFILO • ORDINATO PER PUNTI</span>'
         "</div>",
         '<div class="tp-table-wrap"><table class="tp-stats-table"><thead><tr>'
         "<th>#</th>"
@@ -3866,16 +3979,27 @@ def compute_player_profile_data(team_name: str, player_name: str, games_df: pd.D
     }
 
 
-def _build_player_avatar_html(num_disp: str) -> str:
+def _build_player_avatar_html(num_disp: str, team_name: str = "") -> str:
+    pal = _get_team_palette(team_name)
+    j_fill = pal["primary"]
+    j_trim = pal["secondary"]
+    j_txt = pal["text"]
+    bg_main = pal["rich_main"]
+    border_col = pal["visible_accent"]
     badge = html_lib.escape(num_disp if num_disp != "—" else "🏀")
+    chest_num = html_lib.escape(num_disp.lstrip("#") if num_disp != "—" else "")
     svg_parts = [
-        '<div style="width:74px;height:74px;border-radius:16px;background:linear-gradient(145deg,#1e3a8a 0%,#0f172a 100%);border:2px solid rgba(251,191,36,0.65);display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;overflow:hidden;box-shadow:0 6px 16px rgba(0,0,0,0.4);">',
-        '<svg viewBox="0 0 80 80" width="74" height="74" xmlns="http://www.w3.org/2000/svg">',
-        '<circle cx="40" cy="25" r="13" fill="#cbd5e1" opacity="0.92"/>',
-        '<path d="M16 74 C16 53, 26 44, 40 44 C54 44, 64 53, 64 74 Z" fill="#2563eb"/>',
-        '<path d="M29 44 L40 53 L51 44" fill="none" stroke="#fbbf24" stroke-width="2.5"/>',
+        f'<div style="width:76px;height:76px;border-radius:16px;background:linear-gradient(145deg,{_rgba(bg_main, 0.42)} 0%,#0b1320 100%);border:2px solid {_rgba(border_col, 0.78)};display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;overflow:hidden;box-shadow:0 6px 16px rgba(0,0,0,0.45);">',
+        '<svg viewBox="0 0 80 80" width="76" height="76" xmlns="http://www.w3.org/2000/svg">',
+        '<circle cx="40" cy="23" r="12.5" fill="#e2e8f0" opacity="0.95"/>',
+        # Canotta da basket con spalline e bordi nei colori sociali
+        f'<path d="M16 76 L19 52 C20 46, 24 42, 29 41 L32 41 C34 47, 46 47, 48 41 L51 41 C56 42, 60 46, 61 52 L64 76 Z" fill="{j_fill}" stroke="{j_trim}" stroke-width="2.4" stroke-linejoin="round"/>',
+        f'<path d="M31 41 C34 48, 46 48, 49 41" fill="none" stroke="{j_trim}" stroke-width="2.6"/>',
+        f'<path d="M24 43 C25 50, 23 55, 19 58" fill="none" stroke="{j_trim}" stroke-width="2.2"/>',
+        f'<path d="M56 43 C55 50, 57 55, 61 58" fill="none" stroke="{j_trim}" stroke-width="2.2"/>',
+        f'<text x="40" y="65" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="900" font-size="14" fill="{j_txt}">{chest_num}</text>' if chest_num else "",
         "</svg>",
-        f'<span style="position:absolute;bottom:4px;right:5px;background:#fbbf24;color:#0f172a;font-size:10px;font-weight:900;padding:1px 5px;border-radius:5px;line-height:1.15;">{badge}</span>',
+        f'<span style="position:absolute;bottom:4px;right:5px;background:{j_trim};color:{"#0f172a" if j_trim.lower() in ("#f8fafc", "#facc15", "#f97316") else "#ffffff"};border:1px solid {_rgba(j_fill, 0.7)};font-size:10px;font-weight:900;padding:1px 5px;border-radius:5px;line-height:1.15;">{badge}</span>',
         "</div>",
     ]
     return "".join(svg_parts)
@@ -3893,14 +4017,19 @@ def show_player_profile_dialog(team_name: str, player_name: str, games_df: pd.Da
     safe_team = html_lib.escape(team_name)
     team_logo_src = logo_html_map.get(f"raw_src::{team_name}", "")
     team_logo_tag = f'<img src="{team_logo_src}" alt="" />' if team_logo_src else "<span>🏀</span>"
-    avatar_html = _build_player_avatar_html(num_disp)
+    t_pal = _get_team_palette(team_name)
+    avatar_html = _build_player_avatar_html(num_disp, team_name)
+    pm_hero_style = (
+        f'style="background:linear-gradient(135deg, {_rgba(t_pal["rich_main"], 0.42)} 0%, #091322 65%, {_rgba(t_pal["rich_accent"], 0.22)} 100%);'
+        f'border:1.5px solid {_rgba(t_pal["visible_accent"], 0.55)};"'
+    )
 
     hero_html = "".join(
         [
-            '<div class="pm-hero-card">',
+            f'<div class="pm-hero-card" {pm_hero_style}>',
             "<div>",
             f'<div class="pm-name-title">{num_prefix}{safe_pname}</div>',
-            f'<div class="pm-team-sub">{team_logo_tag}<span>{safe_team}</span></div>',
+            f'<div class="pm-team-sub" style="color:{t_pal["visible_accent"]};">{team_logo_tag}<span>{safe_team}</span></div>',
             "</div>",
             avatar_html,
             "</div>",
@@ -4137,26 +4266,47 @@ def render_team_page(team_name: str, games_df: pd.DataFrame, logo_html_map: dict
     diff_val = int(t_row["diff"]) if t_row else 0
     diff_str = f"+{diff_val}" if diff_val > 0 else str(diff_val)
 
+    pal = _get_team_palette(team_name)
+    hero_style = (
+        f'style="background:linear-gradient(135deg, {_rgba(pal["rich_main"], 0.48)} 0%, #091322 60%, {_rgba(pal["rich_accent"], 0.26)} 100%);'
+        f'border:1.5px solid {_rgba(pal["visible_accent"], 0.55)};border-top:5px solid {pal["visible_main"]};"'
+    )
+    badge_sociali = (
+        f'<span style="display:inline-flex;align-items:center;gap:6px;margin-top:7px;padding:3px 10px;'
+        f'border-radius:999px;background:rgba(9,15,27,0.75);border:1px solid {_rgba(pal["visible_accent"], 0.5)};'
+        f'font-size:11.5px;font-weight:800;color:#f8fafc;">'
+        f'<span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:{pal["primary"]};border:1.5px solid #94a3b8;"></span>'
+        f'<span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:{pal["secondary"]};border:1.5px solid #94a3b8;"></span>'
+        f'Colori sociali: {html_lib.escape(pal["label"])}'
+        f"</span>"
+    )
+
     st.markdown(
-        '<div class="team-hero">'
+        f'<div class="team-hero" {hero_style}>'
         f"{hero_logo}"
         "<div>"
         f'<div class="team-hero-title">{team_name}</div>'
-        f'<div class="team-hero-sub">{girone} • Posizione attuale: #{pos}</div>'
+        f'<div class="team-hero-sub" style="color:{pal["visible_accent"]};">{girone} • Posizione attuale: #{pos}</div>'
+        f"{badge_sociali}"
         "</div>"
         "</div>",
         unsafe_allow_html=True,
     )
 
     if t_row:
+        kpi_card_style = (
+            f'style="background:linear-gradient(180deg, {_rgba(pal["rich_main"], 0.22)} 0%, #0b1320 100%);'
+            f'border:1px solid {_rgba(pal["visible_main"], 0.42)};border-top:3px solid {pal["visible_main"]};"'
+        )
+        kpi_val_style = f'style="color:{pal["visible_accent"]};"'
         st.markdown(
             '<div class="kpi-grid">'
-            f'<div class="kpi-card"><div class="kpi-label">Punti</div><div class="kpi-val">{t_row["pts"]}</div></div>'
-            f'<div class="kpi-card"><div class="kpi-label">Giocate</div><div class="kpi-val">{t_row["p"]}</div></div>'
-            f'<div class="kpi-card"><div class="kpi-label">Vittorie</div><div class="kpi-val">{t_row["w"]}</div></div>'
-            f'<div class="kpi-card"><div class="kpi-label">Sconfitte</div><div class="kpi-val">{t_row["l"]}</div></div>'
-            f'<div class="kpi-card"><div class="kpi-label">PF / PS</div><div class="kpi-val">{t_row["pf"]}/{t_row["ps"]}</div></div>'
-            f'<div class="kpi-card"><div class="kpi-label">Diff</div><div class="kpi-val">{diff_str}</div></div>'
+            f'<div class="kpi-card" {kpi_card_style}><div class="kpi-label">Punti</div><div class="kpi-val" {kpi_val_style}>{t_row["pts"]}</div></div>'
+            f'<div class="kpi-card" {kpi_card_style}><div class="kpi-label">Giocate</div><div class="kpi-val" {kpi_val_style}>{t_row["p"]}</div></div>'
+            f'<div class="kpi-card" {kpi_card_style}><div class="kpi-label">Vittorie</div><div class="kpi-val" {kpi_val_style}>{t_row["w"]}</div></div>'
+            f'<div class="kpi-card" {kpi_card_style}><div class="kpi-label">Sconfitte</div><div class="kpi-val" {kpi_val_style}>{t_row["l"]}</div></div>'
+            f'<div class="kpi-card" {kpi_card_style}><div class="kpi-label">PF / PS</div><div class="kpi-val" {kpi_val_style}>{t_row["pf"]}/{t_row["ps"]}</div></div>'
+            f'<div class="kpi-card" {kpi_card_style}><div class="kpi-label">Diff</div><div class="kpi-val" {kpi_val_style}>{diff_str}</div></div>'
             "</div>",
             unsafe_allow_html=True,
         )
