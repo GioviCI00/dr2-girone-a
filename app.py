@@ -3925,7 +3925,7 @@ def render_match_detail_page(match_id: str, games_df: pd.DataFrame, logo_html_ma
     tab_riassunto, tab_lba, tab_essenziale, tab_campo, tab_storico = st.tabs(
         [
             "📋 Riassunto",
-            "📊 Statistiche LBA",
+            "📊 Statistiche",
             "📝 Tabellino Essenziale",
             "🏀 Formazioni in Campo",
             "🕒 Storico",
