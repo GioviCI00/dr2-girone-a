@@ -46,11 +46,15 @@ OUR_TEAM = "AGS DIL. TORITTO"
 
 STAFF_PASSWORD = os.environ.get("DR2_STAFF_PASSWORD", "dr2puglia")
 
+
+
 DEFAULT_GITHUB_OWNER = "GioviCI00"
 
 DEFAULT_GITHUB_REPO = "dr2-girone-a"
 
 DEFAULT_GITHUB_BRANCH = "main"
+
+
 
 GITHUB_RAW_BASE = os.environ.get(
 
@@ -384,8 +388,6 @@ DEFAULT_GAMES_RAW = [
 
     ("A22_1976", "Girone A", 22, "Sab 24/04/2027 19:30", "GINNASTICA ANGIULLI BARI", "PALLACANESTRO OLIMPIA CORATO", 0, 0, "Da giocare"),
 
-
-
     # ==========================================
 
     # GIRONE B (Giornate 1-22 + Risultati G1-G3)
@@ -611,8 +613,6 @@ DEFAULT_GAMES_RAW = [
     ("B22_2217", "Girone B", 22, "Sab 24/04/2027 18:00", "ASD ATLETICA BASKET PUTIGNANO", "POL. OLYMPIA CLUB RUTIGLIANO", 0, 0, "Da giocare"),
 
     ("B22_2218", "Girone B", 22, "Sab 24/04/2027 19:00", "ASD CLUB GIGANTI CISTERNINO", "SUPPORT_O TARANTO", 0, 0, "Da giocare"),
-
-
 
     # ==========================================
 
@@ -844,8 +844,6 @@ DEFAULT_GAMES_RAW = [
 
 
 
-
-
 def _p_row(
 
     giocatore: str,
@@ -945,8 +943,6 @@ def _p_row(
         "OER": float(oer),
 
     }
-
-
 
 
 
@@ -1254,8 +1250,6 @@ DEFAULT_ROUND3_DETAILS: dict[str, dict] = {
 
 
 
-
-
 # ==========================================
 
 # PERSISTENZA SU GITHUB
@@ -1271,8 +1265,6 @@ def _get_github_config() -> dict[str, str]:
     repo = DEFAULT_GITHUB_REPO
 
     branch = DEFAULT_GITHUB_BRANCH
-
-
 
     try:
 
@@ -1296,8 +1288,6 @@ def _get_github_config() -> dict[str, str]:
 
         pass
 
-
-
     token = token or os.environ.get("GITHUB_TOKEN", "").strip()
 
     owner = os.environ.get("GITHUB_OWNER", owner).strip() or DEFAULT_GITHUB_OWNER
@@ -1305,8 +1295,6 @@ def _get_github_config() -> dict[str, str]:
     repo = os.environ.get("GITHUB_REPO", repo).strip() or DEFAULT_GITHUB_REPO
 
     branch = os.environ.get("GITHUB_BRANCH", branch).strip() or DEFAULT_GITHUB_BRANCH
-
-
 
     if "/" in repo:
 
@@ -1316,11 +1304,7 @@ def _get_github_config() -> dict[str, str]:
 
             owner, repo = parts[0], parts[1]
 
-
-
     return {"token": token, "owner": owner, "repo": repo, "branch": branch}
-
-
 
 
 
@@ -1329,8 +1313,6 @@ def _github_get_json_file(cfg: dict[str, str], file_path: str) -> tuple[dict, st
     if not cfg["token"]:
 
         return {}, None
-
-
 
     url = (
 
@@ -1386,8 +1368,6 @@ def _github_get_json_file(cfg: dict[str, str], file_path: str) -> tuple[dict, st
 
 
 
-
-
 def _github_put_json_file(cfg: dict[str, str], file_path: str, data: dict, commit_msg: str) -> tuple[bool, str]:
 
     content_str = json.dumps(data, indent=2, ensure_ascii=False) + "\n"
@@ -1402,15 +1382,11 @@ def _github_put_json_file(cfg: dict[str, str], file_path: str, data: dict, commi
 
         )
 
-
-
     try:
 
         _, current_sha = _github_get_json_file(cfg, file_path)
 
         content_b64 = base64.b64encode(content_str.encode("utf-8")).decode("ascii")
-
-
 
         body: dict[str, str] = {
 
@@ -1425,8 +1401,6 @@ def _github_put_json_file(cfg: dict[str, str], file_path: str, data: dict, commi
         if current_sha:
 
             body["sha"] = current_sha
-
-
 
         url = f"https://api.github.com/repos/{cfg['owner']}/{cfg['repo']}/contents/{file_path}"
 
@@ -1458,8 +1432,6 @@ def _github_put_json_file(cfg: dict[str, str], file_path: str, data: dict, commi
 
             _ = resp.read()
 
-
-
         return True, "Modifica salvata in modo permanente su GitHub!"
 
     except HTTPError as err:
@@ -1488,8 +1460,6 @@ def _github_put_json_file(cfg: dict[str, str], file_path: str, data: dict, commi
 
 
 
-
-
 def load_game_overrides() -> dict[str, dict]:
 
     cfg = _get_github_config()
@@ -1514,8 +1484,6 @@ def load_game_overrides() -> dict[str, dict]:
 
             pass
 
-
-
     if LOCAL_OVERRIDES_FILE.is_file():
 
         try:
@@ -1529,8 +1497,6 @@ def load_game_overrides() -> dict[str, dict]:
             return {}
 
     return {}
-
-
 
 
 
@@ -1556,8 +1522,6 @@ def save_game_override_persistent(match_id: str, values: dict) -> tuple[bool, st
 
 
 
-
-
 def load_match_details_store() -> dict[str, dict]:
 
     merged: dict[str, dict] = {k: json.loads(json.dumps(v)) for k, v in DEFAULT_ROUND3_DETAILS.items()}
@@ -1565,8 +1529,6 @@ def load_match_details_store() -> dict[str, dict]:
     cfg = _get_github_config()
 
     remote_data: dict[str, dict] = {}
-
-
 
     if cfg["token"]:
 
@@ -1590,8 +1552,6 @@ def load_match_details_store() -> dict[str, dict]:
 
             pass
 
-
-
     if not remote_data and LOCAL_DETAILS_FILE.is_file():
 
         try:
@@ -1606,19 +1566,13 @@ def load_match_details_store() -> dict[str, dict]:
 
             remote_data = {}
 
-
-
     for mid, mdata in remote_data.items():
 
         if isinstance(mdata, dict):
 
             merged[str(mid)] = mdata
 
-
-
     return merged
-
-
 
 
 
@@ -1645,8 +1599,6 @@ def save_match_detail_persistent(match_id: str, detail_payload: dict) -> tuple[b
     ok, msg = _github_put_json_file(cfg, DETAILS_PATH, store, f"Aggiorna dettagli partita {match_id}")
 
     return ok, msg, store
-
-
 
 
 
@@ -1683,8 +1635,6 @@ def apply_overrides_to_df(df: pd.DataFrame, overrides: dict[str, dict]) -> pd.Da
                 out.loc[idx, "Punti_Trasferta"] = int(ov["Punti_Trasferta"])
 
     return out
-
-
 
 
 
@@ -2348,8 +2298,6 @@ CALENDAR_CSS = """
 
 .cal-board-head .c-left { text-align: left; }
 
-
-
 a.cal-row-link {
 
     text-decoration: none !important;
@@ -2555,8 +2503,6 @@ a.cal-row-link {
 .cal-state-sub.done { color: #4ade80; }
 
 .cal-state-sub.todo { color: #7dd3fc; }
-
-
 
 @media (max-width: 820px) {
 
@@ -2839,8 +2785,6 @@ MATCH_DETAIL_CSS = """
     font-size: 15px;
 
 }
-
-
 
 /* Tabellini professionali */
 
@@ -3159,8 +3103,6 @@ table.lba-box tr.total-row td.pct-val {
     color: #b45309;
 
 }
-
-
 
 /* Formazioni a 3 colonne + campetto compatto */
 
@@ -3494,8 +3436,6 @@ table.lba-box tr.total-row td.pct-val {
 
 }
 
-
-
 /* Storico partite */
 
 .hist-grid {
@@ -3643,8 +3583,6 @@ table.lba-box tr.total-row td.pct-val {
     white-space: nowrap;
 
 }
-
-
 
 .team-hero {
 
@@ -3918,8 +3856,6 @@ table.tp-stats-table tr:nth-child(even) td.num-col {
 
 
 
-
-
 @st.cache_data(show_spinner=False)
 
 def build_games_df(version: str = DATA_VERSION) -> pd.DataFrame:
@@ -3960,8 +3896,6 @@ def build_games_df(version: str = DATA_VERSION) -> pd.DataFrame:
 
 
 
-
-
 def load_full_games_df() -> pd.DataFrame:
 
     base_df = build_games_df(DATA_VERSION).copy()
@@ -3971,8 +3905,6 @@ def load_full_games_df() -> pd.DataFrame:
     st.session_state["game_overrides"] = overrides
 
     return apply_overrides_to_df(base_df, overrides)
-
-
 
 
 
@@ -3986,13 +3918,9 @@ def resolve_logo_src(logo_filename: str, github_base: str) -> str:
 
         return ""
 
-
-
     if github_base:
 
         return f"{github_base.rstrip('/')}/{quote(clean_name, safe='._-')}"
-
-
 
     for candidate in (Path(clean_name), Path("loghi") / clean_name, Path("assets") / clean_name):
 
@@ -4006,11 +3934,7 @@ def resolve_logo_src(logo_filename: str, github_base: str) -> str:
 
             return f"data:{mime};base64,{encoded}"
 
-
-
     return ""
-
-
 
 
 
@@ -4074,8 +3998,6 @@ def build_team_logo_html_map(github_base: str) -> dict[str, str]:
 
 
 
-
-
 def _find_team_girone(team_name: str) -> str | None:
 
     for g_name, items in GIRONI_TEAMS.items():
@@ -4087,8 +4009,6 @@ def _find_team_girone(team_name: str) -> str | None:
                 return g_name
 
     return None
-
-
 
 
 
@@ -4112,8 +4032,6 @@ def _format_tooltip_data(g) -> dict[str, str]:
 
 
 
-
-
 def _render_streak_html(events: list[dict], max_items: int = 5) -> str:
 
     recent = events[-max_items:]
@@ -4121,8 +4039,6 @@ def _render_streak_html(events: list[dict], max_items: int = 5) -> str:
     if not recent:
 
         return '<div class="streak-track"><span class="streak-empty">—</span></div>'
-
-
 
     items = []
 
@@ -4142,15 +4058,11 @@ def _render_streak_html(events: list[dict], max_items: int = 5) -> str:
 
         score_str = str(tip.get("score", "")).replace("<", "&lt;").replace(">", "&gt;")
 
-
-
         cls = "streak-w" if res == "W" else "streak-l"
 
         badge_cls = "tt-badge-w" if res == "W" else "tt-badge-l"
 
         esito_txt = "VITTORIA" if res == "W" else "SCONFITTA"
-
-
 
         items.append(
 
@@ -4175,8 +4087,6 @@ def _render_streak_html(events: list[dict], max_items: int = 5) -> str:
         )
 
     return f'<div class="streak-track">{"".join(items)}</div>'
-
-
 
 
 
@@ -4210,21 +4120,15 @@ def _h2h_points_for_group(group_teams: list[str], played_games: list[tuple]) -> 
 
 
 
-
-
 def _rank_tied_group(group_rows: list[dict], played_games: list[tuple]) -> list[dict]:
 
     if len(group_rows) <= 1:
 
         return group_rows
 
-
-
     group_names = [r["squadra"] for r in group_rows]
 
     h2h_pts = _h2h_points_for_group(group_names, played_games)
-
-
 
     return sorted(
 
@@ -4233,8 +4137,6 @@ def _rank_tied_group(group_rows: list[dict], played_games: list[tuple]) -> list[
         key=lambda r: (-h2h_pts.get(r["squadra"], 0), -r["diff"], r["squadra"]),
 
     )
-
-
 
 
 
@@ -4272,8 +4174,6 @@ def compute_standings(girone: str, games_df: pd.DataFrame) -> list[dict]:
 
     }
 
-
-
     g_played = games_df[
 
         (games_df["Girone"] == girone)
@@ -4282,11 +4182,7 @@ def compute_standings(girone: str, games_df: pd.DataFrame) -> list[dict]:
 
     ].sort_values(by=["Giornata", "ID_Partita"])
 
-
-
     played_tuples = list(g_played.itertuples(index=False))
-
-
 
     for g in played_tuples:
 
@@ -4302,13 +4198,9 @@ def compute_standings(girone: str, games_df: pd.DataFrame) -> list[dict]:
 
         tip_data = _format_tooltip_data(g)
 
-
-
         if home not in stats or away not in stats:
 
             continue
-
-
 
         stats[home]["p"] += 1
 
@@ -4321,8 +4213,6 @@ def compute_standings(girone: str, games_df: pd.DataFrame) -> list[dict]:
         stats[away]["pf"] += p_away
 
         stats[away]["ps"] += p_home
-
-
 
         if p_home > p_away:
 
@@ -4348,13 +4238,9 @@ def compute_standings(girone: str, games_df: pd.DataFrame) -> list[dict]:
 
             stats[home]["streak_events"].append({"res": "L", "game_id": gid, "tooltip_data": tip_data})
 
-
-
     for r in stats.values():
 
         r["diff"] = r["pf"] - r["ps"]
-
-
 
     by_pts: dict[int, list[dict]] = {}
 
@@ -4362,19 +4248,13 @@ def compute_standings(girone: str, games_df: pd.DataFrame) -> list[dict]:
 
         by_pts.setdefault(r["pts"], []).append(r)
 
-
-
     ordered_rows: list[dict] = []
 
     for pts_val in sorted(by_pts.keys(), reverse=True):
 
         ordered_rows.extend(_rank_tied_group(by_pts[pts_val], played_tuples))
 
-
-
     return ordered_rows
-
-
 
 
 
@@ -4394,19 +4274,13 @@ def compute_thirds_standings(games_df: pd.DataFrame) -> list[dict]:
 
 
 
-
-
 def render_standings(girone: str, rows: list[dict], thirds_board: list[dict], logo_html_map: dict[str, str]) -> None:
 
     st.markdown(STANDINGS_CSS, unsafe_allow_html=True)
 
-
-
     playout_start = max(len(rows) - 3, 5)
 
     best_third = thirds_board[0] if thirds_board else None
-
-
 
     st.subheader(f"Classifica — {girone}")
 
@@ -4426,8 +4300,6 @@ def render_standings(girone: str, rows: list[dict], thirds_board: list[dict], lo
 
     ]
 
-
-
     for pos, r in enumerate(rows, start=1):
 
         row_cls = ""
@@ -4443,8 +4315,6 @@ def render_standings(girone: str, rows: list[dict], thirds_board: list[dict], lo
             and best_third["girone"] == girone
 
         )
-
-
 
         if pos == 1:
 
@@ -4464,21 +4334,15 @@ def render_standings(girone: str, rows: list[dict], thirds_board: list[dict], lo
 
             html.append('<div class="zone-tag zone-pout">Play-out (Ultime 4)</div>')
 
-
-
         if pos >= playout_start:
 
             row_cls = "row-pout"
-
-
 
         diff_val = r["diff"]
 
         diff_str = f"+{diff_val}" if diff_val > 0 else str(diff_val)
 
         streak_html = _render_streak_html(r.get("streak_events", []))
-
-
 
         team_encoded = quote(str(r["squadra"]), safe="")
 
@@ -4510,13 +4374,9 @@ def render_standings(girone: str, rows: list[dict], thirds_board: list[dict], lo
 
         )
 
-
-
     html.append("</div>")
 
     st.markdown("".join(html), unsafe_allow_html=True)
-
-
 
     if thirds_board:
 
@@ -4592,8 +4452,6 @@ def render_standings(girone: str, rows: list[dict], thirds_board: list[dict], lo
 
 
 
-
-
 def build_round_html(
 
     round_num: int,
@@ -4612,8 +4470,6 @@ def build_round_html(
 
     phase_label = "RITORNO" if is_ritorno else "ANDATA"
 
-
-
     parts = [
 
         '<div class="cal-board">',
@@ -4631,8 +4487,6 @@ def build_round_html(
         "</div>",
 
     ]
-
-
 
     if round_games.empty:
 
@@ -4674,8 +4528,6 @@ def build_round_html(
 
                 date_str, time_str = str(g.Data).strip(), ""
 
-
-
             home_name = str(g.Casa)
 
             away_name = str(g.Trasferta)
@@ -4684,8 +4536,6 @@ def build_round_html(
 
             away_pts = int(g.Punti_Trasferta)
 
-
-
             h_logo_src = logo_html_map.get(f"raw_src::{home_name}", "")
 
             a_logo_src = logo_html_map.get(f"raw_src::{away_name}", "")
@@ -4693,8 +4543,6 @@ def build_round_html(
             h_logo = f'<img class="cal-side-logo" src="{h_logo_src}" alt="" loading="lazy" />' if h_logo_src else "🏀"
 
             a_logo = f'<img class="cal-side-logo" src="{a_logo_src}" alt="" loading="lazy" />' if a_logo_src else "🏀"
-
-
 
             if is_played:
 
@@ -4738,8 +4586,6 @@ def build_round_html(
 
                 )
 
-
-
             parts.append(
 
                 f'<a class="cal-row-link" href="?match={gid_encoded}" target="_self">'
@@ -4780,13 +4626,9 @@ def build_round_html(
 
             )
 
-
-
     parts.append("</div>")
 
     return "".join(parts)
-
-
 
 
 
@@ -4803,8 +4645,6 @@ def _fmt_pct(made: int, att: int) -> str:
         return str(int(round(val)))
 
     return f"{val:.1f}"
-
-
 
 
 
@@ -4838,8 +4678,6 @@ def _parse_minutes_to_int(min_str: str) -> int:
 
 
 
-
-
 def _extract_jersey_number(name: str, explicit_num: object = None) -> int:
 
     if explicit_num is not None and str(explicit_num).strip() != "":
@@ -4861,8 +4699,6 @@ def _extract_jersey_number(name: str, explicit_num: object = None) -> int:
         return int(m.group(1))
 
     return 999
-
-
 
 
 
@@ -4890,8 +4726,6 @@ def _extract_surname(full_name: str) -> str:
 
 
 
-
-
 def _normalize_player_rows(rows: list | None) -> list[dict]:
 
     if not isinstance(rows, list):
@@ -4911,8 +4745,6 @@ def _normalize_player_rows(rows: list | None) -> list[dict]:
         if not name:
 
             continue
-
-
 
         pts_val = item.get("PUN", item.get("PTS", 0))
 
@@ -4941,8 +4773,6 @@ def _normalize_player_rows(rows: list | None) -> list[dict]:
         sf_val = item.get("SF", item.get("QUINTETTO", False))
 
         num_val = _extract_jersey_number(name, item.get("NUM", None))
-
-
 
         out.append(
 
@@ -5002,8 +4832,6 @@ def _normalize_player_rows(rows: list | None) -> list[dict]:
 
 
 
-
-
 def _get_match_detail(match_id: str) -> dict:
 
     store = st.session_state.setdefault("match_details_store", {})
@@ -5046,8 +4874,6 @@ def _get_match_detail(match_id: str) -> dict:
 
         }
 
-
-
     return {
 
         "coach_home": "",
@@ -5072,8 +4898,6 @@ def _get_match_detail(match_id: str) -> dict:
 
 
 
-
-
 def _players_to_editor_df(player_list: list[dict], full_stats: bool = True, min_rows: int = 8) -> pd.DataFrame:
 
     rows = _normalize_player_rows(player_list)
@@ -5095,8 +4919,6 @@ def _players_to_editor_df(player_list: list[dict], full_stats: bool = True, min_
     compact_cols = ["NUM", "Giocatore", "PUN", "MIN", "SF", "F_C", "2PT_R", "SC", "3PT_R", "TL_R", "TL_T", "ASS"]
 
     return df[compact_cols]
-
-
 
 
 
@@ -5149,8 +4971,6 @@ def _editor_df_to_players(df: pd.DataFrame, existing_players: list[dict] | None 
         if tl_t_val < tl_r_val:
 
             tl_t_val = tl_r_val
-
-
 
         out.append(
 
@@ -5210,8 +5030,6 @@ def _editor_df_to_players(df: pd.DataFrame, existing_players: list[dict] | None 
 
 
 
-
-
 def render_lba_boxscore(
 
     team_name: str,
@@ -5240,11 +5058,7 @@ def render_lba_boxscore(
 
     badge_txt = "STATISTICHE DETTAGLIATE" if full_stats else "TABELLINO ESSENZIALE"
 
-
-
     table_cls = "lba-box full-stats" if full_stats else "lba-box compact-stats"
-
-
 
     if full_stats:
 
@@ -5386,8 +5200,6 @@ def render_lba_boxscore(
 
         )
 
-
-
     html = [
 
         '<div class="lba-box-card">',
@@ -5414,8 +5226,6 @@ def render_lba_boxscore(
 
     ]
 
-
-
     tot_pun = tot_min_num = 0
 
     tot_fc = tot_fs = 0
@@ -5433,8 +5243,6 @@ def render_lba_boxscore(
     tot_palp = tot_palr = tot_ass = 0
 
     tot_val = 0
-
-
 
     for p in norm_players:
 
@@ -5484,8 +5292,6 @@ def render_lba_boxscore(
 
         num_badge = f'<span class="num-badge">#{int(p["NUM"])}</span>' if int(p["NUM"]) < 999 else ""
 
-
-
         tot_pun += pun
 
         tot_min_num += _parse_minutes_to_int(min_str)
@@ -5525,8 +5331,6 @@ def render_lba_boxscore(
         tot_ass += ass
 
         tot_val += val_l
-
-
 
         if full_stats:
 
@@ -5624,8 +5428,6 @@ def render_lba_boxscore(
 
             )
 
-
-
     if full_stats:
 
         tot_oer = f"{(tot_pun / max(tot_2t + tot_3t + tot_palp, 1)):.1f}" if (tot_2t + tot_3t + tot_palp) > 0 else "0"
@@ -5644,13 +5446,13 @@ def render_lba_boxscore(
 
             f"<td>{tot_fc}</td><td>{tot_fs}</td>"
 
-            f"<td>{tot_2r}</td><td>{tot_2t}</td><td class=\"pct-val\">{_fmt_pct(tot_2r, tot_2t)}</td>"
+            f'<td>{tot_2r}</td><td>{tot_2t}</td><td class="pct-val">{_fmt_pct(tot_2r, tot_2t)}</td>'
 
             f"<td>{tot_sc}</td>"
 
-            f"<td>{tot_3r}</td><td>{tot_3t}</td><td class=\"pct-val\">{_fmt_pct(tot_3r, tot_3t)}</td>"
+            f'<td>{tot_3r}</td><td>{tot_3t}</td><td class="pct-val">{_fmt_pct(tot_3r, tot_3t)}</td>'
 
-            f"<td>{tot_tlr}</td><td>{tot_tlt}</td><td class=\"pct-val\">{_fmt_pct(tot_tlr, tot_tlt)}</td>"
+            f'<td>{tot_tlr}</td><td>{tot_tlt}</td><td class="pct-val">{_fmt_pct(tot_tlr, tot_tlt)}</td>'
 
             f"<td>{tot_rimo}</td><td>{tot_rimd}</td><td>{tot_rimt}</td>"
 
@@ -5702,13 +5504,9 @@ def render_lba_boxscore(
 
         )
 
-
-
     html.append("</tbody></table></div></div>")
 
     st.markdown("".join(html), unsafe_allow_html=True)
-
-
 
 
 
@@ -5784,8 +5582,6 @@ def _render_court_formation(
 
         align_style = ' style="justify-content:flex-end;text-align:right;"' if is_right else ""
 
-
-
         def _line(p: dict, is_st: bool) -> str:
 
             num_txt = str(int(p.get("NUM", 0))) if int(p.get("NUM", 0)) < 999 else "?"
@@ -5804,13 +5600,9 @@ def _render_court_formation(
 
             )
 
-
-
         st_html = "".join(_line(p, True) for p in starters) or '<div style="color:#94a3b8;font-size:11.5px;">Nessun quintetto</div>'
 
         bn_html = "".join(_line(p, False) for p in bench) or '<div style="color:#94a3b8;font-size:11.5px;">Nessun altro atleta</div>'
-
-
 
         return (
 
@@ -5912,8 +5704,6 @@ def _render_court_formation(
 
     )
 
-
-
     center_court_html = (
 
         '<div class="court-compact-wrap">'
@@ -5936,8 +5726,6 @@ def _render_court_formation(
 
     )
 
-
-
     full_html = (
 
         '<div class="formation-3col">'
@@ -5953,8 +5741,6 @@ def _render_court_formation(
     )
 
     st.markdown(full_html, unsafe_allow_html=True)
-
-
 
 
 
@@ -5978,8 +5764,6 @@ def _render_team_history_column(
 
     logo_img = f'<img src="{logo_src}" alt="" />' if logo_src else "🏀"
 
-
-
     prev_games = games_df[
 
         (games_df["ID_Partita"] != current_match_id)
@@ -5991,8 +5775,6 @@ def _render_team_history_column(
         & (games_df["Giornata"].astype(int) <= int(current_round))
 
     ].sort_values(by=["Giornata", "ID_Partita"])
-
-
 
     items_html = []
 
@@ -6028,8 +5810,6 @@ def _render_team_history_column(
 
         )
 
-
-
     body_html = (
 
         "".join(items_html)
@@ -6039,8 +5819,6 @@ def _render_team_history_column(
         else '<div style="color:#94a3b8;font-size:12.5px;">Nessuna partita disputata in precedenza.</div>'
 
     )
-
-
 
     return (
 
@@ -6053,8 +5831,6 @@ def _render_team_history_column(
         "</div>"
 
     )
-
-
 
 
 
@@ -6071,8 +5847,6 @@ def compute_team_player_stats(team_name: str, games_df: pd.DataFrame) -> pd.Data
         ]["ID_Partita"].astype(str)
 
     )
-
-
 
     agg: dict[str, dict] = {}
 
@@ -6138,8 +5912,6 @@ def compute_team_player_stats(team_name: str, games_df: pd.DataFrame) -> pd.Data
 
                 agg[key]["NUM"] = num_val
 
-
-
             agg[key]["G"] += 1
 
             agg[key]["PUN"] += int(p.get("PUN", 0))
@@ -6164,8 +5936,6 @@ def compute_team_player_stats(team_name: str, games_df: pd.DataFrame) -> pd.Data
 
             agg[key]["VAL"] += int(p.get("VAL", 0))
 
-
-
     if not agg:
 
         return pd.DataFrame(
@@ -6173,8 +5943,6 @@ def compute_team_player_stats(team_name: str, games_df: pd.DataFrame) -> pd.Data
             columns=["NUM", "Giocatore", "G", "PUN", "PPG", "2PT_R", "2PT_T", "3PT_R", "3PT_T", "TL_R", "TL_T", "RIM", "ASS", "F_C", "VAL"]
 
         )
-
-
 
     rows = []
 
@@ -6221,8 +5989,6 @@ def compute_team_player_stats(team_name: str, games_df: pd.DataFrame) -> pd.Data
         )
 
     return pd.DataFrame(rows).sort_values(by=["PUN", "Giocatore"], ascending=[False, True]).reset_index(drop=True)
-
-
 
 
 
@@ -6276,8 +6042,6 @@ def _render_team_player_stats_html(team_name: str, p_df: pd.DataFrame) -> str:
 
     ]
 
-
-
     for row in p_df.to_dict("records"):
 
         num_int = int(row.get("NUM", 999))
@@ -6322,13 +6086,9 @@ def _render_team_player_stats_html(team_name: str, p_df: pd.DataFrame) -> str:
 
         )
 
-
-
     html.append("</tbody></table></div></div>")
 
     return "".join(html)
-
-
 
 
 
@@ -6358,8 +6118,6 @@ def _render_team_games_interactive_html(team_name: str, games_df: pd.DataFrame, 
 
     ]
 
-
-
     for g in team_games.itertuples(index=False):
 
         gid_encoded = quote(str(g.ID_Partita), safe="")
@@ -6371,8 +6129,6 @@ def _render_team_games_interactive_html(team_name: str, games_df: pd.DataFrame, 
         phase_txt = "Ritorno" if r_num > 11 else "Andata"
 
         disp_r = r_num - 11 if r_num > 11 else r_num
-
-
 
         tokens = str(g.Data).strip().split()
 
@@ -6388,8 +6144,6 @@ def _render_team_games_interactive_html(team_name: str, games_df: pd.DataFrame, 
 
             date_str, time_str = str(g.Data).strip(), ""
 
-
-
         home_name = str(g.Casa)
 
         away_name = str(g.Trasferta)
@@ -6398,8 +6152,6 @@ def _render_team_games_interactive_html(team_name: str, games_df: pd.DataFrame, 
 
         away_pts = int(g.Punti_Trasferta)
 
-
-
         h_logo_src = logo_html_map.get(f"raw_src::{home_name}", "")
 
         a_logo_src = logo_html_map.get(f"raw_src::{away_name}", "")
@@ -6407,8 +6159,6 @@ def _render_team_games_interactive_html(team_name: str, games_df: pd.DataFrame, 
         h_logo = f'<img class="cal-side-logo" src="{h_logo_src}" alt="" loading="lazy" />' if h_logo_src else "🏀"
 
         a_logo = f'<img class="cal-side-logo" src="{a_logo_src}" alt="" loading="lazy" />' if a_logo_src else "🏀"
-
-
 
         if is_played:
 
@@ -6452,8 +6202,6 @@ def _render_team_games_interactive_html(team_name: str, games_df: pd.DataFrame, 
 
             )
 
-
-
         parts.append(
 
             f'<a class="cal-row-link" href="?match={gid_encoded}" target="_self">'
@@ -6494,13 +6242,9 @@ def _render_team_games_interactive_html(team_name: str, games_df: pd.DataFrame, 
 
         )
 
-
-
     parts.append("</div>")
 
     return "".join(parts)
-
-
 
 
 
@@ -6514,8 +6258,6 @@ def render_team_page(team_name: str, games_df: pd.DataFrame, logo_html_map: dict
 
     st.markdown(TEAM_PAGE_CSS, unsafe_allow_html=True)
 
-
-
     if st.button("← Torna alla classifica"):
 
         st.session_state["selected_team_name"] = None
@@ -6526,8 +6268,6 @@ def render_team_page(team_name: str, games_df: pd.DataFrame, logo_html_map: dict
 
         st.rerun()
 
-
-
     girone = _find_team_girone(team_name)
 
     if not girone:
@@ -6536,23 +6276,17 @@ def render_team_page(team_name: str, games_df: pd.DataFrame, logo_html_map: dict
 
         return
 
-
-
     board = compute_standings(girone, games_df)
 
     pos = next((idx for idx, r in enumerate(board, start=1) if r["squadra"] == team_name), 0)
 
     t_row = next((r for r in board if r["squadra"] == team_name), None)
 
-
-
     hero_logo = logo_html_map.get(f"hero::{team_name}", '<div class="md-logo-box">🏀</div>')
 
     diff_val = int(t_row["diff"]) if t_row else 0
 
     diff_str = f"+{diff_val}" if diff_val > 0 else str(diff_val)
-
-
 
     st.markdown(
 
@@ -6573,8 +6307,6 @@ def render_team_page(team_name: str, games_df: pd.DataFrame, logo_html_map: dict
         unsafe_allow_html=True,
 
     )
-
-
 
     if t_row:
 
@@ -6604,8 +6336,6 @@ def render_team_page(team_name: str, games_df: pd.DataFrame, logo_html_map: dict
 
         st.markdown(_render_streak_html(t_row.get("streak_events", [])), unsafe_allow_html=True)
 
-
-
     if "team_flash_msg" in st.session_state:
 
         f_kind, f_txt = st.session_state.pop("team_flash_msg")
@@ -6618,8 +6348,6 @@ def render_team_page(team_name: str, games_df: pd.DataFrame, logo_html_map: dict
 
             st.warning(f_txt)
 
-
-
     st.subheader("Statistiche Giocatori (da tabellini partita)")
 
     p_df = compute_team_player_stats(team_name, games_df)
@@ -6631,8 +6359,6 @@ def render_team_page(team_name: str, games_df: pd.DataFrame, logo_html_map: dict
     else:
 
         st.markdown(_render_team_player_stats_html(team_name, p_df), unsafe_allow_html=True)
-
-
 
     with st.expander("✏️ Modifica Numero di Maglia e Nome Cognome atleti", expanded=False):
 
@@ -6660,8 +6386,6 @@ def render_team_page(team_name: str, games_df: pd.DataFrame, logo_html_map: dict
 
             roster_edit_df = pd.DataFrame([{"_orig_key": "", "NUM": 0, "Giocatore": ""}])
 
-
-
         edited_roster = st.data_editor(
 
             roster_edit_df[["NUM", "Giocatore"]],
@@ -6681,8 +6405,6 @@ def render_team_page(team_name: str, games_df: pd.DataFrame, logo_html_map: dict
             key=f"edit_roster_{team_name}",
 
         )
-
-
 
         if st.button("💾 Salva Nome e Numero su GitHub", key=f"save_roster_{team_name}"):
 
@@ -6708,8 +6430,6 @@ def render_team_page(team_name: str, games_df: pd.DataFrame, logo_html_map: dict
 
                 rename_map[new_name.lower()] = (new_name, new_num)
 
-
-
             store = st.session_state.get("match_details_store", {})
 
             team_gids = set(
@@ -6721,8 +6441,6 @@ def render_team_page(team_name: str, games_df: pd.DataFrame, logo_html_map: dict
             last_ok = True
 
             last_msg = "Aggiornamento completato."
-
-
 
             for g in games_df[games_df["ID_Partita"].astype(str).isin(team_gids)].itertuples(index=False):
 
@@ -6768,15 +6486,11 @@ def render_team_page(team_name: str, games_df: pd.DataFrame, logo_html_map: dict
 
                     last_msg = msg_s
 
-
-
             st.session_state["match_details_store"] = store
 
             st.session_state["team_flash_msg"] = ("success" if last_ok else "warning", last_msg)
 
             st.rerun()
-
-
 
     st.subheader("Calendario e Risultati Squadra")
 
@@ -6786,13 +6500,9 @@ def render_team_page(team_name: str, games_df: pd.DataFrame, logo_html_map: dict
 
 
 
-
-
 def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: dict[str, str]) -> None:
 
     st.markdown(MATCH_DETAIL_CSS, unsafe_allow_html=True)
-
-
 
     if st.button("← Torna indietro"):
 
@@ -6804,8 +6514,6 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
 
         st.rerun()
 
-
-
     rows = games_df[games_df["ID_Partita"] == match_id]
 
     if rows.empty:
@@ -6813,8 +6521,6 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
         st.warning(f"Partita `{match_id}` non trovata.")
 
         return
-
-
 
     g = rows.iloc[0]
 
@@ -6834,17 +6540,11 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
 
     is_our_game = OUR_TEAM in (home_name.strip(), away_name.strip())
 
-
-
     h_hero_logo = logo_html_map.get(f"hero::{home_name}", '<div class="md-logo-box">🏀</div>')
 
     a_hero_logo = logo_html_map.get(f"hero::{away_name}", '<div class="md-logo-box">🏀</div>')
 
-
-
     score_text = f"{home_pts} - {away_pts}" if is_played else "VS"
-
-
 
     st.markdown(
 
@@ -6874,8 +6574,6 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
 
     )
 
-
-
     with st.expander("✏️ Modifica data, ora e risultato partita (salvataggio permanente)", expanded=False):
 
         with st.form(f"edit_game_form_{match_id}"):
@@ -6897,8 +6595,6 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
             stato_idx = stati_opts.index(curr_stato) if curr_stato in stati_opts else 0
 
             new_stato = c2.selectbox("Stato gara", stati_opts, index=stato_idx)
-
-
 
             c3, c4 = st.columns(2)
 
@@ -6929,8 +6625,6 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
                 step=1,
 
             )
-
-
 
             if st.form_submit_button("💾 Salva modifiche per sempre"):
 
@@ -6974,8 +6668,6 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
 
                     st.rerun()
 
-
-
     if "flash_msg" in st.session_state:
 
         kind, text = st.session_state.pop("flash_msg")
@@ -6988,11 +6680,7 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
 
             st.warning(text)
 
-
-
     detail = _get_match_detail(match_id)
-
-
 
     sezioni_gara = st.radio(
 
@@ -7007,8 +6695,6 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
         key=f"md_tab_{match_id}",
 
     )
-
-
 
     if sezioni_gara == "RIASSUNTO":
 
@@ -7027,8 +6713,6 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
         ot_td_h = f"<td>{ot_h}</td>" if has_ot else ""
 
         ot_td_a = f"<td>{ot_a}</td>" if has_ot else ""
-
-
 
         st.markdown(
 
@@ -7088,13 +6772,9 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
 
                 st.rerun()
 
-
-
         hp = _normalize_player_rows(detail["home_players"])
 
         ap = _normalize_player_rows(detail["away_players"])
-
-
 
         pts_tab_h = sum(int(p["PUN"]) for p in hp)
 
@@ -7103,8 +6783,6 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
         disp_pts_h = pts_tab_h if (is_our_game and hp) else home_pts
 
         disp_pts_a = pts_tab_a if (is_our_game and ap) else away_pts
-
-
 
         tl_r_h = sum(int(p["TL_R"]) for p in hp)
 
@@ -7118,8 +6796,6 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
 
         tl_sbag_a = max(tl_t_a - tl_r_a, 0)
 
-
-
         t2_r_h = sum(int(p["2PT_R"]) for p in hp)
 
         t2_r_a = sum(int(p["2PT_R"]) for p in ap)
@@ -7131,8 +6807,6 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
         fc_h = sum(int(p["F_C"]) for p in hp)
 
         fc_a = sum(int(p["F_C"]) for p in ap)
-
-
 
         stat_rows = [
 
@@ -7168,15 +6842,11 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
 
             ])
 
-
-
         st.markdown('<div class="md-sec-card"><div class="md-sec-title">STATISTICHE DI SQUADRA</div>', unsafe_allow_html=True)
 
         st.table(pd.DataFrame(stat_rows))
 
         st.markdown("</div>", unsafe_allow_html=True)
-
-
 
     elif sezioni_gara == "STATS GIOCATORE":
 
@@ -7190,13 +6860,9 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
 
             )
 
-
-
         render_lba_boxscore(home_name, detail["coach_home"], detail["home_players"], logo_html_map, full_stats=is_our_game)
 
         render_lba_boxscore(away_name, detail["coach_away"], detail["away_players"], logo_html_map, full_stats=is_our_game)
-
-
 
         with st.expander("✏️ Modifica tabellini giocatori e allenatori (salvataggio permanente)", expanded=False):
 
@@ -7205,8 +6871,6 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
             new_coach_h = c_ch.text_input(f"Allenatore {home_name}", value=detail["coach_home"], key=f"coach_h_{match_id}")
 
             new_coach_a = c_ca.text_input(f"Allenatore {away_name}", value=detail["coach_away"], key=f"coach_a_{match_id}")
-
-
 
             tab_h, tab_a = st.tabs([home_name, away_name])
 
@@ -7238,8 +6902,6 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
 
                 )
 
-
-
             if st.button("💾 Salva tabellini su GitHub", key=f"save_box_{match_id}"):
 
                 new_detail = dict(detail)
@@ -7252,8 +6914,6 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
 
                 new_detail["away_players"] = _editor_df_to_players(edited_a, existing_players=detail["away_players"])
 
-
-
                 with st.spinner("Salvataggio tabellini su GitHub in corso..."):
 
                     ok, msg, store = save_match_detail_persistent(match_id, new_detail)
@@ -7263,8 +6923,6 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
                 st.session_state["flash_msg"] = ("success" if ok else "warning", msg)
 
                 st.rerun()
-
-
 
     elif sezioni_gara == "FORMAZIONI":
 
@@ -7285,8 +6943,6 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
         )
 
         st.markdown("</div>", unsafe_allow_html=True)
-
-
 
     elif sezioni_gara == "STORICO":
 
@@ -7328,8 +6984,6 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
 
 
 
-
-
 # ==========================================
 
 # INIZIALIZZAZIONE STATO
@@ -7340,25 +6994,17 @@ if "match_details_store" not in st.session_state:
 
     st.session_state["match_details_store"] = load_match_details_store()
 
-
-
 if "games_df" not in st.session_state:
 
     st.session_state["games_df"] = load_full_games_df()
-
-
 
 if "selected_match_id" not in st.session_state:
 
     st.session_state["selected_match_id"] = None
 
-
-
 if "selected_team_name" not in st.session_state:
 
     st.session_state["selected_team_name"] = None
-
-
 
 if "staff_authenticated" not in st.session_state:
 
@@ -7388,8 +7034,6 @@ else:
 
 st.markdown(GLOBAL_UI_CSS, unsafe_allow_html=True)
 
-
-
 gh_cfg = _get_github_config()
 
 logo_html_map = build_team_logo_html_map(GITHUB_RAW_BASE)
@@ -7410,8 +7054,6 @@ with st.sidebar:
 
     st.markdown("---")
 
-
-
     sezione = st.radio(
 
         "Sezione",
@@ -7422,8 +7064,6 @@ with st.sidebar:
 
     )
 
-
-
     girone_selezionato = st.selectbox(
 
         "Girone",
@@ -7433,8 +7073,6 @@ with st.sidebar:
         index=0,
 
     )
-
-
 
     st.markdown("---")
 
@@ -7465,8 +7103,6 @@ with st.sidebar:
                 else:
 
                     st.error("Password non valida.")
-
-
 
     if not gh_cfg["token"]:
 
@@ -7560,6 +7196,8 @@ else:
 
         )
 
+
+
         squadre_girone = sorted([t["squadra"] for t in GIRONI_TEAMS.get(girone_selezionato, [])])
 
         squadra_filtro = col_f2.selectbox(
@@ -7589,8 +7227,6 @@ else:
 
 
             col_andata, col_ritorno = st.columns(2, gap="large")
-
-
 
             with col_andata:
 
