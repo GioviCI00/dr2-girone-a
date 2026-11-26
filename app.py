@@ -19,7 +19,7 @@ st.set_page_config(
 # ==========================================
 # CONFIGURAZIONE
 # ==========================================
-DATA_VERSION = "2026-11-26-v13-teams-grid-and-multiteam"
+DATA_VERSION = "2026-11-26-v14-teams-grid-rich-logos"
 OUR_TEAM = "AGS DIL. TORITTO"
 STAFF_PASSWORD = os.environ.get("DR2_STAFF_PASSWORD", "dr2puglia")
 
@@ -1177,7 +1177,6 @@ CALENDAR_CSS = """
     color: #fbbf24;
     font-weight: 900;
 }
-/* Miglioramento grafico widget multiselect */
 div[data-testid="stMultiSelect"] > label {
     font-size: 12px !important;
     font-weight: 800 !important;
@@ -1374,17 +1373,17 @@ TEAMS_GRID_CSS = """
 .teams-row-4 {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 18px;
-    margin-bottom: 22px;
+    gap: 20px;
+    margin-bottom: 24px;
 }
 .teams-row-3 {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 18px;
+    gap: 20px;
     max-width: 76%;
-    margin: 0 auto 24px auto;
+    margin: 0 auto 26px auto;
 }
-@media (max-width: 1024px) {
+@media (max-width: 1100px) {
     .teams-row-4, .teams-row-3 {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         max-width: 100%;
@@ -1406,134 +1405,173 @@ a.team-tile-link {
 .team-square-card {
     width: 100%;
     aspect-ratio: 1 / 1;
-    background: linear-gradient(155deg, #0d1d34 0%, #132c50 60%, #173663 100%);
-    border: 1.5px solid rgba(148, 163, 184, 0.26);
-    border-radius: 18px;
-    padding: 14px 12px;
+    background: radial-gradient(circle at 50% 34%, rgba(37, 99, 235, 0.34) 0%, rgba(13, 29, 52, 0.96) 58%, #091323 100%);
+    border: 1.5px solid rgba(148, 163, 184, 0.3);
+    border-radius: 20px;
+    padding: 14px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
     text-align: center;
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.34);
-    transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.42);
+    transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
     cursor: pointer;
     position: relative;
     overflow: hidden;
 }
+.team-square-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #1d4ed8 0%, #fbbf24 50%, #1d4ed8 100%);
+    opacity: 0.75;
+}
 a.team-tile-link:hover .team-square-card {
-    transform: translateY(-5px);
+    transform: translateY(-6px);
     border-color: #fbbf24;
-    background: linear-gradient(155deg, #122847 0%, #193b6b 100%);
-    box-shadow: 0 14px 30px rgba(251, 191, 36, 0.22);
+    background: radial-gradient(circle at 50% 34%, rgba(251, 191, 36, 0.25) 0%, rgba(18, 40, 71, 0.98) 60%, #0b172a 100%);
+    box-shadow: 0 16px 34px rgba(251, 191, 36, 0.24);
+}
+.ts-watermark {
+    position: absolute;
+    top: 42%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(1.85);
+    width: 75%;
+    height: 75%;
+    object-fit: contain;
+    opacity: 0.06;
+    pointer-events: none;
+    filter: grayscale(30%);
+    z-index: 0;
 }
 .ts-top-row {
     width: 100%;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-size: 11px;
+    font-size: 11.5px;
     font-weight: 900;
+    z-index: 2;
 }
 .ts-pos-pill {
-    background: rgba(251, 191, 36, 0.18);
+    background: rgba(251, 191, 36, 0.2);
     color: #fbbf24;
-    border: 1px solid rgba(251, 191, 36, 0.45);
+    border: 1px solid rgba(251, 191, 36, 0.5);
     border-radius: 999px;
-    padding: 2px 9px;
+    padding: 3px 10px;
 }
 .ts-pts-pill {
-    background: rgba(15, 23, 42, 0.8);
+    background: rgba(15, 23, 42, 0.88);
     color: #bae6fd;
-    border: 1px solid rgba(148, 163, 184, 0.25);
+    border: 1px solid rgba(148, 163, 184, 0.3);
     border-radius: 999px;
-    padding: 2px 9px;
+    padding: 3px 10px;
 }
-.ts-logo-box {
-    width: 66px;
-    height: 66px;
-    background: #ffffff;
-    border-radius: 15px;
-    padding: 6px;
+.ts-logo-stage {
+    flex: 1;
+    width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
+    padding: 6px 0;
+    z-index: 2;
+}
+.ts-logo-box {
+    width: 118px;
+    height: 118px;
+    background: #ffffff;
+    border-radius: 22px;
+    padding: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2.5px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.42), 0 0 0 5px rgba(255, 255, 255, 0.08);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+a.team-tile-link:hover .ts-logo-box {
+    transform: scale(1.06);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5), 0 0 0 5px rgba(251, 191, 36, 0.28);
 }
 .ts-logo-box img {
-    max-width: 100%;
-    max-height: 100%;
+    width: 100%;
+    height: 100%;
     object-fit: contain;
 }
-.ts-in-name {
-    font-size: 12px;
-    font-weight: 900;
-    color: #ffffff;
-    text-transform: uppercase;
-    line-height: 1.2;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-.ts-hist-box {
+.ts-bottom-panel {
     width: 100%;
-    background: rgba(9, 15, 26, 0.72);
-    border: 1px solid rgba(148, 163, 184, 0.18);
-    border-radius: 10px;
-    padding: 6px 8px;
+    background: rgba(8, 14, 24, 0.84);
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 12px;
+    padding: 8px 10px;
+    z-index: 2;
+    backdrop-filter: blur(4px);
 }
-.ts-rec-line {
-    font-size: 11px;
+.ts-metrics-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11.5px;
     font-weight: 800;
     color: #e2e8f0;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
 }
-.ts-rec-w { color: #4ade80; }
-.ts-rec-l { color: #f87171; }
+.ts-rec-w { color: #4ade80; font-weight: 900; }
+.ts-rec-l { color: #f87171; font-weight: 900; }
+.ts-diff-pos { color: #4ade80; font-weight: 900; }
+.ts-diff-neg { color: #f87171; font-weight: 900; }
+.ts-diff-zero { color: #94a3b8; font-weight: 800; }
 .ts-streak-pills {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: 5px;
 }
 .ts-mini-w {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 18px;
-    height: 18px;
-    border-radius: 4px;
-    font-size: 10px;
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    font-size: 10.5px;
     font-weight: 900;
     background: #16a34a;
     color: #ffffff;
+    border: 1px solid #22c55e;
 }
 .ts-mini-l {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 18px;
-    height: 18px;
-    border-radius: 4px;
-    font-size: 10px;
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    font-size: 10.5px;
     font-weight: 900;
     background: #dc2626;
     color: #ffffff;
+    border: 1px solid #ef4444;
 }
 .ts-mini-none {
     font-size: 10.5px;
-    color: #64748b;
+    color: #94a3b8;
     font-weight: 700;
 }
 .ts-caption-below {
-    margin-top: 9px;
-    font-size: 12.5px;
+    margin-top: 10px;
+    font-size: 13px;
     font-weight: 900;
     color: #f8fafc;
     text-align: center;
     text-transform: uppercase;
     line-height: 1.25;
+    letter-spacing: 0.2px;
     transition: color 0.15s ease;
 }
 a.team-tile-link:hover .ts-caption-below {
@@ -1662,7 +1700,6 @@ MATCH_DETAIL_CSS = """
     font-size: 15px;
 }
 
-/* Tabellini professionali */
 .lba-box-card {
     margin-bottom: 20px;
     border-radius: 14px;
@@ -1822,7 +1859,6 @@ table.lba-box tr.total-row td.pct-val {
     color: #b45309;
 }
 
-/* Formazioni a 3 colonne + campetto compatto */
 .formation-3col {
     display: grid;
     grid-template-columns: minmax(205px, 1fr) minmax(380px, 560px) minmax(205px, 1fr);
@@ -1989,7 +2025,6 @@ table.lba-box tr.total-row td.pct-val {
     text-overflow: ellipsis;
 }
 
-/* Storico partite */
 .hist-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -2553,18 +2588,27 @@ def render_teams_grid(girone: str, games_df: pd.DataFrame, logo_html_map: dict[s
         for item in chunk:
             sq = item["squadra"]
             sq_enc = quote(sq, safe="")
-            st_row = stats_map.get(sq, {"pts": 0, "p": 0, "w": 0, "l": 0, "streak_events": []})
+            st_row = stats_map.get(sq, {"pts": 0, "p": 0, "w": 0, "l": 0, "diff": 0, "streak_events": []})
             pos_val = pos_map.get(sq, "-")
             pts_val = int(st_row.get("pts", 0))
             p_val = int(st_row.get("p", 0))
             w_val = int(st_row.get("w", 0))
             l_val = int(st_row.get("l", 0))
+            diff_val = int(st_row.get("diff", 0))
+
+            if diff_val > 0:
+                diff_html = f'<span class="ts-diff-pos">+{diff_val}</span>'
+            elif diff_val < 0:
+                diff_html = f'<span class="ts-diff-neg">{diff_val}</span>'
+            else:
+                diff_html = '<span class="ts-diff-zero">0</span>'
 
             logo_src = logo_html_map.get(f"raw_src::{sq}", "")
+            watermark_html = f'<img class="ts-watermark" src="{logo_src}" alt="" />' if logo_src else ""
             logo_inner = (
                 f'<img src="{logo_src}" alt="{sq}" loading="lazy" />'
                 if logo_src
-                else '<span style="font-size:32px;">🏀</span>'
+                else '<span style="font-size:48px;">🏀</span>'
             )
 
             events = st_row.get("streak_events", [])[-5:]
@@ -2579,14 +2623,19 @@ def render_teams_grid(girone: str, games_df: pd.DataFrame, logo_html_map: dict[s
             cards_html.append(
                 f'<a class="team-tile-link" href="?team={sq_enc}" target="_self">'
                 f'<div class="team-square-card">'
+                f'{watermark_html}'
                 f'<div class="ts-top-row">'
-                f'<span class="ts-pos-pill">#{pos_val}</span>'
+                f'<span class="ts-pos-pill">#{pos_val} CLASSIFICA</span>'
                 f'<span class="ts-pts-pill">{pts_val} PT</span>'
                 f'</div>'
+                f'<div class="ts-logo-stage">'
                 f'<div class="ts-logo-box">{logo_inner}</div>'
-                f'<div class="ts-in-name">{sq}</div>'
-                f'<div class="ts-hist-box">'
-                f'<div class="ts-rec-line">{p_val}G • <span class="ts-rec-w">{w_val}V</span> - <span class="ts-rec-l">{l_val}P</span></div>'
+                f'</div>'
+                f'<div class="ts-bottom-panel">'
+                f'<div class="ts-metrics-row">'
+                f'<span>{p_val}G • <span class="ts-rec-w">{w_val}V</span> - <span class="ts-rec-l">{l_val}P</span></span>'
+                f'<span>DIFF {diff_html}</span>'
+                f'</div>'
                 f'<div class="ts-streak-pills">{pills}</div>'
                 f'</div>'
                 f'</div>'
