@@ -16,5 +16,11 @@
     "Stato": "Da giocare",
     "Punti_Casa": 0,
     "Punti_Trasferta": 0
+  },
+  "A03_1880": {
+    "Data": "Sab 21/11/2026 19:00",
+    "Stato": "Giocata",
+    "Punti_Casa": 64,
+    "Punti_Trasferta": 77
   }
 }
