@@ -939,7 +939,7 @@
     "ot_away": 0,
     "home_players": [
       {
-        "Giocatore": "Centrone L.",
+        "Giocatore": "Luca Centrone",
         "NUM": 0,
         "PUN": 10,
         "MIN": "0",
@@ -964,11 +964,11 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Iacovelli A.",
+        "Giocatore": "Antonio Iacovelli",
         "NUM": 0,
         "PUN": 15,
         "MIN": "0",
-        "SF": false,
+        "SF": true,
         "F_C": 0,
         "F_S": 0,
         "2PT_R": 0,
@@ -989,11 +989,11 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Panessa A.",
-        "NUM": 0,
+        "Giocatore": "Antonello Panessa",
+        "NUM": 2,
         "PUN": 6,
         "MIN": "0",
-        "SF": false,
+        "SF": true,
         "F_C": 0,
         "F_S": 0,
         "2PT_R": 0,
@@ -1014,8 +1014,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Rutigliano A.",
-        "NUM": 0,
+        "Giocatore": "Aldo Rutigliano",
+        "NUM": 10,
         "PUN": 3,
         "MIN": "0",
         "SF": false,
@@ -1039,17 +1039,17 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Maietta G.",
-        "NUM": 0,
+        "Giocatore": "Gianluca Maietta",
+        "NUM": 11,
         "PUN": 17,
         "MIN": "0",
-        "SF": false,
+        "SF": true,
         "F_C": 0,
         "F_S": 0,
         "2PT_R": 0,
         "2PT_T": 0,
         "SC": 0,
-        "3PT_R": 5,
+        "3PT_R": 0,
         "3PT_T": 0,
         "TL_R": 0,
         "TL_T": 0,
@@ -1064,8 +1064,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "De Meo N.",
-        "NUM": 0,
+        "Giocatore": "Nicola De Meo",
+        "NUM": 13,
         "PUN": 6,
         "MIN": "0",
         "SF": false,
@@ -1089,11 +1089,11 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Larocchia A.",
-        "NUM": 0,
+        "Giocatore": "Alessandro Larocchia",
+        "NUM": 20,
         "PUN": 16,
         "MIN": "0",
-        "SF": false,
+        "SF": true,
         "F_C": 0,
         "F_S": 0,
         "2PT_R": 0,
@@ -1114,8 +1114,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Mazzarano M.",
-        "NUM": 0,
+        "Giocatore": "Marco Mazzarano",
+        "NUM": 21,
         "PUN": 3,
         "MIN": "0",
         "SF": false,
@@ -1139,10 +1139,35 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Pastore A.",
-        "NUM": 0,
+        "Giocatore": "Antonio Pastore",
+        "NUM": 29,
         "PUN": 2,
         "MIN": "0",
+        "SF": false,
+        "F_C": 0,
+        "F_S": 0,
+        "2PT_R": 0,
+        "2PT_T": 0,
+        "SC": 0,
+        "3PT_R": 0,
+        "3PT_T": 0,
+        "TL_R": 0,
+        "TL_T": 0,
+        "RIM_O": 0,
+        "RIM_D": 0,
+        "ST_D": 0,
+        "ST_S": 0,
+        "PAL_P": 0,
+        "PAL_R": 0,
+        "ASS": 0,
+        "VAL": 0,
+        "OER": 0.0
+      },
+      {
+        "Giocatore": "Gianpaolo Intino",
+        "NUM": 32,
+        "PUN": 0,
+        "MIN": "09:06",
         "SF": false,
         "F_C": 0,
         "F_S": 0,
@@ -1352,7 +1377,7 @@
         "2PT_T": 0,
         "SC": 0,
         "3PT_R": 6,
-        "3PT_T": 0,
+        "3PT_T": 6,
         "TL_R": 0,
         "TL_T": 0,
         "RIM_O": 0,
@@ -1365,7 +1390,8 @@
         "VAL": 0,
         "OER": 0.0
       }
-    ]
+    ],
+    "notes": ""
   },
   "A03_1878": {
     "coach_home": "",
