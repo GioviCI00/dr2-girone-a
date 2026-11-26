@@ -19,7 +19,7 @@ st.set_page_config(
 # ==========================================
 # CONFIGURAZIONE
 # ==========================================
-DATA_VERSION = "2026-11-26-v15-jersey-zero-fix"
+DATA_VERSION = "2026-11-26-v14-teams-grid-rich-logos"
 OUR_TEAM = "AGS DIL. TORITTO"
 STAFF_PASSWORD = os.environ.get("DR2_STAFF_PASSWORD", "dr2puglia")
 
@@ -425,7 +425,7 @@ DEFAULT_GAMES_RAW = [
 
 def _p_row(
     giocatore: str,
-    numero: int | None = None,
+    numero: int = 0,
     pts: int = 0,
     minuti: str = "0",
     sf: bool = False,
@@ -448,10 +448,9 @@ def _p_row(
     val_lega: int = 0,
     oer: float = 0.0,
 ) -> dict:
-    resolved_num = _extract_jersey_number(str(giocatore), numero)
     return {
         "Giocatore": str(giocatore),
-        "NUM": resolved_num,
+        "NUM": int(numero),
         "PUN": int(pts),
         "MIN": str(minuti),
         "SF": bool(sf),
@@ -2780,22 +2779,8 @@ def _extract_jersey_number(name: str, explicit_num: object = None) -> int:
                 return val
     m = re.match(r"^\s*#?(\d{1,2})\b", str(name or ""))
     if m:
-        val = int(m.group(1))
-        if 0 <= val <= 99:
-            return val
+        return int(m.group(1))
     return 999
-
-
-def _format_jersey_display(num_val: object, fallback_missing: str = "—") -> str:
-    if num_val is None or str(num_val).strip() == "":
-        return fallback_missing
-    parsed = pd.to_numeric(num_val, errors="coerce")
-    if pd.isna(parsed):
-        return fallback_missing
-    n = int(parsed)
-    if 0 <= n <= 99:
-        return str(n)
-    return fallback_missing
 
 
 def _extract_surname(full_name: str) -> str:
@@ -2941,14 +2926,10 @@ def _editor_df_to_players(df: pd.DataFrame, existing_players: list[dict] | None 
         if tl_t_val < tl_r_val:
             tl_t_val = tl_r_val
 
-        raw_num = getattr(r, "NUM", None)
-        if raw_num is None or (isinstance(raw_num, float) and pd.isna(raw_num)):
-            raw_num = prev.get("NUM", None)
-
         out.append(
             _p_row(
                 giocatore=name,
-                numero=raw_num,
+                numero=_extract_jersey_number(name, getattr(r, "NUM", prev.get("NUM", None))),
                 pts=int(pd.to_numeric(getattr(r, "PUN", prev.get("PUN", 0)), errors="coerce") or 0),
                 minuti=str(getattr(r, "MIN", prev.get("MIN", "0")) or "0").strip(),
                 sf=bool(getattr(r, "SF", prev.get("SF", False))),
@@ -3109,8 +3090,7 @@ def render_lba_boxscore(
         ass = int(p["ASS"])
         val_l = int(p["VAL"])
         oer_v = f"{float(p['OER']):.1f}" if float(p["OER"]) != 0 else "0"
-        num_disp = _format_jersey_display(p.get("NUM"), fallback_missing="")
-        num_badge = f'<span class="num-badge">#{num_disp}</span>' if num_disp != "" else ""
+        num_badge = f'<span class="num-badge">#{int(p["NUM"])}</span>' if int(p["NUM"]) < 999 else ""
 
         tot_pun += pun
         tot_min_num += _parse_minutes_to_int(min_str)
@@ -3263,7 +3243,7 @@ def _render_court_formation(
         align_style = ' style="justify-content:flex-end;text-align:right;"' if is_right else ""
 
         def _line(p: dict, is_st: bool) -> str:
-            num_txt = _format_jersey_display(p.get("NUM"), fallback_missing="?")
+            num_txt = str(int(p.get("NUM", 0))) if int(p.get("NUM", 0)) < 999 else "?"
             cls_st = " starter" if is_st else ""
             return (
                 f'<div class="roster-player-line{cls_st}">'
@@ -3287,7 +3267,7 @@ def _render_court_formation(
         )
 
     def _jersey_html(p: dict, team_cls: str) -> str:
-        num_txt = _format_jersey_display(p.get("NUM"), fallback_missing="?")
+        num_txt = str(int(p.get("NUM", 0))) if int(p.get("NUM", 0)) < 999 else "?"
         cognome = _extract_surname(str(p.get("Giocatore", ""))) or str(p.get("Giocatore", ""))
         return (
             '<div class="jersey-card">'
@@ -3436,13 +3416,8 @@ def compute_team_player_stats(team_name: str, games_df: pd.DataFrame) -> pd.Data
                     "F_C": 0,
                     "VAL": 0,
                 }
-            else:
-                if p.get("NUM") is not None and str(p.get("NUM")).strip() != "":
-                    parsed_n = pd.to_numeric(p.get("NUM"), errors="coerce")
-                    if pd.notna(parsed_n) and 0 <= int(parsed_n) <= 99:
-                        agg[key]["NUM"] = int(parsed_n)
-                elif agg[key]["NUM"] == 999 and num_val < 999:
-                    agg[key]["NUM"] = num_val
+            elif agg[key]["NUM"] == 999 and num_val < 999:
+                agg[key]["NUM"] = num_val
 
             agg[key]["G"] += 1
             agg[key]["PUN"] += int(p.get("PUN", 0))
@@ -3513,8 +3488,8 @@ def _render_team_player_stats_html(team_name: str, p_df: pd.DataFrame) -> str:
         "</tr></thead><tbody>",
     ]
     for row in p_df.to_dict("records"):
-        num_disp_val = _format_jersey_display(row.get("NUM"), fallback_missing="—")
-        num_disp = f"#{num_disp_val}" if num_disp_val != "—" else "—"
+        num_int = int(row.get("NUM", 999))
+        num_disp = f"#{num_int}" if num_int < 999 else "—"
         html.append(
             "<tr>"
             f'<td class="num-col">{num_disp}</td>'
@@ -3691,7 +3666,7 @@ def render_team_page(team_name: str, games_df: pd.DataFrame, logo_html_map: dict
             [
                 {
                     "_orig_key": str(r["Giocatore"]).strip().lower(),
-                    "NUM": int(r["NUM"]) if 0 <= int(r["NUM"]) <= 99 else 0,
+                    "NUM": int(r["NUM"]) if int(r["NUM"]) < 999 else 0,
                     "Giocatore": str(r["Giocatore"]),
                 }
                 for r in p_df.to_dict("records")
@@ -3716,8 +3691,7 @@ def render_team_page(team_name: str, games_df: pd.DataFrame, logo_html_map: dict
             rename_map: dict[str, tuple[str, int]] = {}
             for idx_r, nr in enumerate(new_rows):
                 new_name = str(nr.get("Giocatore", "") or "").strip()
-                parsed_n = pd.to_numeric(nr.get("NUM", None), errors="coerce")
-                new_num = int(parsed_n) if pd.notna(parsed_n) and 0 <= int(parsed_n) <= 99 else 0
+                new_num = int(pd.to_numeric(nr.get("NUM", 0), errors="coerce") or 0)
                 if not new_name:
                     continue
                 if idx_r < len(orig_rows) and orig_rows[idx_r].get("_orig_key"):
