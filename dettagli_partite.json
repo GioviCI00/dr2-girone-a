@@ -1263,7 +1263,7 @@
     "home_players": [
       {
         "Giocatore": "Ruotolo L.",
-        "NUM": 999,
+        "NUM": 17,
         "PUN": 17,
         "MIN": "0",
         "SF": false,
@@ -1288,7 +1288,7 @@
       },
       {
         "Giocatore": "Lamacchia G.",
-        "NUM": 999,
+        "NUM": 34,
         "PUN": 9,
         "MIN": "0",
         "SF": false,
@@ -1313,7 +1313,7 @@
       },
       {
         "Giocatore": "Mariani G.",
-        "NUM": 999,
+        "NUM": 15,
         "PUN": 8,
         "MIN": "0",
         "SF": false,
@@ -1338,7 +1338,7 @@
       },
       {
         "Giocatore": "Ruotolo A.",
-        "NUM": 999,
+        "NUM": 2,
         "PUN": 7,
         "MIN": "0",
         "SF": false,
@@ -1363,7 +1363,7 @@
       },
       {
         "Giocatore": "Natali F.",
-        "NUM": 999,
+        "NUM": 16,
         "PUN": 7,
         "MIN": "0",
         "SF": false,
@@ -1388,7 +1388,7 @@
       },
       {
         "Giocatore": "Germanà A.",
-        "NUM": 999,
+        "NUM": 0,
         "PUN": 6,
         "MIN": "0",
         "SF": false,
@@ -1413,7 +1413,7 @@
       },
       {
         "Giocatore": "Mastromarco P.",
-        "NUM": 999,
+        "NUM": 11,
         "PUN": 6,
         "MIN": "0",
         "SF": false,
@@ -1438,7 +1438,7 @@
       },
       {
         "Giocatore": "Riganti A.",
-        "NUM": 999,
+        "NUM": 18,
         "PUN": 4,
         "MIN": "0",
         "SF": false,
@@ -1463,7 +1463,7 @@
       },
       {
         "Giocatore": "Favale A.",
-        "NUM": 999,
+        "NUM": 0,
         "PUN": 3,
         "MIN": "0",
         "SF": false,
@@ -1488,7 +1488,7 @@
       },
       {
         "Giocatore": "Ancona L.",
-        "NUM": 999,
+        "NUM": 5,
         "PUN": 1,
         "MIN": "0",
         "SF": false,
@@ -1513,7 +1513,7 @@
       },
       {
         "Giocatore": "Bozzi D.",
-        "NUM": 999,
+        "NUM": 21,
         "PUN": 0,
         "MIN": "0",
         "SF": false,
@@ -1538,7 +1538,7 @@
       },
       {
         "Giocatore": "Patruno L.",
-        "NUM": 999,
+        "NUM": 22,
         "PUN": 0,
         "MIN": "0",
         "SF": false,
