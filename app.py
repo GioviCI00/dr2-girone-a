@@ -19,7 +19,7 @@ st.set_page_config(
 # ==========================================
 # CONFIGURAZIONE
 # ==========================================
-DATA_VERSION = "2026-11-26-v16-jersey-zero-fix"
+DATA_VERSION = "2026-11-26-v17-jersey-zero-safe"
 OUR_TEAM = "New Virtus Basket Toritto"
 STAFF_PASSWORD = os.environ.get("DR2_STAFF_PASSWORD", "dr2puglia")
 
@@ -424,32 +424,62 @@ DEFAULT_GAMES_RAW = [
 
 
 def _extract_jersey_number(name: str, explicit_num: object = None) -> int:
-    """Estrae o valida un numero di maglia valido (0-99); restituisce 999 se assente."""
-    if explicit_num is not None and str(explicit_num).strip() != "":
-        parsed = pd.to_numeric(explicit_num, errors="coerce")
-        if pd.notna(parsed):
-            val = int(parsed)
+    """Estrae o valida un numero di maglia valido (0-99); restituisce 999 se assente o non valido."""
+    try:
+        if explicit_num is not None:
+            if isinstance(explicit_num, (list, tuple, dict, set)):
+                explicit_num = None
+            elif not (isinstance(explicit_num, float) and pd.isna(explicit_num)):
+                num_str = str(explicit_num).strip().lstrip("#")
+                if num_str != "":
+                    parsed = pd.to_numeric(num_str, errors="coerce")
+                    if pd.notna(parsed):
+                        val = int(float(parsed))
+                        if 0 <= val <= 99:
+                            return val
+    except Exception:
+        pass
+
+    try:
+        m = re.match(r"^\s*#?(\d{1,2})\b", str(name or ""))
+        if m:
+            val = int(m.group(1))
             if 0 <= val <= 99:
                 return val
-    m = re.match(r"^\s*#?(\d{1,2})\b", str(name or ""))
-    if m:
-        val = int(m.group(1))
-        if 0 <= val <= 99:
-            return val
+    except Exception:
+        pass
+
     return 999
 
 
 def _format_jersey_display(num_val: object, empty_placeholder: str = "—") -> str:
-    """Formatta un numero di maglia (incluso '0') o restituisce empty_placeholder se mancante."""
-    if num_val is None or str(num_val).strip() == "":
-        return empty_placeholder
-    parsed = pd.to_numeric(num_val, errors="coerce")
-    if pd.isna(parsed):
-        return empty_placeholder
-    n = int(parsed)
-    if 0 <= n <= 99:
-        return str(n)
-    return empty_placeholder
+    """Formatta in modo sicuro un numero di maglia (incluso '0' -> '#0') o restituisce empty_placeholder."""
+    placeholder = str(empty_placeholder) if empty_placeholder is not None else "—"
+    try:
+        if num_val is None or isinstance(num_val, (list, tuple, dict, set)):
+            return placeholder
+        if isinstance(num_val, bool):
+            return placeholder
+        if isinstance(num_val, str):
+            cleaned = num_val.strip()
+            if not cleaned or cleaned in {"—", "-", "?", "None", "nan", "NaN"}:
+                return placeholder
+            cleaned = cleaned.lstrip("#").strip()
+            parsed = pd.to_numeric(cleaned, errors="coerce")
+        else:
+            if pd.isna(num_val):
+                return placeholder
+            parsed = pd.to_numeric(num_val, errors="coerce")
+
+        if pd.isna(parsed):
+            return placeholder
+
+        n = int(float(parsed))
+        if 0 <= n <= 99:
+            return f"#{n}"
+        return placeholder
+    except Exception:
+        return placeholder
 
 
 def _p_row(
@@ -3138,8 +3168,8 @@ def render_lba_boxscore(
         ass = int(p["ASS"])
         val_l = int(p["VAL"])
         oer_v = f"{float(p['OER']):.1f}" if float(p["OER"]) != 0 else "0"
-        num_disp = _format_jersey_display(p.get("NUM"), empty_placeholder="")
-        num_badge = f'<span class="num-badge">#{num_disp}</span>' if num_disp != "" else ""
+        num_disp_val = _format_jersey_display(p.get("NUM"), empty_placeholder="")
+        num_badge = f'<span class="num-badge">{num_disp_val}</span>' if num_disp_val != "" else ""
         tot_pun += pun
         tot_min_num += _parse_minutes_to_int(min_str)
         tot_fc += fc
@@ -3295,7 +3325,7 @@ def _render_court_formation(
             cls_st = " starter" if is_st else ""
             return (
                 f'<div class="roster-player-line{cls_st}">'
-                f'<span class="roster-num-pill">#{num_txt}</span>'
+                f'<span class="roster-num-pill">{num_txt}</span>'
                 f'<span>{p["Giocatore"]}</span>'
                 f"</div>"
             )
@@ -3539,8 +3569,7 @@ def _render_team_player_stats_html(team_name: str, p_df: pd.DataFrame) -> str:
         "</tr></thead><tbody>",
     ]
     for row in p_df.to_dict("records"):
-        num_disp_val = _format_jersey_display(row.get("NUM"), empty_placeholder="—")
-        num_disp = f"#{num_disp_val}" if num_disp_val != "—" else "—"
+        num_disp = _format_jersey_display(row.get("NUM"), empty_placeholder="—")
         html.append(
             "<tr>"
             f'<td class="num-col">{num_disp}</td>'
