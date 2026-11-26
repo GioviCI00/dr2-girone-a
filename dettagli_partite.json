@@ -19,7 +19,7 @@
     "home_players": [
       {
         "Giocatore": "Maldera N.",
-        "NUM": 999,
+        "NUM": 1,
         "PUN": 6,
         "MIN": "0",
         "SF": true,
@@ -44,7 +44,7 @@
       },
       {
         "Giocatore": "D'Imperio M.",
-        "NUM": 999,
+        "NUM": 2,
         "PUN": 14,
         "MIN": "0",
         "SF": true,
@@ -94,7 +94,7 @@
       },
       {
         "Giocatore": "Lavacca G.",
-        "NUM": 999,
+        "NUM": 9,
         "PUN": 12,
         "MIN": "0",
         "SF": true,
@@ -119,7 +119,7 @@
       },
       {
         "Giocatore": "Eremita A.",
-        "NUM": 999,
+        "NUM": 13,
         "PUN": 10,
         "MIN": "0",
         "SF": true,
@@ -169,7 +169,7 @@
       },
       {
         "Giocatore": "Lovero L.",
-        "NUM": 999,
+        "NUM": 20,
         "PUN": 10,
         "MIN": "0",
         "SF": true,
