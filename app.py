@@ -40,7 +40,7 @@ st.set_page_config(
 
 # ==========================================
 
-DATA_VERSION = "2026-11-26-v19-no-ass-sc"
+DATA_VERSION = "2026-11-26-v20-g1-g2-g3-boxscores"
 
 OUR_TEAM = "New Virtus Basket Toritto"
 
@@ -1073,6 +1073,748 @@ def _p_row(
 
 
 DEFAULT_ROUND3_DETAILS: dict[str, dict] = {
+
+    # ==========================================
+
+    # GIORNATA 1 — GIRONE A
+
+    # ==========================================
+
+    "A01_1867": {
+
+        "coach_home": "Caressa",
+
+        "coach_away": "Piarulli",
+
+        "quarters_home": [18, 16, 21, 17],
+
+        "quarters_away": [8, 20, 21, 18],
+
+        "ot_home": 0,
+
+        "ot_away": 0,
+
+        "home_players": [
+
+            _p_row("D'Imperio M.", pts=22),
+
+            _p_row("Lovero L.", pts=20),
+
+            _p_row("Eremita A.", pts=12),
+
+            _p_row("Ricci R.", pts=6),
+
+            _p_row("Maldera N.", pts=5),
+
+            _p_row("Lavacca G.", pts=4),
+
+            _p_row("Marcucci S.", pts=3),
+
+            _p_row("Barile G.", pts=0),
+
+            _p_row("Iannone C.", pts=0),
+
+            _p_row("Berardi C.", pts=0),
+
+            _p_row("Menduni G. (N.E.)", pts=0),
+
+            _p_row("Cannillo N. (N.E.)", pts=0),
+
+        ],
+
+        "away_players": [
+
+            _p_row("Volpicella P.", pts=13),
+
+            _p_row("Scaringella F.", pts=11),
+
+            _p_row("Lorusso M.", pts=9),
+
+            _p_row("Ferrara L.", pts=8),
+
+            _p_row("Cantatore E.", pts=8),
+
+            _p_row("Catano K.", pts=6),
+
+            _p_row("Mangione N.", pts=5),
+
+            _p_row("Piccolo D.", pts=3),
+
+            _p_row("Ferrante D. (K)", pts=3),
+
+            _p_row("Di Vittorio S.", pts=1),
+
+            _p_row("Lasorsa C.", pts=0),
+
+            _p_row("De Marco G.", pts=0),
+
+        ],
+
+    },
+
+    "A01_1868": {
+
+        "coach_home": "Giuliani",
+
+        "coach_away": "Menduni",
+
+        "quarters_home": [15, 12, 10, 13],
+
+        "quarters_away": [17, 16, 17, 26],
+
+        "ot_home": 0,
+
+        "ot_away": 0,
+
+        "home_players": [
+
+            _p_row("Franciosi S.", pts=12),
+
+            _p_row("Tarantella E.", pts=11),
+
+            _p_row("Di Santo F.", pts=9),
+
+            _p_row("Conte A.", pts=3),
+
+            _p_row("Guida M.", pts=3),
+
+            _p_row("De Capua A.", pts=3),
+
+            _p_row("Tartaglione R.", pts=3),
+
+            _p_row("Di Gennaro D.", pts=2),
+
+            _p_row("Ferrara A.", pts=2),
+
+            _p_row("Caratù G.", pts=2),
+
+            _p_row("Franciosi D.", pts=0),
+
+            _p_row("Di Lella S.", pts=0),
+
+        ],
+
+        "away_players": [
+
+            _p_row("Tricarico F.", pts=18),
+
+            _p_row("Rinaldi P.", pts=18),
+
+            _p_row("Santoro A.", pts=15),
+
+            _p_row("Marano A.", pts=11),
+
+            _p_row("Russo R.", pts=4),
+
+            _p_row("Kharebava N.", pts=3),
+
+            _p_row("Pepe S.", pts=3),
+
+            _p_row("Russo W.", pts=2),
+
+            _p_row("Carpinelli P.", pts=2),
+
+            _p_row("Khelfat N.", pts=0),
+
+            _p_row("Pysmenytski M.", pts=0),
+
+            _p_row("Rizzi M.", pts=0),
+
+        ],
+
+    },
+
+    "A01_1869": {
+
+        "coach_home": "Zotti",
+
+        "coach_away": "Ursi",
+
+        "quarters_home": [17, 7, 21, 23],
+
+        "quarters_away": [15, 7, 16, 12],
+
+        "ot_home": 0,
+
+        "ot_away": 0,
+
+        "home_players": [
+
+            _p_row("Ruotolo L.", pts=17),
+
+            _p_row("Lamacchia G.", pts=9),
+
+            _p_row("Mariani G.", pts=8),
+
+            _p_row("Ruotolo A.", pts=7),
+
+            _p_row("Natali F.", pts=7),
+
+            _p_row("Germanà A.", pts=6),
+
+            _p_row("Mastromarco P.", pts=6),
+
+            _p_row("Riganti A.", pts=4),
+
+            _p_row("Favale A.", pts=3),
+
+            _p_row("Ancona L.", pts=1),
+
+            _p_row("Bozzi D.", pts=0),
+
+            _p_row("Patruno L.", pts=0),
+
+        ],
+
+        "away_players": [
+
+            _p_row("Manigrasso A.", pts=13),
+
+            _p_row("L'Abbate V.", pts=9),
+
+            _p_row("Gaeta R.", pts=7),
+
+            _p_row("D'Errico M.", pts=6),
+
+            _p_row("Emiliano M.", pts=3),
+
+            _p_row("Genchi R.", pts=3),
+
+            _p_row("Stamerra S.", pts=3),
+
+            _p_row("Lorusso D.", pts=2),
+
+            _p_row("Grittani G.", pts=2),
+
+            _p_row("Carlucci A.", pts=1),
+
+            _p_row("Vaccaro V.", pts=1),
+
+            _p_row("Montemurro D.", pts=0),
+
+        ],
+
+    },
+
+    "A01_1870": {
+
+        "coach_home": "",
+
+        "coach_away": "Angelilli",
+
+        "quarters_home": [19, 20, 18, 21],
+
+        "quarters_away": [21, 27, 21, 18],
+
+        "ot_home": 0,
+
+        "ot_away": 0,
+
+        "home_players": [
+
+            _p_row("Russo R.", pts=18),
+
+            _p_row("Amadey Verdun J.", pts=14),
+
+            _p_row("Chiappinelli G.", pts=14),
+
+            _p_row("Cristiani", pts=9),
+
+            _p_row("Di Franco V.", pts=9),
+
+            _p_row("Olivieri D.", pts=7),
+
+            _p_row("Grosso F.", pts=5),
+
+            _p_row("Podio K.", pts=2),
+
+            _p_row("Tredanari L.", pts=0),
+
+            _p_row("De Lillo G.", pts=0),
+
+            _p_row("Nido A.", pts=0),
+
+            _p_row("Nido N.", pts=0),
+
+        ],
+
+        "away_players": [
+
+            _p_row("De Meo N.", pts=23),
+
+            _p_row("Larocchia A.", pts=22),
+
+            _p_row("Maietta G.", pts=17),
+
+            _p_row("Iacovelli A. (K)", pts=7),
+
+            _p_row("Angelilli D.", pts=6),
+
+            _p_row("Panessa A.", pts=5),
+
+            _p_row("Intino G.", pts=4),
+
+            _p_row("Stillavato R.", pts=2),
+
+            _p_row("Pastore A.", pts=1),
+
+            _p_row("Sivo R.", pts=0),
+
+            _p_row("Rutigliano A.", pts=0),
+
+            _p_row("Casaburi R.", pts=0),
+
+        ],
+
+    },
+
+    "A01_1871": {
+
+        "coach_home": "Diana (Vice: Catucci)",
+
+        "coach_away": "Panzarino",
+
+        "quarters_home": [11, 20, 14, 17],
+
+        "quarters_away": [21, 19, 20, 21],
+
+        "ot_home": 0,
+
+        "ot_away": 0,
+
+        "home_players": [
+
+            _p_row("Piccaluga R.", pts=12),
+
+            _p_row("Sicolo M.", pts=11),
+
+            _p_row("Cannarella R.", pts=10),
+
+            _p_row("Urso M.", pts=7),
+
+            _p_row("Chieco S.", pts=6),
+
+            _p_row("Santeramo M.", pts=6),
+
+            _p_row("Panebianco S.", pts=6),
+
+            _p_row("Bozzi G.", pts=4),
+
+            _p_row("Quaranta G.", pts=0),
+
+            _p_row("De Bellis A. (N.E.)", pts=0),
+
+            _p_row("Loconte L. (N.E.)", pts=0),
+
+            _p_row("Colapinto D. (N.E.)", pts=0),
+
+        ],
+
+        "away_players": [
+
+            _p_row("D'Erasmo F. (K)", pts=28),
+
+            _p_row("Housni Z.", pts=16),
+
+            _p_row("Derosa L.", pts=11),
+
+            _p_row("Provaroni F.", pts=8),
+
+            _p_row("Silletti D.", pts=8),
+
+            _p_row("Colangelo A.", pts=4),
+
+            _p_row("Digno S.", pts=2),
+
+            _p_row("Tounkara D.", pts=2),
+
+            _p_row("Fraccalvieri A.", pts=2),
+
+            _p_row("Desiante V.", pts=0),
+
+            _p_row("Coscia V.", pts=0),
+
+            _p_row("Micunco M. (N.E.)", pts=0),
+
+        ],
+
+    },
+
+
+
+    # ==========================================
+
+    # GIORNATA 2 — GIRONE A
+
+    # ==========================================
+
+    "A02_1872": {
+
+        "coach_home": "",
+
+        "coach_away": "",
+
+        "quarters_home": [18, 14, 15, 22],
+
+        "quarters_away": [14, 11, 22, 18],
+
+        "ot_home": 0,
+
+        "ot_away": 0,
+
+        "home_players": [
+
+            _p_row("Scarponi I.", pts=21),
+
+            _p_row("Fuiano M.", pts=15),
+
+            _p_row("Mazzeo R.", pts=10),
+
+            _p_row("Miale A.", pts=8),
+
+            _p_row("Cicculli V.", pts=5),
+
+            _p_row("D'Orsi A.", pts=5),
+
+            _p_row("Miglio E.", pts=2),
+
+            _p_row("Colucci A.", pts=2),
+
+            _p_row("Barletta F.", pts=1),
+
+            _p_row("Campagna G.", pts=0),
+
+            _p_row("Cavallo E.", pts=0),
+
+            _p_row("Giarrusso A. (N.E.)", pts=0),
+
+        ],
+
+        "away_players": [
+
+            _p_row("Chiappinelli G.", pts=18),
+
+            _p_row("Amadey Verdun J.", pts=15),
+
+            _p_row("Russo R.", pts=13),
+
+            _p_row("Di Franco V.", pts=9),
+
+            _p_row("Olivieri D.", pts=4),
+
+            _p_row("Cristiani", pts=3),
+
+            _p_row("Podio K.", pts=3),
+
+            _p_row("De Lillo G.", pts=0),
+
+            _p_row("Grosso F.", pts=0),
+
+            _p_row("Nido A.", pts=0),
+
+            _p_row("Nido N.", pts=0),
+
+            _p_row("Tredanari L. (N.E.)", pts=0),
+
+        ],
+
+    },
+
+    "A02_1873": {
+
+        "coach_home": "Piarulli",
+
+        "coach_away": "Giuliani",
+
+        "quarters_home": [10, 12, 22, 6],
+
+        "quarters_away": [18, 16, 11, 11],
+
+        "ot_home": 0,
+
+        "ot_away": 0,
+
+        "home_players": [
+
+            _p_row("Catano K.", pts=15),
+
+            _p_row("Scaringella F.", pts=11),
+
+            _p_row("Lorusso M.", pts=6),
+
+            _p_row("Lasorsa C.", pts=5),
+
+            _p_row("Di Vittorio S.", pts=4),
+
+            _p_row("Colonna F.", pts=3),
+
+            _p_row("Ferrara L.", pts=2),
+
+            _p_row("Piccolo D.", pts=2),
+
+            _p_row("Ferrante D. (K)", pts=2),
+
+            _p_row("De Marco G.", pts=0),
+
+            _p_row("Sciscioli P.", pts=0),
+
+            _p_row("Mangione N.", pts=0),
+
+        ],
+
+        "away_players": [
+
+            _p_row("Guida M.", pts=12),
+
+            _p_row("Tarantella E.", pts=10),
+
+            _p_row("Tartaglione R.", pts=7),
+
+            _p_row("Ferrara A.", pts=7),
+
+            _p_row("De Capua A.", pts=6),
+
+            _p_row("Di Santo F.", pts=6),
+
+            _p_row("Di Gennaro D.", pts=5),
+
+            _p_row("Franciosi S.", pts=3),
+
+            _p_row("Conte A.", pts=0),
+
+            _p_row("Franciosi D.", pts=0),
+
+            _p_row("Rinaldi C.", pts=0),
+
+            _p_row("Caratù G. (N.E.)", pts=0),
+
+        ],
+
+    },
+
+    "A02_1874": {
+
+        "coach_home": "",
+
+        "coach_away": "Caressa",
+
+        "quarters_home": [21, 7, 8, 13],
+
+        "quarters_away": [11, 17, 17, 14],
+
+        "ot_home": 0,
+
+        "ot_away": 0,
+
+        "home_players": [
+
+            _p_row("Rinaldi P.", pts=11),
+
+            _p_row("Santoro A.", pts=8),
+
+            _p_row("Pysmenytski M.", pts=6),
+
+            _p_row("Marano A.", pts=5),
+
+            _p_row("Tricarico F.", pts=4),
+
+            _p_row("Khelfat N.", pts=4),
+
+            _p_row("Carpinelli P.", pts=3),
+
+            _p_row("Daniello M.", pts=3),
+
+            _p_row("Pepe S.", pts=3),
+
+            _p_row("Rizzi M.", pts=2),
+
+            _p_row("Russo R.", pts=0),
+
+            _p_row("Russo W.", pts=0),
+
+        ],
+
+        "away_players": [
+
+            _p_row("D'Imperio M.", pts=27),
+
+            _p_row("Lavacca G.", pts=12),
+
+            _p_row("Lovero L.", pts=7),
+
+            _p_row("Berardi C.", pts=5),
+
+            _p_row("Eremita A.", pts=5),
+
+            _p_row("Ricci R.", pts=2),
+
+            _p_row("Iannone C.", pts=1),
+
+            _p_row("Basile L.", pts=0),
+
+            _p_row("Maldera N.", pts=0),
+
+            _p_row("Turturo J. (N.E.)", pts=0),
+
+            _p_row("Cannillo A. (N.E.)", pts=0),
+
+            _p_row("Di Terlizzi G. (N.E.)", pts=0),
+
+        ],
+
+    },
+
+    "A02_1875": {
+
+        "coach_home": "Panzarino",
+
+        "coach_away": "Zotti (Vice: Macellaio)",
+
+        "quarters_home": [21, 16, 23, 20],
+
+        "quarters_away": [22, 20, 29, 9],
+
+        "ot_home": 5,
+
+        "ot_away": 16,
+
+        "home_players": [
+
+            _p_row("Tounkara D.", pts=18),
+
+            _p_row("Derosa L.", pts=13),
+
+            _p_row("D'Erasmo F. (K)", pts=13),
+
+            _p_row("Silletti D.", pts=12),
+
+            _p_row("Colangelo A.", pts=9),
+
+            _p_row("Housni Z.", pts=7),
+
+            _p_row("Provaroni F.", pts=5),
+
+            _p_row("Desiante V.", pts=3),
+
+            _p_row("Fraccalvieri A.", pts=3),
+
+            _p_row("Micunco M.", pts=2),
+
+            _p_row("Digno S.", pts=0),
+
+            _p_row("Vero A. (N.E.)", pts=0),
+
+        ],
+
+        "away_players": [
+
+            _p_row("Ruotolo L.", pts=41),
+
+            _p_row("Mariani G.", pts=31),
+
+            _p_row("Ruotolo A.", pts=9),
+
+            _p_row("Mastromarco P.", pts=4),
+
+            _p_row("Natali F.", pts=4),
+
+            _p_row("Riganti A.", pts=4),
+
+            _p_row("Lamacchia G.", pts=3),
+
+            _p_row("Ancona L.", pts=0),
+
+            _p_row("Bernardi A.", pts=0),
+
+            _p_row("Bozzi D.", pts=0),
+
+            _p_row("Patruno L.", pts=0),
+
+            _p_row("Rubino A.", pts=0),
+
+        ],
+
+    },
+
+    "A02_1876": {
+
+        "coach_home": "Ursi",
+
+        "coach_away": "Diana (Vice: Catucci)",
+
+        "quarters_home": [11, 14, 15, 16],
+
+        "quarters_away": [16, 13, 6, 13],
+
+        "ot_home": 0,
+
+        "ot_away": 0,
+
+        "home_players": [
+
+            _p_row("Merlo N.", pts=13),
+
+            _p_row("D'Errico M.", pts=10),
+
+            _p_row("L'Abbate V.", pts=8),
+
+            _p_row("Carlucci A.", pts=7),
+
+            _p_row("Manigrasso A.", pts=7),
+
+            _p_row("Montemurro D.", pts=4),
+
+            _p_row("Gaeta R.", pts=3),
+
+            _p_row("Vaccaro V.", pts=2),
+
+            _p_row("Emiliano M.", pts=2),
+
+            _p_row("Stamerra S.", pts=0),
+
+            _p_row("Genchi R.", pts=0),
+
+            _p_row("Lorusso D.", pts=0),
+
+        ],
+
+        "away_players": [
+
+            _p_row("Cannarella R.", pts=13),
+
+            _p_row("Bozzi G.", pts=10),
+
+            _p_row("Santeramo M.", pts=9),
+
+            _p_row("Sicolo M.", pts=7),
+
+            _p_row("Piccaluga R.", pts=6),
+
+            _p_row("Quaranta G.", pts=2),
+
+            _p_row("Chieco S.", pts=1),
+
+            _p_row("Zaccaria G.", pts=0),
+
+            _p_row("Caradonna P.", pts=0),
+
+            _p_row("Panebianco S.", pts=0),
+
+            _p_row("De Bellis A. (N.E.)", pts=0),
+
+            _p_row("Loconte L. (N.E.)", pts=0),
+
+        ],
+
+    },
+
+
+
+    # ==========================================
+
+    # GIORNATA 3 — GIRONE A
+
+    # ==========================================
 
     "A03_1880": {
 
