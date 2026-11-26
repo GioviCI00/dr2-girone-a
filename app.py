@@ -40,7 +40,7 @@ st.set_page_config(
 
 # ==========================================
 
-DATA_VERSION = "2026-11-26-v11-jersey-zero-and-two-col-calendar"
+DATA_VERSION = "2026-11-26-v12-multiselect-rounds"
 
 OUR_TEAM = "AGS DIL. TORITTO"
 
@@ -7248,45 +7248,13 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
 
                 new_detail["coach_away"] = new_coach_a.strip()
 
-                new_detail["home_players"] = _editor_df_to_players(edited_h, detail["home_players"])
+                new_detail["home_players"] = _editor_df_to_players(edited_h, existing_players=detail["home_players"])
 
-                new_detail["away_players"] = _editor_df_to_players(edited_a, detail["away_players"])
-
-
-
-                if is_our_game:
-
-                    sum_h = sum(int(p["PUN"]) for p in new_detail["home_players"])
-
-                    sum_a = sum(int(p["PUN"]) for p in new_detail["away_players"])
-
-                    if sum_h > 0 or sum_a > 0:
-
-                        ov_payload = {
-
-                            "Data": str(g["Data"]),
-
-                            "Stato": "Giocata" if sum_h != sum_a else str(g["Stato"]),
-
-                            "Punti_Casa": int(sum_h),
-
-                            "Punti_Trasferta": int(sum_a),
-
-                        }
-
-                        _, _, updated_ov = save_game_override_persistent(match_id, ov_payload)
-
-                        st.session_state["game_overrides"] = updated_ov
-
-                        st.session_state["games_df"] = apply_overrides_to_df(
-
-                            build_games_df(DATA_VERSION).copy(), updated_ov
-
-                        )
+                new_detail["away_players"] = _editor_df_to_players(edited_a, existing_players=detail["away_players"])
 
 
 
-                with st.spinner("Salvataggio tabellini su GitHub..."):
+                with st.spinner("Salvataggio tabellini su GitHub in corso..."):
 
                     ok, msg, store = save_match_detail_persistent(match_id, new_detail)
 
@@ -7322,288 +7290,382 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
 
     elif sezioni_gara == "STORICO":
 
-        st.markdown('<div class="md-sec-card"><div class="md-sec-title">STORICO PARTITE PRECEDENTI</div>', unsafe_allow_html=True)
+        st.markdown('<div class="md-sec-card"><div class="md-sec-title">ULTIME PARTITE DISPUTATE</div>', unsafe_allow_html=True)
 
-        hist_html = (
+        col_left_html = _render_team_history_column(
 
-            '<div class="hist-grid">'
+            team_name=home_name,
 
-            f'{_render_team_history_column(home_name, "CASA", match_id, round_num, games_df, logo_html_map)}'
+            label_side="Casa",
 
-            f'{_render_team_history_column(away_name, "TRASFERTA", match_id, round_num, games_df, logo_html_map)}'
+            current_match_id=match_id,
 
-            "</div>"
+            current_round=round_num,
+
+            games_df=games_df,
+
+            logo_html_map=logo_html_map,
 
         )
 
-        st.markdown(hist_html, unsafe_allow_html=True)
+        col_right_html = _render_team_history_column(
 
-        st.markdown("</div>", unsafe_allow_html=True)
+            team_name=away_name,
 
+            label_side="Trasferta",
 
+            current_match_id=match_id,
 
+            current_round=round_num,
 
+            games_df=games_df,
 
-def render_calendar_page(girone: str, games_df: pd.DataFrame, logo_html_map: dict[str, str]) -> None:
+            logo_html_map=logo_html_map,
 
-    st.markdown(CALENDAR_CSS, unsafe_allow_html=True)
+        )
 
-
-
-    g_games = games_df[games_df["Girone"] == girone].copy()
-
-    if g_games.empty:
-
-        st.info(f"Nessuna partita disponibile per {girone}.")
-
-        return
+        st.markdown(f'<div class="hist-grid">{col_left_html}{col_right_html}</div></div>', unsafe_allow_html=True)
 
 
 
-    all_rounds = sorted(g_games["Giornata"].astype(int).unique().tolist())
-
-    andata_rounds = [r for r in all_rounds if r <= 11]
-
-    ritorno_rounds = [r for r in all_rounds if r > 11]
 
 
+# ==========================================
 
-    round_options = ["Tutte le giornate"] + [f"{r}ª Giornata" for r in all_rounds]
+# INIZIALIZZAZIONE STATO
 
-    selected_round = st.selectbox(
+# ==========================================
 
-        "Filtra per giornata",
+if "match_details_store" not in st.session_state:
 
-        round_options,
+    st.session_state["match_details_store"] = load_match_details_store()
+
+
+
+if "games_df" not in st.session_state:
+
+    st.session_state["games_df"] = load_full_games_df()
+
+
+
+if "selected_match_id" not in st.session_state:
+
+    st.session_state["selected_match_id"] = None
+
+
+
+if "selected_team_name" not in st.session_state:
+
+    st.session_state["selected_team_name"] = None
+
+
+
+if "staff_authenticated" not in st.session_state:
+
+    st.session_state["staff_authenticated"] = False
+
+
+
+query_match = st.query_params.get("match")
+
+if query_match:
+
+    st.session_state["selected_match_id"] = str(query_match)
+
+    st.session_state["selected_team_name"] = None
+
+else:
+
+    query_team = st.query_params.get("team")
+
+    if query_team:
+
+        st.session_state["selected_team_name"] = str(query_team)
+
+        st.session_state["selected_match_id"] = None
+
+
+
+st.markdown(GLOBAL_UI_CSS, unsafe_allow_html=True)
+
+
+
+gh_cfg = _get_github_config()
+
+logo_html_map = build_team_logo_html_map(GITHUB_RAW_BASE)
+
+
+
+# ==========================================
+
+# SIDEBAR
+
+# ==========================================
+
+with st.sidebar:
+
+    st.title("🏀 DR2 Puglia")
+
+    st.caption("Divisione Regionale 2 — Puglia")
+
+    st.markdown("---")
+
+
+
+    sezione = st.radio(
+
+        "Sezione",
+
+        ("Classifiche", "Calendario"),
 
         index=0,
 
-        key=f"cal_round_{girone}",
+    )
+
+
+
+    girone_selezionato = st.selectbox(
+
+        "Girone",
+
+        ("Girone A", "Girone B", "Girone C"),
+
+        index=0,
 
     )
 
 
 
-    if selected_round == "Tutte le giornate":
+    st.markdown("---")
 
-        col_andata, col_ritorno = st.columns(2, gap="medium")
+    if st.session_state["staff_authenticated"]:
 
+        st.success("Modalità Staff attiva")
 
+        if st.button("Esci da Staff", use_container_width=True):
 
-        with col_andata:
+            st.session_state["staff_authenticated"] = False
 
-            st.markdown('<div class="cal-phase-hdr">⬆️ GIRONE DI ANDATA (SINISTRA)</div>', unsafe_allow_html=True)
-
-            for r in andata_rounds:
-
-                r_df = g_games[g_games["Giornata"].astype(int) == r].sort_values(by=["Data", "ID_Partita"])
-
-                st.markdown(
-
-                    build_round_html(r, r_df, logo_html_map, is_ritorno=False, girone_label=girone),
-
-                    unsafe_allow_html=True,
-
-                )
-
-
-
-        with col_ritorno:
-
-            st.markdown('<div class="cal-phase-hdr">⬇️ GIRONE DI RITORNO (DESTRA)</div>', unsafe_allow_html=True)
-
-            for r in ritorno_rounds:
-
-                r_df = g_games[g_games["Giornata"].astype(int) == r].sort_values(by=["Data", "ID_Partita"])
-
-                st.markdown(
-
-                    build_round_html(r, r_df, logo_html_map, is_ritorno=True, girone_label=girone),
-
-                    unsafe_allow_html=True,
-
-                )
+            st.rerun()
 
     else:
 
-        r_num = int(selected_round.split("ª")[0])
+        with st.expander("Area Staff (opzionale)", expanded=False):
 
-        is_rit = r_num > 11
+            pwd = st.text_input("Password staff", type="password", key="staff_pwd_input")
 
-        r_df = g_games[g_games["Giornata"].astype(int) == r_num].sort_values(by=["Data", "ID_Partita"])
+            if st.button("Attiva Staff", use_container_width=True):
 
-        col_andata, col_ritorno = st.columns(2, gap="medium")
+                if pwd == STAFF_PASSWORD:
 
-        if not is_rit:
+                    st.session_state["staff_authenticated"] = True
 
-            with col_andata:
+                    st.rerun()
 
-                st.markdown('<div class="cal-phase-hdr">⬆️ GIRONE DI ANDATA</div>', unsafe_allow_html=True)
+                else:
 
-                st.markdown(build_round_html(r_num, r_df, logo_html_map, is_ritorno=False, girone_label=girone), unsafe_allow_html=True)
-
-            with col_ritorno:
-
-                st.markdown('<div class="cal-phase-hdr">⬇️ GIRONE DI RITORNO</div>', unsafe_allow_html=True)
-
-                st.info("Giornata di ritorno non selezionata.")
-
-        else:
-
-            with col_andata:
-
-                st.markdown('<div class="cal-phase-hdr">⬆️ GIRONE DI ANDATA</div>', unsafe_allow_html=True)
-
-                st.info("Giornata di andata non selezionata.")
-
-            with col_ritorno:
-
-                st.markdown('<div class="cal-phase-hdr">⬇️ GIRONE DI RITORNO</div>', unsafe_allow_html=True)
-
-                st.markdown(build_round_html(r_num, r_df, logo_html_map, is_ritorno=True, girone_label=girone), unsafe_allow_html=True)
+                    st.error("Password non valida.")
 
 
+
+    if not gh_cfg["token"]:
+
+        st.caption("Nota: senza `GITHUB_TOKEN` le modifiche restano nella sessione corrente.")
 
 
 
 # ==========================================
 
-# APPLICAZIONE PRINCIPALE
+# CORPO PRINCIPALE
 
 # ==========================================
 
-def main() -> None:
+st.markdown(
 
-    st.markdown(GLOBAL_UI_CSS, unsafe_allow_html=True)
+    '<div class="topbar-card">'
 
+    '<div class="topbar-title">🏀 DR2 Puglia — Classifiche e Calendario</div>'
 
+    '<div class="topbar-sub">Stagione 2026/27 • Gironi A, B e C • Risultati, Streak e Dettagli Gare</div>'
 
-    if "match_details_store" not in st.session_state:
+    "</div>",
 
-        st.session_state["match_details_store"] = load_match_details_store()
+    unsafe_allow_html=True,
 
+)
 
 
-    if "games_df" not in st.session_state:
 
-        st.session_state["games_df"] = load_full_games_df()
+games_df = st.session_state["games_df"]
 
 
 
-    games_df: pd.DataFrame = st.session_state["games_df"]
+if st.session_state["selected_match_id"]:
 
-    logo_html_map = build_team_logo_html_map(GITHUB_RAW_BASE)
+    render_match_detail(st.session_state["selected_match_id"], games_df, logo_html_map)
 
+elif st.session_state["selected_team_name"]:
 
+    render_team_page(st.session_state["selected_team_name"], games_df, logo_html_map)
 
-    qp = st.query_params
+else:
 
-    match_param = qp.get("match")
+    if sezione == "Classifiche":
 
-    team_param = qp.get("team")
-
-
-
-    if match_param:
-
-        st.session_state["selected_match_id"] = str(match_param)
-
-    if team_param and not match_param:
-
-        st.session_state["selected_team_name"] = str(team_param)
-
-
-
-    st.markdown(
-
-        '<div class="topbar-card">'
-
-        '<div class="topbar-title">🏀 DR2 Puglia — Classifiche e Calendario</div>'
-
-        '<div class="topbar-sub">Stagione 2026/2027 • Gironi A, B e C • Clicca su una gara o una squadra per i dettagli</div>'
-
-        "</div>",
-
-        unsafe_allow_html=True,
-
-    )
-
-
-
-    selected_match = st.session_state.get("selected_match_id")
-
-    if selected_match:
-
-        render_match_detail(str(selected_match), games_df, logo_html_map)
-
-        return
-
-
-
-    selected_team = st.session_state.get("selected_team_name")
-
-    if selected_team:
-
-        render_team_page(str(selected_team), games_df, logo_html_map)
-
-        return
-
-
-
-    with st.sidebar:
-
-        st.header("Navigazione")
-
-        girone = st.selectbox(
-
-            "Seleziona Girone",
-
-            ("Girone A", "Girone B", "Girone C"),
-
-            index=0,
-
-        )
-
-        sezione = st.radio(
-
-            "Sezione",
-
-            ("Classifica", "Calendario"),
-
-            index=0,
-
-        )
-
-        st.divider()
-
-        cfg = _get_github_config()
-
-        if cfg["token"]:
-
-            st.caption(f"Persistenza GitHub attiva ({cfg['owner']}/{cfg['repo']}@{cfg['branch']}).")
-
-        else:
-
-            st.caption("Modalità locale / sessione (imposta GITHUB_TOKEN per salvare su GitHub).")
-
-
-
-    if sezione == "Classifica":
-
-        board_rows = compute_standings(girone, games_df)
+        standings_rows = compute_standings(girone_selezionato, games_df)
 
         thirds_board = compute_thirds_standings(games_df)
 
-        render_standings(girone, board_rows, thirds_board, logo_html_map)
+        render_standings(girone_selezionato, standings_rows, thirds_board, logo_html_map)
 
     else:
 
-        render_calendar_page(girone, games_df, logo_html_map)
+        st.markdown(CALENDAR_CSS, unsafe_allow_html=True)
+
+        st.subheader(f"Calendario — {girone_selezionato}")
+
+        st.caption("Seleziona una o più giornate per confrontare le gare, oppure clicca su una partita per aprirne i dettagli.")
 
 
 
+        df_g = games_df[games_df["Girone"] == girone_selezionato].copy()
+
+        giornate_disponibili = sorted(df_g["Giornata"].dropna().astype(int).unique().tolist())
 
 
-if __name__ == "__main__":
 
-    main()
+        def _format_round_option(r_num: int) -> str:
+
+            if r_num > 11:
+
+                return f"{r_num - 11}ª Giornata Ritorno (G{r_num})"
+
+            return f"{r_num}ª Giornata Andata (G{r_num})"
+
+
+
+        col_f1, col_f2 = st.columns([2, 1])
+
+        giornate_scelte = col_f1.multiselect(
+
+            "Filtro per giornata (puoi selezionarne più di una)",
+
+            options=giornate_disponibili,
+
+            default=giornate_disponibili,
+
+            format_func=_format_round_option,
+
+            placeholder="Scegli una o più giornate...",
+
+        )
+
+        squadre_girone = sorted([t["squadra"] for t in GIRONI_TEAMS.get(girone_selezionato, [])])
+
+        squadra_filtro = col_f2.selectbox(
+
+            "Filtro per squadra",
+
+            options=["Tutte le squadre"] + squadre_girone,
+
+            index=0,
+
+        )
+
+
+
+        if not giornate_scelte:
+
+            st.info("Seleziona almeno una giornata nel filtro qui sopra per visualizzare le partite.")
+
+        else:
+
+            giornate_ordinate = sorted({int(g) for g in giornate_scelte})
+
+            andata_rounds = [r for r in giornate_ordinate if r <= 11]
+
+            ritorno_rounds = [r for r in giornate_ordinate if r > 11]
+
+
+
+            col_andata, col_ritorno = st.columns(2, gap="large")
+
+
+
+            with col_andata:
+
+                st.markdown('<div class="cal-phase-hdr">ANDATA</div>', unsafe_allow_html=True)
+
+                if not andata_rounds:
+
+                    st.info("Nessuna giornata di Andata selezionata.")
+
+                else:
+
+                    for r_num in andata_rounds:
+
+                        r_df = df_g[df_g["Giornata"] == r_num]
+
+                        if squadra_filtro != "Tutte le squadre":
+
+                            r_df = r_df[(r_df["Casa"] == squadra_filtro) | (r_df["Trasferta"] == squadra_filtro)]
+
+                        st.markdown(
+
+                            build_round_html(
+
+                                round_num=r_num,
+
+                                round_games=r_df,
+
+                                logo_html_map=logo_html_map,
+
+                                is_ritorno=False,
+
+                                girone_label=girone_selezionato,
+
+                            ),
+
+                            unsafe_allow_html=True,
+
+                        )
+
+
+
+            with col_ritorno:
+
+                st.markdown('<div class="cal-phase-hdr">RITORNO</div>', unsafe_allow_html=True)
+
+                if not ritorno_rounds:
+
+                    st.info("Nessuna giornata di Ritorno selezionata.")
+
+                else:
+
+                    for r_num in ritorno_rounds:
+
+                        r_df = df_g[df_g["Giornata"] == r_num]
+
+                        if squadra_filtro != "Tutte le squadre":
+
+                            r_df = r_df[(r_df["Casa"] == squadra_filtro) | (r_df["Trasferta"] == squadra_filtro)]
+
+                        st.markdown(
+
+                            build_round_html(
+
+                                round_num=r_num,
+
+                                round_games=r_df,
+
+                                logo_html_map=logo_html_map,
+
+                                is_ritorno=True,
+
+                                girone_label=girone_selezionato,
+
+                            ),
+
+                            unsafe_allow_html=True,
+
+                        )
