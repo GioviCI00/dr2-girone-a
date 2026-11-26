@@ -22,5 +22,11 @@
     "Stato": "Giocata",
     "Punti_Casa": 64,
     "Punti_Trasferta": 77
+  },
+  "A01_1871": {
+    "Data": "Dom 08/11/2026 18:30",
+    "Stato": "Giocata",
+    "Punti_Casa": 62,
+    "Punti_Trasferta": 81
   }
 }
