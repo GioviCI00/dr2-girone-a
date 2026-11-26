@@ -2491,16 +2491,16 @@
     "coach_home": "Vito Diana",
     "coach_away": "Antonello Panzarino",
     "quarters_home": [
-      0,
-      0,
-      0,
-      0
+      11,
+      20,
+      14,
+      17
     ],
     "quarters_away": [
-      0,
-      0,
-      0,
-      0
+      21,
+      19,
+      20,
+      21
     ],
     "ot_home": 0,
     "ot_away": 0,
