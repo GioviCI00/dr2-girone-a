@@ -2352,7 +2352,8 @@
     ],
     "ot_home": 0,
     "ot_away": 0,
-    "home_players": [
+    "home_players": [],
+    "away_players": [
       {
         "Giocatore": "Ferdinando Provaroni",
         "NUM": 0,
@@ -2379,7 +2380,6 @@
         "OER": 0.0
       }
     ],
-    "away_players": [],
     "notes": ""
   }
 }
