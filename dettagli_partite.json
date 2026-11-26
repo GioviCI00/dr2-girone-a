@@ -6738,7 +6738,7 @@
     "home_players": [
       {
         "Giocatore": "Ruotolo A.",
-        "NUM": 0,
+        "NUM": 2,
         "PUN": 15,
         "MIN": "0",
         "SF": false,
@@ -6763,7 +6763,7 @@
       },
       {
         "Giocatore": "Mastromarco P.",
-        "NUM": 0,
+        "NUM": 11,
         "PUN": 2,
         "MIN": "0",
         "SF": false,
@@ -6788,7 +6788,7 @@
       },
       {
         "Giocatore": "Mariani G.",
-        "NUM": 0,
+        "NUM": 15,
         "PUN": 25,
         "MIN": "0",
         "SF": false,
@@ -6813,7 +6813,7 @@
       },
       {
         "Giocatore": "Natali F.",
-        "NUM": 0,
+        "NUM": 16,
         "PUN": 1,
         "MIN": "0",
         "SF": false,
@@ -6838,7 +6838,7 @@
       },
       {
         "Giocatore": "Ruotolo L.",
-        "NUM": 0,
+        "NUM": 17,
         "PUN": 19,
         "MIN": "0",
         "SF": false,
@@ -6863,7 +6863,7 @@
       },
       {
         "Giocatore": "Riganti A.",
-        "NUM": 0,
+        "NUM": 18,
         "PUN": 18,
         "MIN": "0",
         "SF": false,
