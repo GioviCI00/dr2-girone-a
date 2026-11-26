@@ -1,3 +1,9 @@
+
+
+Gemini è un'AI e può fare errori, anche in merito a persone. La tua privacy e GeminiSi apre in una nuova finestra
+
+Icona PY
+dr2_puglia_app
 import base64
 import json
 import os
@@ -19,10 +25,9 @@ st.set_page_config(
 # ==========================================
 # CONFIGURAZIONE
 # ==========================================
-DATA_VERSION = "2026-11-26-v13-teams-grid-and-multiteam"
+DATA_VERSION = "2026-11-26-v12-teams-cards-rich"
 OUR_TEAM = "AGS DIL. TORITTO"
 STAFF_PASSWORD = os.environ.get("DR2_STAFF_PASSWORD", "dr2puglia")
-
 DEFAULT_GITHUB_OWNER = "GioviCI00"
 DEFAULT_GITHUB_REPO = "dr2-girone-a"
 DEFAULT_GITHUB_BRANCH = "main"
@@ -495,11 +500,11 @@ DEFAULT_ROUND3_DETAILS: dict[str, dict] = {
         "away_players": [
             _p_row("Provaroni F.", numero=0, pts=3, minuti="13:03", sf=True, falli_c=1, t3_r=1, t3_t=1),
             _p_row("Derosa L.", pts=23, minuti="35:42", sf=True, falli_c=4, t2_r=7, t2_t=10, tl_r=9, tl_t=12),
-            _p_row("Desiante V.", pts=5, minuti="15:24", sf=True, falli_c=3, t2_r=1, t2_t=1, t3_r=1, t3_t=1),
+            _p_row("Desiante V.", pts=5, minuti="15:24", falli_c=3, t2_r=1, t2_t=1, t3_r=1, t3_t=1),
             _p_row("D'Erasmo F.", pts=15, minuti="30:18", sf=True, falli_c=4, t2_r=4, t2_t=4, tl_r=7, tl_t=10),
             _p_row("Housni Z.", pts=9, minuti="36:17", sf=True, falli_c=2, t2_r=4, t2_t=6, tl_r=1, tl_t=3),
-            _p_row("Silletti D.", pts=8, minuti="30:33", sf=True, falli_c=3, t3_r=2, t3_t=2, tl_r=2, tl_t=2),
-            _p_row("Micunco M.", pts=2, minuti="02:27", sf=True, falli_c=2, t2_r=1, t2_t=1),
+            _p_row("Silletti D.", pts=8, minuti="30:33", falli_c=3, t3_r=2, t3_t=2, tl_r=2, tl_t=2),
+            _p_row("Micunco M.", pts=2, minuti="02:27", falli_c=2, t2_r=1, t2_t=1),
             _p_row("Colangelo A.", pts=12, minuti="29:52", sf=True, falli_c=4, t2_r=3, t2_t=3, t3_r=1, t3_t=1, tl_r=3, tl_t=3),
             _p_row("Dario Iacobone", pts=0, minuti="03:53", falli_c=1),
             _p_row("Fraccalvieri A.", pts=0, minuti="02:31", falli_c=1),
@@ -636,6 +641,7 @@ def _get_github_config() -> dict[str, str]:
     owner = DEFAULT_GITHUB_OWNER
     repo = DEFAULT_GITHUB_REPO
     branch = DEFAULT_GITHUB_BRANCH
+
     try:
         if "GITHUB_TOKEN" in st.secrets:
             token = str(st.secrets["GITHUB_TOKEN"]).strip()
@@ -664,6 +670,7 @@ def _get_github_config() -> dict[str, str]:
 def _github_get_json_file(cfg: dict[str, str], file_path: str) -> tuple[dict, str | None]:
     if not cfg["token"]:
         return {}, None
+
     url = (
         f"https://api.github.com/repos/{cfg['owner']}/{cfg['repo']}/contents/{file_path}"
         f"?ref={quote(cfg['branch'], safe='')}"
@@ -699,9 +706,11 @@ def _github_put_json_file(cfg: dict[str, str], file_path: str, data: dict, commi
             False,
             "GITHUB_TOKEN non trovato nei Secrets: modifica salvata solo temporaneamente in sessione.",
         )
+
     try:
         _, current_sha = _github_get_json_file(cfg, file_path)
         content_b64 = base64.b64encode(content_str.encode("utf-8")).decode("ascii")
+
         body: dict[str, str] = {
             "message": commit_msg,
             "content": content_b64,
@@ -725,6 +734,7 @@ def _github_put_json_file(cfg: dict[str, str], file_path: str, data: dict, commi
         )
         with urlopen(req, timeout=12) as resp:
             _ = resp.read()
+
         return True, "Modifica salvata in modo permanente su GitHub!"
     except HTTPError as err:
         detail = ""
@@ -778,6 +788,7 @@ def load_match_details_store() -> dict[str, dict]:
     merged: dict[str, dict] = {k: json.loads(json.dumps(v)) for k, v in DEFAULT_ROUND3_DETAILS.items()}
     cfg = _get_github_config()
     remote_data: dict[str, dict] = {}
+
     if cfg["token"]:
         try:
             data, _ = _github_get_json_file(cfg, DETAILS_PATH)
@@ -801,6 +812,7 @@ def load_match_details_store() -> dict[str, dict]:
     for mid, mdata in remote_data.items():
         if isinstance(mdata, dict):
             merged[str(mid)] = mdata
+
     return merged
 
 
@@ -911,7 +923,6 @@ STANDINGS_CSS = """
 .zone-promo { background: #15803d; color: #ffffff; }
 .zone-po { background: #b45309; color: #ffffff; }
 .zone-pout { background: #b91c1c; color: #ffffff; }
-
 .board-row {
     display: grid;
     grid-template-columns: 52px 52px 1fr 50px 50px 50px 66px 156px 62px;
@@ -935,7 +946,6 @@ STANDINGS_CSS = """
 .board-row.row-pout { border-left: 5px solid #ef4444; }
 .board-row.row-qual { border-left: 5px solid #22c55e; }
 .board-row.row-out { border-left: 5px solid #ef4444; }
-
 .b-pos {
     font-size: 17px;
     font-weight: 900;
@@ -1132,13 +1142,12 @@ a.streak-link {
 CALENDAR_CSS = """
 <style>
 .cal-filter-banner {
-    background: linear-gradient(135deg, #0c192d 0%, #132746 100%);
-    border: 1px solid rgba(148, 163, 184, 0.26);
-    border-left: 4px solid #fbbf24;
+    background: linear-gradient(135deg, #0d1d33 0%, #132a4a 100%);
+    border: 1px solid rgba(251, 191, 36, 0.28);
     border-radius: 14px;
-    padding: 13px 16px;
-    margin-bottom: 12px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.26);
+    padding: 14px 18px;
+    margin-bottom: 14px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1148,15 +1157,14 @@ CALENDAR_CSS = """
 .cal-filter-title {
     font-size: 13px;
     font-weight: 900;
-    letter-spacing: 0.6px;
+    letter-spacing: 0.7px;
     text-transform: uppercase;
     color: #fbbf24;
 }
 .cal-filter-sub {
-    font-size: 11.5px;
-    font-weight: 600;
+    font-size: 12px;
     color: #cbd5e1;
-    margin-top: 2px;
+    font-weight: 600;
 }
 .cal-filter-pills {
     display: flex;
@@ -1166,83 +1174,68 @@ CALENDAR_CSS = """
 }
 .cal-pill {
     background: rgba(15, 23, 42, 0.85);
-    border: 1px solid rgba(251, 191, 36, 0.35);
-    color: #f8fafc;
-    border-radius: 999px;
-    padding: 4px 11px;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    color: #e2e8f0;
     font-size: 11px;
     font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 999px;
 }
-.cal-pill span {
+.cal-pill.gold {
+    border-color: rgba(251, 191, 36, 0.55);
     color: #fbbf24;
-    font-weight: 900;
 }
-/* Miglioramento grafico widget multiselect */
-div[data-testid="stMultiSelect"] > label {
-    font-size: 12px !important;
-    font-weight: 800 !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.5px !important;
-    color: #93c5fd !important;
-    margin-bottom: 4px !important;
-}
-div[data-testid="stMultiSelect"] div[data-baseweb="select"] > div {
+div[data-baseweb="select"] > div {
     background-color: #0e1a2e !important;
-    border: 1px solid rgba(148, 163, 184, 0.35) !important;
-    border-radius: 11px !important;
-    min-height: 44px !important;
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+    border-color: rgba(251, 191, 36, 0.35) !important;
+    border-radius: 10px !important;
 }
-div[data-testid="stMultiSelect"] div[data-baseweb="select"] > div:focus-within {
-    border-color: #fbbf24 !important;
-    box-shadow: 0 0 0 1px #fbbf24 !important;
-}
-div[data-testid="stMultiSelect"] span[data-baseweb="tag"] {
-    background: linear-gradient(90deg, #1d4ed8 0%, #1e40af 100%) !important;
-    border: 1px solid rgba(147, 197, 253, 0.45) !important;
-    border-radius: 7px !important;
-    color: #ffffff !important;
-    font-weight: 700 !important;
+span[data-baseweb="tag"] {
+    background-color: #1e3a66 !important;
+    border: 1px solid rgba(251, 191, 36, 0.45) !important;
+    color: #f8fafc !important;
+    border-radius: 6px !important;
 }
 .cal-phase-hdr {
-    background: linear-gradient(90deg, #10243e 0%, #193861 100%);
-    border: 1px solid rgba(148, 163, 184, 0.25);
-    border-left: 4px solid #fbbf24;
+    background: linear-gradient(90deg, #132844 0%, #1b385e 100%);
+    border: 1px solid rgba(251, 191, 36, 0.38);
     border-radius: 10px;
-    padding: 9px 14px;
-    margin-top: 8px;
+    padding: 10px 14px;
     margin-bottom: 12px;
-    font-size: 12.5px;
+    color: #fbbf24;
+    font-size: 13px;
     font-weight: 900;
-    letter-spacing: 0.6px;
-    color: #f8fafc;
+    letter-spacing: 0.7px;
     text-transform: uppercase;
+    text-align: center;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
 }
 .cal-board {
     background: #0d1624;
     border: 1px solid rgba(148, 163, 184, 0.22);
     border-radius: 12px;
     overflow: hidden;
-    margin-bottom: 16px;
+    margin-bottom: 18px;
     box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
 }
 .cal-board-head {
     display: grid;
-    grid-template-columns: 128px 1fr 94px 1fr;
-    gap: 8px;
+    grid-template-columns: 155px 1fr 116px 1fr;
+    gap: 12px;
     align-items: center;
-    padding: 9px 12px;
+    padding: 10px 16px;
     background: linear-gradient(90deg, #13243b 0%, #1a3150 100%);
     border-bottom: 1px solid rgba(148, 163, 184, 0.22);
     color: #cbd5e1;
-    font-size: 10.5px;
+    font-size: 11px;
     font-weight: 800;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.6px;
     text-transform: uppercase;
 }
 .cal-board-head .c-center { text-align: center; color: #fbbf24; }
 .cal-board-head .c-right { text-align: right; }
 .cal-board-head .c-left { text-align: left; }
+
 a.cal-row-link {
     text-decoration: none !important;
     color: inherit !important;
@@ -1250,10 +1243,10 @@ a.cal-row-link {
 }
 .cal-row-card {
     display: grid;
-    grid-template-columns: 128px 1fr 94px 1fr;
-    gap: 8px;
+    grid-template-columns: 155px 1fr 116px 1fr;
+    gap: 12px;
     align-items: center;
-    padding: 11px 12px;
+    padding: 13px 16px;
     background: #0e1726;
     border-bottom: 1px solid rgba(148, 163, 184, 0.12);
     transition: background 0.14s ease, transform 0.12s ease;
@@ -1269,20 +1262,20 @@ a.cal-row-link {
     border-bottom: none;
 }
 .cal-round-col {
-    line-height: 1.25;
+    line-height: 1.3;
 }
 .cal-round-league {
-    font-size: 10px;
+    font-size: 10.5px;
     font-weight: 700;
     color: #94a3b8;
 }
 .cal-round-num {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 900;
     color: #fbbf24;
 }
 .cal-round-date {
-    font-size: 11px;
+    font-size: 11.5px;
     font-weight: 800;
     color: #f8fafc;
     margin-top: 1px;
@@ -1291,7 +1284,7 @@ a.cal-row-link {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 7px;
+    gap: 10px;
     text-align: right;
     min-width: 0;
 }
@@ -1299,27 +1292,27 @@ a.cal-row-link {
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    gap: 7px;
+    gap: 10px;
     text-align: left;
     min-width: 0;
 }
 .cal-side-name {
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 700;
     color: #cbd5e1;
-    line-height: 1.18;
+    line-height: 1.2;
 }
 .cal-side-name.win {
     color: #ffffff;
     font-weight: 900;
 }
 .cal-side-logo {
-    width: 30px;
-    height: 30px;
+    width: 34px;
+    height: 34px;
     object-fit: contain;
     background: #ffffff;
     border-radius: 50%;
-    padding: 2px;
+    padding: 3px;
     border: 1px solid rgba(148, 163, 184, 0.35);
     flex-shrink: 0;
 }
@@ -1328,20 +1321,20 @@ a.cal-row-link {
     line-height: 1.15;
 }
 .cal-score-line {
-    font-size: 17px;
+    font-size: 19px;
     font-weight: 900;
-    letter-spacing: 0.4px;
+    letter-spacing: 0.5px;
     white-space: nowrap;
 }
 .cal-pts-win { color: #f8fafc; }
 .cal-pts-lose { color: #94a3b8; }
-.cal-pts-vs { color: #fbbf24; font-size: 14px; }
+.cal-pts-vs { color: #fbbf24; font-size: 15px; }
 .cal-state-sub {
-    font-size: 9px;
+    font-size: 9.5px;
     font-weight: 800;
-    letter-spacing: 0.6px;
+    letter-spacing: 0.7px;
     color: #94a3b8;
-    margin-top: 2px;
+    margin-top: 3px;
     text-transform: uppercase;
 }
 .cal-state-sub.done { color: #4ade80; }
@@ -1371,29 +1364,20 @@ a.cal-row-link {
 
 TEAMS_GRID_CSS = """
 <style>
-.teams-row-4 {
+.teams-grid-row {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 18px;
-    margin-bottom: 22px;
+    gap: 20px;
+    margin-bottom: 24px;
 }
-.teams-row-3 {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 18px;
-    max-width: 76%;
-    margin: 0 auto 24px auto;
-}
-@media (max-width: 1024px) {
-    .teams-row-4, .teams-row-3 {
+@media (max-width: 1100px) {
+    .teams-grid-row {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        max-width: 100%;
     }
 }
-@media (max-width: 580px) {
-    .teams-row-4, .teams-row-3 {
+@media (max-width: 600px) {
+    .teams-grid-row {
         grid-template-columns: 1fr;
-        max-width: 100%;
     }
 }
 a.team-tile-link {
@@ -1402,102 +1386,146 @@ a.team-tile-link {
     display: flex;
     flex-direction: column;
     align-items: center;
+    transition: transform 0.16s ease;
 }
-.team-square-card {
+a.team-tile-link:hover {
+    transform: translateY(-4px);
+}
+.team-square-box {
     width: 100%;
     aspect-ratio: 1 / 1;
-    background: linear-gradient(155deg, #0d1d34 0%, #132c50 60%, #173663 100%);
-    border: 1.5px solid rgba(148, 163, 184, 0.26);
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(155deg, #0c1b33 0%, #132b4f 52%, #0a1426 100%);
+    border: 1.5px solid rgba(148, 163, 184, 0.28);
     border-radius: 18px;
-    padding: 14px 12px;
+    padding: 14px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
     text-align: center;
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.34);
-    transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+    transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
 }
-a.team-tile-link:hover .team-square-card {
-    transform: translateY(-5px);
+a.team-tile-link:hover .team-square-box {
     border-color: #fbbf24;
-    background: linear-gradient(155deg, #122847 0%, #193b6b 100%);
-    box-shadow: 0 14px 30px rgba(251, 191, 36, 0.22);
+    background: linear-gradient(155deg, #122747 0%, #1b3b6b 55%, #0e1c33 100%);
+    box-shadow: 0 14px 30px rgba(251, 191, 36, 0.18);
 }
-.ts-top-row {
-    width: 100%;
+.team-square-watermark {
+    position: absolute;
+    inset: 0;
     display: flex;
     align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    opacity: 0.07;
+    z-index: 0;
+}
+.team-square-watermark img {
+    width: 86%;
+    height: 86%;
+    object-fit: contain;
+    filter: grayscale(100%) brightness(1.6);
+}
+.team-square-top {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    display: flex;
     justify-content: space-between;
+    align-items: center;
     font-size: 11px;
     font-weight: 900;
 }
-.ts-pos-pill {
+.team-pos-pill {
     background: rgba(251, 191, 36, 0.18);
     color: #fbbf24;
-    border: 1px solid rgba(251, 191, 36, 0.45);
+    border: 1px solid rgba(251, 191, 36, 0.48);
     border-radius: 999px;
     padding: 2px 9px;
 }
-.ts-pts-pill {
-    background: rgba(15, 23, 42, 0.8);
-    color: #bae6fd;
+.team-pts-pill {
+    background: rgba(15, 23, 42, 0.85);
+    color: #93c5fd;
     border: 1px solid rgba(148, 163, 184, 0.25);
     border-radius: 999px;
     padding: 2px 9px;
 }
-.ts-logo-box {
-    width: 66px;
-    height: 66px;
-    background: #ffffff;
-    border-radius: 15px;
-    padding: 6px;
+.team-square-logo-wrap {
+    position: relative;
+    z-index: 1;
+    width: 108px;
+    height: 108px;
+    background: radial-gradient(circle at 30% 30%, #ffffff 0%, #f1f5f9 100%);
+    border-radius: 22px;
+    padding: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.42), 0 0 0 3px rgba(251, 191, 36, 0.25);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
-.ts-logo-box img {
-    max-width: 100%;
-    max-height: 100%;
+a.team-tile-link:hover .team-square-logo-wrap {
+    transform: scale(1.05);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5), 0 0 0 3px rgba(251, 191, 36, 0.65);
+}
+.team-square-logo-wrap img {
+    width: 100%;
+    height: 100%;
     object-fit: contain;
 }
-.ts-in-name {
+.team-square-inner-name {
+    position: relative;
+    z-index: 1;
     font-size: 12px;
     font-weight: 900;
     color: #ffffff;
     text-transform: uppercase;
-    line-height: 1.2;
+    line-height: 1.22;
+    letter-spacing: 0.2px;
+    padding: 0 4px;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
-.ts-hist-box {
+.team-square-hist {
+    position: relative;
+    z-index: 1;
     width: 100%;
-    background: rgba(9, 15, 26, 0.72);
-    border: 1px solid rgba(148, 163, 184, 0.18);
-    border-radius: 10px;
+    background: rgba(9, 15, 26, 0.85);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 11px;
     padding: 6px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
 }
-.ts-rec-line {
-    font-size: 11px;
+.team-hist-metrics {
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    font-size: 10.5px;
     font-weight: 800;
-    color: #e2e8f0;
-    margin-bottom: 4px;
+    color: #cbd5e1;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+    padding-bottom: 4px;
 }
-.ts-rec-w { color: #4ade80; }
-.ts-rec-l { color: #f87171; }
-.ts-streak-pills {
+.team-hist-metrics span b {
+    color: #fbbf24;
+    font-weight: 900;
+}
+.team-hist-boxes {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 4px;
 }
-.ts-mini-w {
+.mini-wl {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1506,37 +1534,21 @@ a.team-tile-link:hover .team-square-card {
     border-radius: 4px;
     font-size: 10px;
     font-weight: 900;
-    background: #16a34a;
     color: #ffffff;
 }
-.ts-mini-l {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 18px;
-    height: 18px;
-    border-radius: 4px;
-    font-size: 10px;
-    font-weight: 900;
-    background: #dc2626;
-    color: #ffffff;
-}
-.ts-mini-none {
-    font-size: 10.5px;
-    color: #64748b;
-    font-weight: 700;
-}
-.ts-caption-below {
+.mini-w { background: #16a34a; border: 1px solid #22c55e; }
+.mini-l { background: #dc2626; border: 1px solid #ef4444; }
+.team-caption-below {
     margin-top: 9px;
     font-size: 12.5px;
-    font-weight: 900;
-    color: #f8fafc;
+    font-weight: 800;
+    color: #e2e8f0;
     text-align: center;
     text-transform: uppercase;
     line-height: 1.25;
-    transition: color 0.15s ease;
+    padding: 0 4px;
 }
-a.team-tile-link:hover .ts-caption-below {
+a.team-tile-link:hover .team-caption-below {
     color: #fbbf24;
 }
 </style>
@@ -2234,14 +2246,17 @@ def resolve_logo_src(logo_filename: str, github_base: str) -> str:
     clean_name = (logo_filename or "").strip()
     if not clean_name:
         return ""
+
     if github_base:
         return f"{github_base.rstrip('/')}/{quote(clean_name, safe='._-')}"
+
     for candidate in (Path(clean_name), Path("loghi") / clean_name, Path("assets") / clean_name):
         if candidate.is_file():
             ext = candidate.suffix.lower().lstrip(".")
             mime = "image/jpeg" if ext in ("jpg", "jpeg") else f"image/{ext or 'png'}"
             encoded = base64.b64encode(candidate.read_bytes()).decode("ascii")
             return f"data:{mime};base64,{encoded}"
+
     return ""
 
 
@@ -2299,6 +2314,7 @@ def _render_streak_html(events: list[dict], max_items: int = 5) -> str:
     recent = events[-max_items:]
     if not recent:
         return '<div class="streak-track"><span class="streak-empty">—</span></div>'
+
     items = []
     for ev in recent:
         res = ev["res"]
@@ -2308,9 +2324,11 @@ def _render_streak_html(events: list[dict], max_items: int = 5) -> str:
         home_str = str(tip.get("home", "")).replace("<", "&lt;").replace(">", "&gt;")
         away_str = str(tip.get("away", "")).replace("<", "&lt;").replace(">", "&gt;")
         score_str = str(tip.get("score", "")).replace("<", "&lt;").replace(">", "&gt;")
+
         cls = "streak-w" if res == "W" else "streak-l"
         badge_cls = "tt-badge-w" if res == "W" else "tt-badge-l"
         esito_txt = "VITTORIA" if res == "W" else "SCONFITTA"
+
         items.append(
             f'<div class="streak-item">'
             f'<div class="streak-tooltip">'
@@ -2344,8 +2362,10 @@ def _h2h_points_for_group(group_teams: list[str], played_games: list[tuple]) -> 
 def _rank_tied_group(group_rows: list[dict], played_games: list[tuple]) -> list[dict]:
     if len(group_rows) <= 1:
         return group_rows
+
     group_names = [r["squadra"] for r in group_rows]
     h2h_pts = _h2h_points_for_group(group_names, played_games)
+
     return sorted(
         group_rows,
         key=lambda r: (-h2h_pts.get(r["squadra"], 0), -r["diff"], r["squadra"]),
@@ -2433,12 +2453,12 @@ def compute_thirds_standings(games_df: pd.DataFrame) -> list[dict]:
 
 def render_standings(girone: str, rows: list[dict], thirds_board: list[dict], logo_html_map: dict[str, str]) -> None:
     st.markdown(STANDINGS_CSS, unsafe_allow_html=True)
+
     playout_start = max(len(rows) - 3, 5)
     best_third = thirds_board[0] if thirds_board else None
 
     st.subheader(f"Classifica — {girone}")
     st.caption("Clicca sul nome di una squadra per aprire la scheda squadra oppure passa sul quadratino W/L per i dettagli gara.")
-
     html = [
         '<div class="board-box">',
         '<div class="board-head">'
@@ -2455,6 +2475,7 @@ def render_standings(girone: str, rows: list[dict], thirds_board: list[dict], lo
             and best_third["squadra"] == r["squadra"]
             and best_third["girone"] == girone
         )
+
         if pos == 1:
             html.append('<div class="zone-tag zone-promo">Promozione Diretta (1° Posto)</div>')
             row_cls = "row-promo"
@@ -2471,9 +2492,9 @@ def render_standings(girone: str, rows: list[dict], thirds_board: list[dict], lo
         diff_val = r["diff"]
         diff_str = f"+{diff_val}" if diff_val > 0 else str(diff_val)
         streak_html = _render_streak_html(r.get("streak_events", []))
+
         team_encoded = quote(str(r["squadra"]), safe="")
         logo_tag = logo_html_map.get(f"board::{r['squadra']}", '<div class="b-pos">🏀</div>')
-
         html.append(
             f'<div class="board-row {row_cls}">'
             f'<div class="b-pos">{pos}</div>'
@@ -2509,7 +2530,6 @@ def render_standings(girone: str, rows: list[dict], thirds_board: list[dict], lo
             streak_html = _render_streak_html(t.get("streak_events", []))
             team_encoded = quote(str(t["squadra"]), safe="")
             logo_tag = logo_html_map.get(f"board::{t['squadra']}", '<div class="b-pos">🏀</div>')
-
             t_html.append(
                 f'<div class="board-row {r_cls}">'
                 f'<div class="b-pos">{idx}</div>'
@@ -2528,73 +2548,6 @@ def render_standings(girone: str, rows: list[dict], thirds_board: list[dict], lo
             )
         t_html.append("</div>")
         st.markdown("".join(t_html), unsafe_allow_html=True)
-
-
-def render_teams_grid(girone: str, games_df: pd.DataFrame, logo_html_map: dict[str, str]) -> None:
-    st.markdown(TEAMS_GRID_CSS, unsafe_allow_html=True)
-    st.subheader(f"Squadre — {girone}")
-    st.caption("Clicca su uno dei riquadri squadra per aprire la scheda completa con statistiche, calendario e tabellini.")
-
-    board = compute_standings(girone, games_df)
-    pos_map = {r["squadra"]: idx for idx, r in enumerate(board, start=1)}
-    stats_map = {r["squadra"]: r for r in board}
-
-    teams_list = sorted(GIRONI_TEAMS.get(girone, []), key=lambda x: x["squadra"])
-    row_slices = [
-        ("teams-row-4", teams_list[0:4]),
-        ("teams-row-4", teams_list[4:8]),
-        ("teams-row-3", teams_list[8:11]),
-    ]
-
-    for row_cls, chunk in row_slices:
-        if not chunk:
-            continue
-        cards_html = [f'<div class="{row_cls}">']
-        for item in chunk:
-            sq = item["squadra"]
-            sq_enc = quote(sq, safe="")
-            st_row = stats_map.get(sq, {"pts": 0, "p": 0, "w": 0, "l": 0, "streak_events": []})
-            pos_val = pos_map.get(sq, "-")
-            pts_val = int(st_row.get("pts", 0))
-            p_val = int(st_row.get("p", 0))
-            w_val = int(st_row.get("w", 0))
-            l_val = int(st_row.get("l", 0))
-
-            logo_src = logo_html_map.get(f"raw_src::{sq}", "")
-            logo_inner = (
-                f'<img src="{logo_src}" alt="{sq}" loading="lazy" />'
-                if logo_src
-                else '<span style="font-size:32px;">🏀</span>'
-            )
-
-            events = st_row.get("streak_events", [])[-5:]
-            if events:
-                pills = "".join(
-                    f'<span class="{"ts-mini-w" if e["res"] == "W" else "ts-mini-l"}">{e["res"]}</span>'
-                    for e in events
-                )
-            else:
-                pills = '<span class="ts-mini-none">Nessuna gara giocata</span>'
-
-            cards_html.append(
-                f'<a class="team-tile-link" href="?team={sq_enc}" target="_self">'
-                f'<div class="team-square-card">'
-                f'<div class="ts-top-row">'
-                f'<span class="ts-pos-pill">#{pos_val}</span>'
-                f'<span class="ts-pts-pill">{pts_val} PT</span>'
-                f'</div>'
-                f'<div class="ts-logo-box">{logo_inner}</div>'
-                f'<div class="ts-in-name">{sq}</div>'
-                f'<div class="ts-hist-box">'
-                f'<div class="ts-rec-line">{p_val}G • <span class="ts-rec-w">{w_val}V</span> - <span class="ts-rec-l">{l_val}P</span></div>'
-                f'<div class="ts-streak-pills">{pills}</div>'
-                f'</div>'
-                f'</div>'
-                f'<div class="ts-caption-below">{sq}</div>'
-                f'</a>'
-            )
-        cards_html.append("</div>")
-        st.markdown("".join(cards_html), unsafe_allow_html=True)
 
 
 def build_round_html(
@@ -2623,14 +2576,13 @@ def build_round_html(
             f'<div class="cal-round-col"><div class="cal-round-num">{display_num}ª Giornata • {phase_label}</div><div class="cal-round-date">—</div></div>'
             '<div class="cal-side-home"><span class="cal-side-name">Nessuna gara</span></div>'
             '<div class="cal-score-box"><div class="cal-score-line cal-pts-vs">-</div></div>'
-            '<div class="cal-side-away"><span class="cal-side-name">corrispondente ai filtri</span></div>'
+            '<div class="cal-side-away"><span class="cal-side-name">in programma</span></div>'
             "</div>"
         )
     else:
         for g in round_games.itertuples(index=False):
             gid_encoded = quote(str(g.ID_Partita), safe="")
             is_played = str(g.Stato).strip().lower() == "giocata"
-
             tokens = str(g.Data).strip().split()
             if len(tokens) >= 3:
                 date_str, time_str = tokens[1], tokens[2]
@@ -2757,6 +2709,7 @@ def _normalize_player_rows(rows: list | None) -> list[dict]:
         name = str(item.get("Giocatore", "")).strip()
         if not name:
             continue
+
         pts_val = item.get("PUN", item.get("PTS", 0))
         t2_r_val = item.get("2PT_R", item.get("2PT", 0))
         t2_t_val = item.get("2PT_T", max(int(pd.to_numeric(t2_r_val, errors="coerce") or 0), 0))
@@ -2823,6 +2776,7 @@ def _get_match_detail(match_id: str) -> dict:
             "away_players": _normalize_player_rows(raw.get("away_players")),
             "notes": str(raw.get("notes", "") or ""),
         }
+
     return {
         "coach_home": "",
         "coach_away": "",
@@ -2866,12 +2820,10 @@ def _editor_df_to_players(df: pd.DataFrame, existing_players: list[dict] | None 
         t2_val = int(pd.to_numeric(getattr(r, "2PT_T", prev.get("2PT_T", r2_val)), errors="coerce") or 0)
         if t2_val < r2_val:
             t2_val = r2_val
-
         r3_val = int(pd.to_numeric(getattr(r, "3PT_R", prev.get("3PT_R", 0)), errors="coerce") or 0)
         t3_val = int(pd.to_numeric(getattr(r, "3PT_T", prev.get("3PT_T", r3_val)), errors="coerce") or 0)
         if t3_val < r3_val:
             t3_val = r3_val
-
         tl_r_val = int(pd.to_numeric(getattr(r, "TL_R", prev.get("TL_R", 0)), errors="coerce") or 0)
         tl_t_val = int(pd.to_numeric(getattr(r, "TL_T", prev.get("TL_T", tl_r_val)), errors="coerce") or 0)
         if tl_t_val < tl_r_val:
@@ -2921,6 +2873,7 @@ def render_lba_boxscore(
     )
     allenatore_txt = coach_name.strip() if coach_name.strip() else "—"
     badge_txt = "STATISTICHE DETTAGLIATE" if full_stats else "TABELLINO ESSENZIALE"
+
     table_cls = "lba-box full-stats" if full_stats else "lba-box compact-stats"
 
     if full_stats:
@@ -3122,10 +3075,10 @@ def render_lba_boxscore(
             f"<td>{tot_min_num}</td>"
             "<td>-</td>"
             f"<td>{tot_fc}</td><td>{tot_fs}</td>"
-            f'<td>{tot_2r}</td><td>{tot_2t}</td><td class="pct-val">{_fmt_pct(tot_2r, tot_2t)}</td>'
+            f"<td>{tot_2r}</td><td>{tot_2t}</td><td class="pct-val">{_fmt_pct(tot_2r, tot_2t)}</td>"
             f"<td>{tot_sc}</td>"
-            f'<td>{tot_3r}</td><td>{tot_3t}</td><td class="pct-val">{_fmt_pct(tot_3r, tot_3t)}</td>'
-            f'<td>{tot_tlr}</td><td>{tot_tlt}</td><td class="pct-val">{_fmt_pct(tot_tlr, tot_tlt)}</td>'
+            f"<td>{tot_3r}</td><td>{tot_3t}</td><td class="pct-val">{_fmt_pct(tot_3r, tot_3t)}</td>"
+            f"<td>{tot_tlr}</td><td>{tot_tlt}</td><td class="pct-val">{_fmt_pct(tot_tlr, tot_tlt)}</td>"
             f"<td>{tot_rimo}</td><td>{tot_rimd}</td><td>{tot_rimt}</td>"
             f"<td>{tot_std}</td><td>{tot_sts}</td>"
             f"<td>{tot_palp}</td><td>{tot_palr}</td>"
@@ -3307,7 +3260,6 @@ def _render_team_history_column(
         badge_cls = "hist-badge-w" if won else "hist-badge-l"
         badge_txt = "V" if won else "P"
         place_tag = "Casa" if is_home else "Trasf."
-
         items_html.append(
             '<div class="hist-item">'
             f'<div class="{badge_cls}">{badge_txt} • G{int(g.Giornata)}</div>'
@@ -3337,6 +3289,7 @@ def compute_team_player_stats(team_name: str, games_df: pd.DataFrame) -> pd.Data
             & (games_df["Stato"].astype(str).str.strip().str.lower() == "giocata")
         ]["ID_Partita"].astype(str)
     )
+
     agg: dict[str, dict] = {}
     for g in games_df[(games_df["Casa"] == team_name) | (games_df["Trasferta"] == team_name)].itertuples(index=False):
         gid = str(g.ID_Partita)
@@ -3438,6 +3391,7 @@ def _render_team_player_stats_html(team_name: str, p_df: pd.DataFrame) -> str:
         "<th>VAL</th>"
         "</tr></thead><tbody>",
     ]
+
     for row in p_df.to_dict("records"):
         num_int = int(row.get("NUM", 999))
         num_disp = f"#{num_int}" if num_int < 999 else "—"
@@ -3460,6 +3414,7 @@ def _render_team_player_stats_html(team_name: str, p_df: pd.DataFrame) -> str:
             f"<td>{int(row.get('VAL', 0))}</td>"
             "</tr>"
         )
+
     html.append("</tbody></table></div></div>")
     return "".join(html)
 
@@ -3477,6 +3432,7 @@ def _render_team_games_interactive_html(team_name: str, games_df: pd.DataFrame, 
         '<div class="c-left">SQUADRA OSPITE</div>'
         "</div>",
     ]
+
     for g in team_games.itertuples(index=False):
         gid_encoded = quote(str(g.ID_Partita), safe="")
         is_played = str(g.Stato).strip().lower() == "giocata"
@@ -3544,6 +3500,7 @@ def _render_team_games_interactive_html(team_name: str, games_df: pd.DataFrame, 
             "</div>"
             "</a>"
         )
+
     parts.append("</div>")
     return "".join(parts)
 
@@ -3568,6 +3525,7 @@ def render_team_page(team_name: str, games_df: pd.DataFrame, logo_html_map: dict
     board = compute_standings(girone, games_df)
     pos = next((idx for idx, r in enumerate(board, start=1) if r["squadra"] == team_name), 0)
     t_row = next((r for r in board if r["squadra"] == team_name), None)
+
     hero_logo = logo_html_map.get(f"hero::{team_name}", '<div class="md-logo-box">🏀</div>')
     diff_val = int(t_row["diff"]) if t_row else 0
     diff_str = f"+{diff_val}" if diff_val > 0 else str(diff_val)
@@ -3636,6 +3594,7 @@ def render_team_page(team_name: str, games_df: pd.DataFrame, logo_html_map: dict
             },
             key=f"edit_roster_{team_name}",
         )
+
         if st.button("💾 Salva Nome e Numero su GitHub", key=f"save_roster_{team_name}"):
             orig_rows = roster_edit_df.to_dict("records")
             new_rows = edited_roster.to_dict("records")
@@ -3655,6 +3614,7 @@ def render_team_page(team_name: str, games_df: pd.DataFrame, logo_html_map: dict
             )
             last_ok = True
             last_msg = "Aggiornamento completato."
+
             for g in games_df[games_df["ID_Partita"].astype(str).isin(team_gids)].itertuples(index=False):
                 gid = str(g.ID_Partita)
                 if gid not in store or not isinstance(store[gid], dict):
@@ -3687,6 +3647,75 @@ def render_team_page(team_name: str, games_df: pd.DataFrame, logo_html_map: dict
     st.markdown(_render_team_games_interactive_html(team_name, games_df, logo_html_map), unsafe_allow_html=True)
 
 
+def render_teams_grid_page(girone: str, games_df: pd.DataFrame, logo_html_map: dict[str, str]) -> None:
+    st.markdown(TEAMS_GRID_CSS, unsafe_allow_html=True)
+
+    teams_in_girone = GIRONI_TEAMS.get(girone, [])
+    if not teams_in_girone:
+        st.info(f"Nessuna squadra configurata per {girone}.")
+        return
+
+    standings = compute_standings(girone, games_df)
+    pos_map = {r["squadra"]: idx for idx, r in enumerate(standings, start=1)}
+    stats_map = {r["squadra"]: r for r in standings}
+
+    st.subheader(f"Squadre — {girone}")
+    st.caption("Clicca su uno dei riquadri per aprire la scheda completa della squadra, statistiche giocatori e calendario.")
+
+    # Disposizione su 3 righe: 4 + 4 + 3 = 11 squadre
+    row_slices = [teams_in_girone[0:4], teams_in_girone[4:8], teams_in_girone[8:11]]
+
+    for slice_teams in row_slices:
+        if not slice_teams:
+            continue
+        row_html = ['<div class="teams-grid-row">']
+        for item in slice_teams:
+            t_name = item["squadra"]
+            t_encoded = quote(t_name, safe="")
+            logo_src = logo_html_map.get(f"raw_src::{t_name}", "")
+            logo_img = f'<img src="{logo_src}" alt="{t_name}" loading="lazy" />' if logo_src else '<span style="font-size:48px;">🏀</span>'
+            watermark_html = f'<div class="team-square-watermark"><img src="{logo_src}" alt="" loading="lazy" /></div>' if logo_src else ""
+
+            t_stat = stats_map.get(t_name, {"p": 0, "w": 0, "l": 0, "pts": 0, "diff": 0, "streak_events": []})
+            pos_num = pos_map.get(t_name, 0)
+            diff_val = int(t_stat.get("diff", 0))
+            diff_str = f"+{diff_val}" if diff_val > 0 else str(diff_val)
+            events = t_stat.get("streak_events", [])[-5:]
+
+            if events:
+                wl_boxes = "".join(
+                    f'<span class="mini-wl {"mini-w" if ev["res"] == "W" else "mini-l"}">{ev["res"]}</span>'
+                    for ev in events
+                )
+            else:
+                wl_boxes = '<span style="color:#64748b;font-size:10px;font-weight:700;">Nessuna gara</span>'
+
+            row_html.append(
+                f'<a class="team-tile-link" href="?team={t_encoded}" target="_self">'
+                '<div class="team-square-box">'
+                f"{watermark_html}"
+                '<div class="team-square-top">'
+                f'<span class="team-pos-pill">#{pos_num} POS</span>'
+                f'<span class="team-pts-pill">{int(t_stat.get("pts", 0))} PT</span>'
+                "</div>"
+                f'<div class="team-square-logo-wrap">{logo_img}</div>'
+                f'<div class="team-square-inner-name">{t_name}</div>'
+                '<div class="team-square-hist">'
+                '<div class="team-hist-metrics">'
+                f'<span>G: <b>{int(t_stat.get("p", 0))}</b></span>'
+                f'<span>V-P: <b>{int(t_stat.get("w", 0))}-{int(t_stat.get("l", 0))}</b></span>'
+                f'<span>DIFF: <b>{diff_str}</b></span>'
+                "</div>"
+                f'<div class="team-hist-boxes">{wl_boxes}</div>'
+                "</div>"
+                "</div>"
+                f'<div class="team-caption-below">{t_name}</div>'
+                "</a>"
+            )
+        row_html.append("</div>")
+        st.markdown("".join(row_html), unsafe_allow_html=True)
+
+
 def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: dict[str, str]) -> None:
     st.markdown(MATCH_DETAIL_CSS, unsafe_allow_html=True)
 
@@ -3713,6 +3742,7 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
 
     h_hero_logo = logo_html_map.get(f"hero::{home_name}", '<div class="md-logo-box">🏀</div>')
     a_hero_logo = logo_html_map.get(f"hero::{away_name}", '<div class="md-logo-box">🏀</div>')
+
     score_text = f"{home_pts} - {away_pts}" if is_played else "VS"
 
     st.markdown(
@@ -3803,7 +3833,6 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
         ot_h = int(detail.get("ot_home", 0))
         ot_a = int(detail.get("ot_away", 0))
         has_ot = (ot_h > 0 or ot_a > 0)
-
         ot_th = "<th>OT</th>" if has_ot else ""
         ot_td_h = f"<td>{ot_h}</td>" if has_ot else ""
         ot_td_a = f"<td>{ot_a}</td>" if has_ot else ""
@@ -3819,7 +3848,6 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
             "</tbody></table></div>",
             unsafe_allow_html=True,
         )
-
         with st.expander("✏️ Modifica parziali quarti"):
             qc = st.columns(5)
             nh = [qc[i].number_input(f"{home_name[:10]} Q{i+1}", min_value=0, max_value=80, value=int(q_h[i]), key=f"qh_{match_id}_{i}") for i in range(4)]
@@ -3869,7 +3897,6 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
             {"Statistica": "3PT segnati", home_name: t3_r_h, away_name: t3_r_a},
             {"Statistica": "Falli fatti", home_name: fc_h, away_name: fc_a},
         ]
-
         if is_our_game:
             rim_h = sum(int(p["RIM_O"]) + int(p["RIM_D"]) for p in hp)
             rim_a = sum(int(p["RIM_O"]) + int(p["RIM_D"]) for p in ap)
@@ -3890,6 +3917,7 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
                 f"Tabellino essenziale per le gare senza {OUR_TEAM} (mantenuta solo la % dei tiri liberi; "
                 "nascoste falli subiti, tentativi 2PT/3PT, % da 2, rimbalzi, stoppate, palle perse/recuperate e valutazione)."
             )
+
         render_lba_boxscore(home_name, detail["coach_home"], detail["home_players"], logo_html_map, full_stats=is_our_game)
         render_lba_boxscore(away_name, detail["coach_away"], detail["away_players"], logo_html_map, full_stats=is_our_game)
 
@@ -3918,9 +3946,26 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
                 new_detail = dict(detail)
                 new_detail["coach_home"] = new_coach_h.strip()
                 new_detail["coach_away"] = new_coach_a.strip()
-                new_detail["home_players"] = _editor_df_to_players(edited_h, existing_players=detail["home_players"])
-                new_detail["away_players"] = _editor_df_to_players(edited_a, existing_players=detail["away_players"])
-                with st.spinner("Salvataggio tabellini su GitHub in corso..."):
+                new_detail["home_players"] = _editor_df_to_players(edited_h, detail["home_players"])
+                new_detail["away_players"] = _editor_df_to_players(edited_a, detail["away_players"])
+
+                if is_our_game:
+                    sum_h = sum(int(p["PUN"]) for p in new_detail["home_players"])
+                    sum_a = sum(int(p["PUN"]) for p in new_detail["away_players"])
+                    if sum_h > 0 or sum_a > 0:
+                        ov_payload = {
+                            "Data": str(g["Data"]),
+                            "Stato": "Giocata" if sum_h != sum_a else str(g["Stato"]),
+                            "Punti_Casa": int(sum_h),
+                            "Punti_Trasferta": int(sum_a),
+                        }
+                        _, _, updated_ov = save_game_override_persistent(match_id, ov_payload)
+                        st.session_state["game_overrides"] = updated_ov
+                        st.session_state["games_df"] = apply_overrides_to_df(
+                            build_games_df(DATA_VERSION).copy(), updated_ov
+                        )
+
+                with st.spinner("Salvataggio tabellini su GitHub..."):
                     ok, msg, store = save_match_detail_persistent(match_id, new_detail)
                 st.session_state["match_details_store"] = store
                 st.session_state["flash_msg"] = ("success" if ok else "warning", msg)
@@ -3938,203 +3983,179 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
         st.markdown("</div>", unsafe_allow_html=True)
 
     elif sezioni_gara == "STORICO":
-        st.markdown('<div class="md-sec-card"><div class="md-sec-title">ULTIME PARTITE DISPUTATE</div>', unsafe_allow_html=True)
-        col_left_html = _render_team_history_column(
-            team_name=home_name,
-            label_side="Casa",
-            current_match_id=match_id,
-            current_round=round_num,
-            games_df=games_df,
-            logo_html_map=logo_html_map,
+        st.markdown('<div class="md-sec-card"><div class="md-sec-title">STORICO PARTITE PRECEDENTI</div>', unsafe_allow_html=True)
+        hist_html = (
+            '<div class="hist-grid">'
+            f'{_render_team_history_column(home_name, "CASA", match_id, round_num, games_df, logo_html_map)}'
+            f'{_render_team_history_column(away_name, "TRASFERTA", match_id, round_num, games_df, logo_html_map)}'
+            "</div>"
         )
-        col_right_html = _render_team_history_column(
-            team_name=away_name,
-            label_side="Trasferta",
-            current_match_id=match_id,
-            current_round=round_num,
-            games_df=games_df,
-            logo_html_map=logo_html_map,
-        )
-        st.markdown(f'<div class="hist-grid">{col_left_html}{col_right_html}</div></div>', unsafe_allow_html=True)
+        st.markdown(hist_html, unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
 
-# ==========================================
-# INIZIALIZZAZIONE STATO
-# ==========================================
-if "match_details_store" not in st.session_state:
-    st.session_state["match_details_store"] = load_match_details_store()
-if "games_df" not in st.session_state:
-    st.session_state["games_df"] = load_full_games_df()
-if "selected_match_id" not in st.session_state:
-    st.session_state["selected_match_id"] = None
-if "selected_team_name" not in st.session_state:
-    st.session_state["selected_team_name"] = None
-if "staff_authenticated" not in st.session_state:
-    st.session_state["staff_authenticated"] = False
+def render_calendar_page(girone: str, games_df: pd.DataFrame, logo_html_map: dict[str, str]) -> None:
+    st.markdown(CALENDAR_CSS, unsafe_allow_html=True)
 
-query_match = st.query_params.get("match")
-if query_match:
-    st.session_state["selected_match_id"] = str(query_match)
-    st.session_state["selected_team_name"] = None
-else:
-    query_team = st.query_params.get("team")
-    if query_team:
-        st.session_state["selected_team_name"] = str(query_team)
-        st.session_state["selected_match_id"] = None
+    g_games = games_df[games_df["Girone"] == girone].copy()
+    if g_games.empty:
+        st.info(f"Nessuna partita disponibile per {girone}.")
+        return
 
-st.markdown(GLOBAL_UI_CSS, unsafe_allow_html=True)
-gh_cfg = _get_github_config()
-logo_html_map = build_team_logo_html_map(GITHUB_RAW_BASE)
+    all_rounds = sorted(g_games["Giornata"].astype(int).unique().tolist())
+    teams_in_girone = sorted([t["squadra"] for t in GIRONI_TEAMS.get(girone, [])])
 
-# ==========================================
-# SIDEBAR
-# ==========================================
-with st.sidebar:
-    st.title("🏀 DR2 Puglia")
-    st.caption("Divisione Regionale 2 — Puglia")
-    st.markdown("---")
-    sezione = st.radio(
-        "Sezione",
-        ("Classifiche", "Calendario", "Squadre"),
-        index=0,
+    round_labels = {
+        r: (f"{r}ª Giornata (Andata)" if r <= 11 else f"{r - 11}ª Ritorno • G{r}")
+        for r in all_rounds
+    }
+
+    st.markdown(
+        '<div class="cal-filter-banner">'
+        '<div>'
+        '<div class="cal-filter-title">🔎 Filtri Avanzati Calendario</div>'
+        '<div class="cal-filter-sub">Seleziona una o più giornate e/o una o più squadre (vuoto = mostra tutto)</div>'
+        '</div>'
+        '<div class="cal-filter-pills">'
+        f'<span class="cal-pill gold">{girone}</span>'
+        f'<span class="cal-pill">{len(all_rounds)} Giornate</span>'
+        f'<span class="cal-pill">{len(teams_in_girone)} Squadre</span>'
+        '</div>'
+        '</div>',
+        unsafe_allow_html=True,
     )
-    girone_selezionato = st.selectbox(
-        "Girone",
-        ("Girone A", "Girone B", "Girone C"),
-        index=0,
-    )
-    st.markdown("---")
-    if st.session_state["staff_authenticated"]:
-        st.success("Modalità Staff attiva")
-        if st.button("Esci da Staff", use_container_width=True):
-            st.session_state["staff_authenticated"] = False
-            st.rerun()
-    else:
-        with st.expander("Area Staff (opzionale)", expanded=False):
-            pwd = st.text_input("Password staff", type="password", key="staff_pwd_input")
-            if st.button("Attiva Staff", use_container_width=True):
-                if pwd == STAFF_PASSWORD:
-                    st.session_state["staff_authenticated"] = True
-                    st.rerun()
-                else:
-                    st.error("Password non valida.")
 
-    if not gh_cfg["token"]:
-        st.caption("Nota: senza `GITHUB_TOKEN` le modifiche restano nella sessione corrente.")
-
-# ==========================================
-# CORPO PRINCIPALE
-# ==========================================
-st.markdown(
-    '<div class="topbar-card">'
-    '<div class="topbar-title">🏀 DR2 Puglia — Classifiche e Calendario</div>'
-    '<div class="topbar-sub">Stagione 2026/27 • Gironi A, B e C • Risultati, Streak e Dettagli Gare</div>'
-    "</div>",
-    unsafe_allow_html=True,
-)
-
-games_df = st.session_state["games_df"]
-
-if st.session_state["selected_match_id"]:
-    render_match_detail(st.session_state["selected_match_id"], games_df, logo_html_map)
-elif st.session_state["selected_team_name"]:
-    render_team_page(st.session_state["selected_team_name"], games_df, logo_html_map)
-else:
-    if sezione == "Classifiche":
-        standings_rows = compute_standings(girone_selezionato, games_df)
-        thirds_board = compute_thirds_standings(games_df)
-        render_standings(girone_selezionato, standings_rows, thirds_board, logo_html_map)
-
-    elif sezione == "Squadre":
-        render_teams_grid(girone_selezionato, games_df, logo_html_map)
-
-    else:
-        st.markdown(CALENDAR_CSS, unsafe_allow_html=True)
-        st.subheader(f"Calendario — {girone_selezionato}")
-
-        df_g = games_df[games_df["Girone"] == girone_selezionato].copy()
-        giornate_disponibili = sorted(df_g["Giornata"].dropna().astype(int).unique().tolist())
-        squadre_girone = sorted([t["squadra"] for t in GIRONI_TEAMS.get(girone_selezionato, [])])
-
-        def _format_round_option(r_num: int) -> str:
-            if r_num > 11:
-                return f"{r_num - 11}ª Ritorno (G{r_num})"
-            return f"{r_num}ª Andata (G{r_num})"
-
-        st.markdown(
-            '<div class="cal-filter-banner">'
-            '<div>'
-            '<div class="cal-filter-title">🎛️ Filtri Avanzati Calendario</div>'
-            '<div class="cal-filter-sub">Combina più giornate e più squadre per confrontare incroci, scontri diretti e prossimi impegni.</div>'
-            '</div>'
-            '<div class="cal-filter-pills">'
-            f'<div class="cal-pill">Girone: <span>{girone_selezionato}</span></div>'
-            f'<div class="cal-pill">Giornate: <span>{len(giornate_disponibili)}</span></div>'
-            f'<div class="cal-pill">Club: <span>{len(squadre_girone)}</span></div>'
-            '</div>'
-            '</div>',
-            unsafe_allow_html=True,
-        )
-
-        col_f1, col_f2 = st.columns(2, gap="medium")
-        giornate_scelte = col_f1.multiselect(
-            "📅 Giornate (selezione multipla)",
-            options=giornate_disponibili,
-            default=giornate_disponibili,
-            format_func=_format_round_option,
-            placeholder="Tutte le giornate (clicca per filtrare)...",
-        )
-        squadre_scelte = col_f2.multiselect(
-            "🏀 Squadre (selezione multipla — vuoto = tutte)",
-            options=squadre_girone,
+    f_col1, f_col2 = st.columns([1.15, 1.15], gap="medium")
+    with f_col1:
+        selected_rounds = st.multiselect(
+            "📅 Filtra per giornate",
+            options=all_rounds,
             default=[],
-            placeholder="Tutte le squadre (clicca per selezionare una o più)...",
+            format_func=lambda r: round_labels[r],
+            placeholder="Tutte le giornate (clicca per sceglierne una o più)",
+            key=f"cal_rounds_multi_{girone}",
+        )
+    with f_col2:
+        selected_teams = st.multiselect(
+            "🏀 Filtra per squadre",
+            options=teams_in_girone,
+            default=[],
+            placeholder="Tutte le squadre (clicca per sceglierne una o più)",
+            key=f"cal_teams_multi_{girone}",
         )
 
-        if not giornate_scelte:
-            st.info("Seleziona almeno una giornata nel filtro qui sopra per visualizzare le partite.")
+    active_rounds = sorted(selected_rounds) if selected_rounds else all_rounds
+    if selected_teams:
+        team_set = set(selected_teams)
+        g_games = g_games[g_games["Casa"].isin(team_set) | g_games["Trasferta"].isin(team_set)].copy()
+
+    andata_rounds = [r for r in active_rounds if r <= 11]
+    ritorno_rounds = [r for r in active_rounds if r > 11]
+
+    col_andata, col_ritorno = st.columns(2, gap="medium")
+
+    with col_andata:
+        st.markdown('<div class="cal-phase-hdr">⬆️ GIRONE DI ANDATA (SINISTRA)</div>', unsafe_allow_html=True)
+        rendered_andata = 0
+        for r in andata_rounds:
+            r_df = g_games[g_games["Giornata"].astype(int) == r].sort_values(by=["Data", "ID_Partita"])
+            if selected_teams and r_df.empty:
+                continue
+            rendered_andata += 1
+            st.markdown(
+                build_round_html(r, r_df, logo_html_map, is_ritorno=False, girone_label=girone),
+                unsafe_allow_html=True,
+            )
+        if rendered_andata == 0:
+            st.info("Nessuna gara di andata corrisponde ai filtri selezionati.")
+
+    with col_ritorno:
+        st.markdown('<div class="cal-phase-hdr">⬇️ GIRONE DI RITORNO (DESTRA)</div>', unsafe_allow_html=True)
+        rendered_ritorno = 0
+        for r in ritorno_rounds:
+            r_df = g_games[g_games["Giornata"].astype(int) == r].sort_values(by=["Data", "ID_Partita"])
+            if selected_teams and r_df.empty:
+                continue
+            rendered_ritorno += 1
+            st.markdown(
+                build_round_html(r, r_df, logo_html_map, is_ritorno=True, girone_label=girone),
+                unsafe_allow_html=True,
+            )
+        if rendered_ritorno == 0:
+            st.info("Nessuna gara di ritorno corrisponde ai filtri selezionati.")
+
+
+# ==========================================
+# APPLICAZIONE PRINCIPALE
+# ==========================================
+def main() -> None:
+    st.markdown(GLOBAL_UI_CSS, unsafe_allow_html=True)
+
+    if "match_details_store" not in st.session_state:
+        st.session_state["match_details_store"] = load_match_details_store()
+
+    if "games_df" not in st.session_state:
+        st.session_state["games_df"] = load_full_games_df()
+
+    games_df: pd.DataFrame = st.session_state["games_df"]
+    logo_html_map = build_team_logo_html_map(GITHUB_RAW_BASE)
+
+    qp = st.query_params
+    match_param = qp.get("match")
+    team_param = qp.get("team")
+
+    if match_param:
+        st.session_state["selected_match_id"] = str(match_param)
+    if team_param and not match_param:
+        st.session_state["selected_team_name"] = str(team_param)
+
+    st.markdown(
+        '<div class="topbar-card">'
+        '<div class="topbar-title">🏀 DR2 Puglia — Classifiche e Calendario</div>'
+        '<div class="topbar-sub">Stagione 2026/2027 • Gironi A, B e C • Clicca su una gara o una squadra per i dettagli</div>'
+        "</div>",
+        unsafe_allow_html=True,
+    )
+
+    selected_match = st.session_state.get("selected_match_id")
+    if selected_match:
+        render_match_detail(str(selected_match), games_df, logo_html_map)
+        return
+
+    selected_team = st.session_state.get("selected_team_name")
+    if selected_team:
+        render_team_page(str(selected_team), games_df, logo_html_map)
+        return
+
+    with st.sidebar:
+        st.header("Navigazione")
+        girone = st.selectbox(
+            "Seleziona Girone",
+            ("Girone A", "Girone B", "Girone C"),
+            index=0,
+        )
+        sezione = st.radio(
+            "Sezione",
+            ("Classifica", "Calendario", "Squadre"),
+            index=0,
+        )
+        st.divider()
+        cfg = _get_github_config()
+        if cfg["token"]:
+            st.caption(f"Persistenza GitHub attiva ({cfg['owner']}/{cfg['repo']}@{cfg['branch']}).")
         else:
-            giornate_ordinate = sorted({int(g) for g in giornate_scelte})
-            andata_rounds = [r for r in giornate_ordinate if r <= 11]
-            ritorno_rounds = [r for r in giornate_ordinate if r > 11]
+            st.caption("Modalità locale / sessione (imposta GITHUB_TOKEN per salvare su GitHub).")
 
-            col_andata, col_ritorno = st.columns(2, gap="large")
-            with col_andata:
-                st.markdown('<div class="cal-phase-hdr">ANDATA</div>', unsafe_allow_html=True)
-                if not andata_rounds:
-                    st.info("Nessuna giornata di Andata selezionata.")
-                else:
-                    for r_num in andata_rounds:
-                        r_df = df_g[df_g["Giornata"] == r_num]
-                        if squadre_scelte:
-                            r_df = r_df[r_df["Casa"].isin(squadre_scelte) | r_df["Trasferta"].isin(squadre_scelte)]
-                        st.markdown(
-                            build_round_html(
-                                round_num=r_num,
-                                round_games=r_df,
-                                logo_html_map=logo_html_map,
-                                is_ritorno=False,
-                                girone_label=girone_selezionato,
-                            ),
-                            unsafe_allow_html=True,
-                        )
+    if sezione == "Classifica":
+        board_rows = compute_standings(girone, games_df)
+        thirds_board = compute_thirds_standings(games_df)
+        render_standings(girone, board_rows, thirds_board, logo_html_map)
+    elif sezione == "Calendario":
+        render_calendar_page(girone, games_df, logo_html_map)
+    else:
+        render_teams_grid_page(girone, games_df, logo_html_map)
 
-            with col_ritorno:
-                st.markdown('<div class="cal-phase-hdr">RITORNO</div>', unsafe_allow_html=True)
-                if not ritorno_rounds:
-                    st.info("Nessuna giornata di Ritorno selezionata.")
-                else:
-                    for r_num in ritorno_rounds:
-                        r_df = df_g[df_g["Giornata"] == r_num]
-                        if squadre_scelte:
-                            r_df = r_df[r_df["Casa"].isin(squadre_scelte) | r_df["Trasferta"].isin(squadre_scelte)]
-                        st.markdown(
-                            build_round_html(
-                                round_num=r_num,
-                                round_games=r_df,
-                                logo_html_map=logo_html_map,
-                                is_ritorno=True,
-                                girone_label=girone_selezionato,
-                            ),
-                            unsafe_allow_html=True,
-                        )
+
+if __name__ == "__main__":
+    main()
+Analisi in corso…
