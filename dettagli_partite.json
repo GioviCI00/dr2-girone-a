@@ -195,7 +195,7 @@
     ],
     "away_players": [
       {
-        "Giocatore": "Provaroni Ferdinando",
+        "Giocatore": "Ferdinando Provaroni",
         "NUM": 0,
         "PUN": 3,
         "MIN": "13:03",
@@ -205,8 +205,8 @@
         "2PT_R": 0,
         "2PT_T": 0,
         "SC": 0,
-        "3PT_R": 1,
-        "3PT_T": 1,
+        "3PT_R": 0,
+        "3PT_T": 0,
         "TL_R": 0,
         "TL_T": 0,
         "RIM_O": 0,
