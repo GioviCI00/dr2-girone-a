@@ -2334,5 +2334,52 @@
         "OER": 0.0
       }
     ]
+  },
+  "A01_1871": {
+    "coach_home": "Vito Diana",
+    "coach_away": "Antonello Panzarino",
+    "quarters_home": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "quarters_away": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "ot_home": 0,
+    "ot_away": 0,
+    "home_players": [
+      {
+        "Giocatore": "Ferdinando Provaroni",
+        "NUM": 0,
+        "PUN": 8,
+        "MIN": "26:00",
+        "SF": true,
+        "F_C": 2,
+        "F_S": 0,
+        "2PT_R": 0,
+        "2PT_T": 0,
+        "SC": 0,
+        "3PT_R": 0,
+        "3PT_T": 0,
+        "TL_R": 0,
+        "TL_T": 1,
+        "RIM_O": 0,
+        "RIM_D": 0,
+        "ST_D": 0,
+        "ST_S": 0,
+        "PAL_P": 0,
+        "PAL_R": 0,
+        "ASS": 0,
+        "VAL": 0,
+        "OER": 0.0
+      }
+    ],
+    "away_players": [],
+    "notes": ""
   }
 }
