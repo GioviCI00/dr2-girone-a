@@ -1,5570 +1,9887 @@
 import base64
+
 import html as html_lib
+
 import json
+
 import os
+
 import re
+
 from pathlib import Path
+
 from urllib.error import HTTPError
+
 from urllib.parse import quote
+
 from urllib.request import Request, urlopen
 
+
+
 import pandas as pd
+
 import streamlit as st
 
+
+
 st.set_page_config(
+
     page_title="DR2 Puglia — Classifiche e Calendario",
+
     page_icon="🏀",
+
     layout="wide",
+
 )
 
+
+
 # ==========================================
+
 # CONFIGURAZIONE
+
 # ==========================================
+
 DATA_VERSION = "2026-11-26-v21-player-modal-fixed"
+
 OUR_TEAM = "New Virtus Basket Toritto"
+
 HIGHLIGHT_TEAM = "AGS DIL. TORITTO"
+
 STAFF_PASSWORD = os.environ.get("DR2_STAFF_PASSWORD", "dr2puglia")
 
+
+
 DEFAULT_GITHUB_OWNER = "GioviCI00"
+
 DEFAULT_GITHUB_REPO = "dr2-girone-a"
+
 DEFAULT_GITHUB_BRANCH = "main"
 
+
+
 GITHUB_RAW_BASE = os.environ.get(
+
     "DR2_GITHUB_RAW_BASE",
+
     f"https://raw.githubusercontent.com/{DEFAULT_GITHUB_OWNER}/{DEFAULT_GITHUB_REPO}/{DEFAULT_GITHUB_BRANCH}",
+
 ).strip()
 
+
+
 OVERRIDES_PATH = "modifiche_partita.json"
+
 DETAILS_PATH = "dettagli_partite.json"
+
 LOCAL_OVERRIDES_FILE = Path(OVERRIDES_PATH)
+
 LOCAL_DETAILS_FILE = Path(DETAILS_PATH)
 
+
+
 GIRONI_TEAMS: dict[str, list[dict[str, str]]] = {
+
     "Girone A": [
+
         {"squadra": "ASD MAGIC BARI", "logo": "Magic Bari.png"},
+
         {"squadra": "ASD POL. BASKET BITRITTO", "logo": "basket bitritto.png"},
+
         {"squadra": "ASD VI.G.OR BASKET SAN SEVERO", "logo": "Vigor San Severo.png"},
+
         {"squadra": "ASD VIRTUS FOGGIA", "logo": "Virtus Foggia.png"},
+
         {"squadra": "ECOFAN CERIGNOLA MEDITERRANEA 92", "logo": "Mediterranea Cerignola.png"},
+
         {"squadra": "FORTITUDO BASKET APRICENA", "logo": "Fortitudo Basket Apricena.png"},
+
         {"squadra": "GINNASTICA ANGIULLI BARI", "logo": "Angiulli Basket Bari.png"},
+
         {"squadra": "PALLACANESTRO OLIMPIA CORATO", "logo": "Olimpia Corato.png"},
+
         {"squadra": "POL. DIL. NUOVA MATTEOTTI CORATO", "logo": "Nuova Matteotti Corato.png"},
+
         {"squadra": "POLISPORTIVA ORSA CAPURSO SSD ARL", "logo": "orsa capurso.png"},
+
         {"squadra": "AGS DIL. TORITTO", "logo": "A.G.S.D. TORITTO.png"},
+
     ],
+
     "Girone B": [
+
         {"squadra": "ASD ATLETICA BASKET PUTIGNANO", "logo": "Atletica Basket Putignano.png"},
+
         {"squadra": "ASD BASKET FASANO", "logo": "ASD Basket Fasano.png"},
+
         {"squadra": "ASD CLUB GIGANTI CISTERNINO", "logo": "Club Giganti Cisternino.png"},
+
         {"squadra": "ASD DREAM BASKET ALTAMURA", "logo": "Dream Basket Altamura.png"},
+
         {"squadra": "ASD MESSAPICA BASKET CEGLIE", "logo": "Messapica Bk Ceglie.png"},
+
         {"squadra": "ASD MURGIA BASKET SANTERAMO", "logo": "Murgia Basket Santeramo.png"},
+
         {"squadra": "ASD SCUOLA BASKET MARTINESE", "logo": "SBM Martina Franca.png"},
+
         {"squadra": "DOMITI LA PINTA BASKET PULSANO", "logo": "Domiti La Pinta ASD Pulsano.png"},
+
         {"squadra": "MASSERIA SEMERARO NEW SPORTING MOTTOLA", "logo": "New Sporting Mottola.png"},
+
         {"squadra": "POL. OLYMPIA CLUB RUTIGLIANO", "logo": "olympia rutigliano.png"},
+
         {"squadra": "SUPPORT_O TARANTO", "logo": "Support_o Taranto.png"},
+
     ],
+
     "Girone C": [
+
         {"squadra": "A.POL.DIL.AURORA BRINDISI", "logo": "Aurora Brindisi.png"},
+
         {"squadra": "ALL STAR BASKET FRANCAVILLA", "logo": "All Star Francavilla.png"},
+
         {"squadra": "ASD ASSI BASKET BRINDISI", "logo": "ASSI Brindisi.png"},
+
         {"squadra": "ASD BASKET TRICASE", "logo": "Basket Tricase.png"},
+
         {"squadra": "ASD BELLFIKA MESAGNE", "logo": "Bellfika Mesagne.png"},
+
         {"squadra": "ASD MAGIC GALATINA", "logo": "Magic Galatina.png"},
+
         {"squadra": "ASD NEW BASKET CARMIANO", "logo": "New Basket Carmiano.png"},
+
         {"squadra": "ASD POLISPORTIVA MANDURIA", "logo": "Basket Manduria.png"},
+
         {"squadra": "AZ DISINFESTAZIONI SRL VIRTUS BRINDISI", "logo": "Virtus Brindisi.png"},
+
         {"squadra": "DIERRE ARREDAMENTI CALIMERA BASKET", "logo": "Calimera Zero21.png"},
+
         {"squadra": "SENSI PALLACANESTRO LUPA LECCE", "logo": "Pallacanestro Lupa Lecce.png"},
+
     ],
+
 }
 
+
+
 TEAM_COLORS: dict[str, dict[str, str]] = {
+
     # Girone A
+
     "AGS DIL. TORITTO": {"label": "Bianco - Blu", "primary": "#f8fafc", "secondary": "#1d4ed8", "text": "#0f172a"},
+
     "ASD VI.G.OR BASKET SAN SEVERO": {"label": "Bianco - Rosso", "primary": "#f8fafc", "secondary": "#dc2626", "text": "#0f172a"},
+
     "POLISPORTIVA ORSA CAPURSO SSD ARL": {"label": "Nero - Arancione", "primary": "#111827", "secondary": "#f97316", "text": "#ffffff"},
+
     "ASD POL. BASKET BITRITTO": {"label": "Bianco - Verde", "primary": "#f8fafc", "secondary": "#16a34a", "text": "#0f172a"},
+
     "GINNASTICA ANGIULLI BARI": {"label": "Azzurro - Bianco", "primary": "#0284c7", "secondary": "#f8fafc", "text": "#ffffff"},
+
     "ASD MAGIC BARI": {"label": "Bianco", "primary": "#f8fafc", "secondary": "#334155", "text": "#0f172a"},
+
     "ECOFAN CERIGNOLA MEDITERRANEA 92": {"label": "Bianco - Azzurro", "primary": "#f8fafc", "secondary": "#0284c7", "text": "#0f172a"},
+
     "POL. DIL. NUOVA MATTEOTTI CORATO": {"label": "Bianco - Blu", "primary": "#f8fafc", "secondary": "#1d4ed8", "text": "#0f172a"},
+
     "FORTITUDO BASKET APRICENA": {"label": "Bianco - Blu", "primary": "#f8fafc", "secondary": "#1d4ed8", "text": "#0f172a"},
+
     "PALLACANESTRO OLIMPIA CORATO": {"label": "Bianco - Rosso", "primary": "#f8fafc", "secondary": "#dc2626", "text": "#0f172a"},
+
     "ASD VIRTUS FOGGIA": {"label": "Bianco - Azzurro", "primary": "#f8fafc", "secondary": "#0284c7", "text": "#0f172a"},
+
     # Girone B
+
     "ASD SCUOLA BASKET MARTINESE": {"label": "Bianco - Verde", "primary": "#f8fafc", "secondary": "#16a34a", "text": "#0f172a"},
+
     "POL. OLYMPIA CLUB RUTIGLIANO": {"label": "Granata - Bianco", "primary": "#881337", "secondary": "#f8fafc", "text": "#ffffff"},
+
     "ASD DREAM BASKET ALTAMURA": {"label": "Bianco", "primary": "#f8fafc", "secondary": "#334155", "text": "#0f172a"},
+
     "ASD MESSAPICA BASKET CEGLIE": {"label": "Giallo - Blu", "primary": "#facc15", "secondary": "#1d4ed8", "text": "#0f172a"},
+
     "ASD MURGIA BASKET SANTERAMO": {"label": "Bianco - Azzurro", "primary": "#f8fafc", "secondary": "#0284c7", "text": "#0f172a"},
+
     "ASD ATLETICA BASKET PUTIGNANO": {"label": "Arancione - Nero", "primary": "#ea580c", "secondary": "#111827", "text": "#ffffff"},
+
     "MASSERIA SEMERARO NEW SPORTING MOTTOLA": {"label": "Blu - Giallo", "primary": "#1d4ed8", "secondary": "#facc15", "text": "#ffffff"},
+
     "SUPPORT_O TARANTO": {"label": "Bianco - Blu", "primary": "#f8fafc", "secondary": "#1d4ed8", "text": "#0f172a"},
+
     "ASD CLUB GIGANTI CISTERNINO": {"label": "Giallo - Blu", "primary": "#facc15", "secondary": "#1d4ed8", "text": "#0f172a"},
+
     "DOMITI LA PINTA BASKET PULSANO": {"label": "Blu - Bianco", "primary": "#1d4ed8", "secondary": "#f8fafc", "text": "#ffffff"},
+
     "ASD BASKET FASANO": {"label": "Bianco - Azzurro", "primary": "#f8fafc", "secondary": "#0284c7", "text": "#0f172a"},
+
     # Girone C
+
     "ASD ASSI BASKET BRINDISI": {"label": "Rosso - Bianco", "primary": "#dc2626", "secondary": "#f8fafc", "text": "#ffffff"},
+
     "ALL STAR BASKET FRANCAVILLA": {"label": "Bianco - Arancione", "primary": "#f8fafc", "secondary": "#ea580c", "text": "#0f172a"},
+
     "ASD NEW BASKET CARMIANO": {"label": "Rosso - Blu", "primary": "#dc2626", "secondary": "#1d4ed8", "text": "#ffffff"},
+
     "ASD BASKET TRICASE": {"label": "Verde - Bianco", "primary": "#16a34a", "secondary": "#f8fafc", "text": "#ffffff"},
+
     "A.POL.DIL.AURORA BRINDISI": {"label": "Giallo - Blu", "primary": "#facc15", "secondary": "#1d4ed8", "text": "#0f172a"},
+
     "AZ DISINFESTAZIONI SRL VIRTUS BRINDISI": {"label": "Giallo - Nero", "primary": "#facc15", "secondary": "#111827", "text": "#0f172a"},
+
     "ASD MAGIC GALATINA": {"label": "Bianco", "primary": "#f8fafc", "secondary": "#334155", "text": "#0f172a"},
+
     "ASD BELLFIKA MESAGNE": {"label": "Blu - Bianco", "primary": "#1d4ed8", "secondary": "#f8fafc", "text": "#ffffff"},
+
     "DIERRE ARREDAMENTI CALIMERA BASKET": {"label": "Giallo - Blu", "primary": "#facc15", "secondary": "#1d4ed8", "text": "#0f172a"},
+
     "ASD POLISPORTIVA MANDURIA": {"label": "Verde - Nero", "primary": "#16a34a", "secondary": "#111827", "text": "#ffffff"},
+
     "SENSI PALLACANESTRO LUPA LECCE": {"label": "Rosso - Giallo", "primary": "#dc2626", "secondary": "#facc15", "text": "#ffffff"},
+
 }
+
+
+
 
 
 def _hex_to_rgb(hex_color: str) -> tuple[int, int, int]:
+
     h = hex_color.strip().lstrip("#")
+
     if len(h) == 3:
+
         h = "".join(c * 2 for c in h)
+
     if len(h) != 6:
+
         return (29, 78, 216)
+
     return (int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16))
 
 
+
+
+
 def _rgba(hex_color: str, alpha: float) -> str:
+
     r, g, b = _hex_to_rgb(hex_color)
+
     return f"rgba({r}, {g}, {b}, {alpha:.2f})"
 
 
+
+
+
 def _get_team_palette(team_name: str) -> dict[str, str]:
+
     clean = str(team_name or "").strip()
+
     base = TEAM_COLORS.get(
+
         clean,
+
         {"label": "Blu - Oro", "primary": "#1d4ed8", "secondary": "#fbbf24", "text": "#ffffff"},
+
     )
+
     prim = base["primary"]
+
     sec = base["secondary"]
+
     txt = base["text"]
+
     # Colore saturo principale per sfondi scuri/bordo (evita che il bianco bruci i testi chiari su card scure)
+
     is_white_prim = prim.lower() in ("#f8fafc", "#ffffff")
+
     rich_main = sec if is_white_prim else prim
+
     rich_accent = prim if is_white_prim else sec
+
     # Colore vivo garantito visibile su sfondo scuro
+
     visible_accent = "#f8fafc" if rich_accent.lower() in ("#111827", "#334155") else rich_accent
+
     visible_main = "#38bdf8" if rich_main.lower() in ("#111827", "#334155") else rich_main
+
     return {
+
         "label": base["label"],
+
         "primary": prim,
+
         "secondary": sec,
+
         "text": txt,
+
         "rich_main": rich_main,
+
         "rich_accent": rich_accent,
+
         "visible_main": visible_main,
+
         "visible_accent": visible_accent,
+
     }
 
+
+
 DEFAULT_GAMES_RAW = [
+
     # ==========================================
+
     # GIRONE A (Giornate 1-22 + Risultati G1-G3)
+
     # ==========================================
+
     ("A01_1867", "Girone A", 1, "Sab 07/11/2026 19:00", "POL. DIL. NUOVA MATTEOTTI CORATO", "PALLACANESTRO OLIMPIA CORATO", 72, 67, "Giocata"),
+
     ("A01_1868", "Girone A", 1, "Dom 08/11/2026 18:30", "FORTITUDO BASKET APRICENA", "ECOFAN CERIGNOLA MEDITERRANEA 92", 50, 76, "Giocata"),
+
     ("A01_1869", "Girone A", 1, "Dom 08/11/2026 18:00", "GINNASTICA ANGIULLI BARI", "ASD MAGIC BARI", 68, 50, "Giocata"),
+
     ("A01_1870", "Girone A", 1, "Sab 07/11/2026 18:30", "ASD VIRTUS FOGGIA", "POLISPORTIVA ORSA CAPURSO SSD ARL", 78, 87, "Giocata"),
+
     ("A01_1871", "Girone A", 1, "Dom 08/11/2026 18:30", "ASD POL. BASKET BITRITTO", "AGS DIL. TORITTO", 62, 81, "Giocata"),
+
     ("A02_1872", "Girone A", 2, "Sab 14/11/2026 18:00", "ASD VI.G.OR BASKET SAN SEVERO", "ASD VIRTUS FOGGIA", 69, 65, "Giocata"),
+
     ("A02_1873", "Girone A", 2, "Dom 15/11/2026 20:15", "PALLACANESTRO OLIMPIA CORATO", "FORTITUDO BASKET APRICENA", 50, 56, "Giocata"),
+
     ("A02_1874", "Girone A", 2, "Dom 15/11/2026 19:00", "ECOFAN CERIGNOLA MEDITERRANEA 92", "POL. DIL. NUOVA MATTEOTTI CORATO", 49, 59, "Giocata"),
+
     ("A02_1875", "Girone A", 2, "Dom 15/11/2026 19:00", "AGS DIL. TORITTO", "GINNASTICA ANGIULLI BARI", 85, 96, "Giocata"),
+
     ("A02_1876", "Girone A", 2, "Dom 15/11/2026 17:30", "ASD MAGIC BARI", "ASD POL. BASKET BITRITTO", 56, 48, "Giocata"),
+
     ("A03_1877", "Girone A", 3, "Sab 21/11/2026 19:30", "GINNASTICA ANGIULLI BARI", "ECOFAN CERIGNOLA MEDITERRANEA 92", 86, 75, "Giocata"),
+
     ("A03_1878", "Girone A", 3, "Dom 22/11/2026 18:30", "FORTITUDO BASKET APRICENA", "ASD MAGIC BARI", 69, 79, "Giocata"),
+
     ("A03_1879", "Girone A", 3, "Dom 22/11/2026 18:00", "POLISPORTIVA ORSA CAPURSO SSD ARL", "ASD VI.G.OR BASKET SAN SEVERO", 78, 75, "Giocata"),
+
     ("A03_1880", "Girone A", 3, "Sab 21/11/2026 19:00", "POL. DIL. NUOVA MATTEOTTI CORATO", "AGS DIL. TORITTO", 64, 77, "Giocata"),
+
     ("A03_1881", "Girone A", 3, "Dom 22/11/2026 18:30", "ASD POL. BASKET BITRITTO", "PALLACANESTRO OLIMPIA CORATO", 51, 50, "Giocata"),
+
     ("A04_1882", "Girone A", 4, "Dom 29/11/2026 17:30", "POL. DIL. NUOVA MATTEOTTI CORATO", "ASD MAGIC BARI", 0, 0, "Da giocare"),
+
     ("A04_1883", "Girone A", 4, "Dom 29/11/2026 19:00", "AGS DIL. TORITTO", "FORTITUDO BASKET APRICENA", 0, 0, "Da giocare"),
+
     ("A04_1884", "Girone A", 4, "Sab 28/11/2026 18:30", "ASD VIRTUS FOGGIA", "GINNASTICA ANGIULLI BARI", 0, 0, "Da giocare"),
+
     ("A04_1885", "Girone A", 4, "Dom 29/11/2026 18:00", "POLISPORTIVA ORSA CAPURSO SSD ARL", "PALLACANESTRO OLIMPIA CORATO", 0, 0, "Da giocare"),
+
     ("A04_1886", "Girone A", 4, "Sab 28/11/2026 19:45", "ASD VI.G.OR BASKET SAN SEVERO", "ASD POL. BASKET BITRITTO", 0, 0, "Da giocare"),
+
     ("A05_1887", "Girone A", 5, "Dom 06/12/2026 17:30", "ASD MAGIC BARI", "POLISPORTIVA ORSA CAPURSO SSD ARL", 0, 0, "Da giocare"),
+
     ("A05_1888", "Girone A", 5, "Dom 06/12/2026 19:00", "ECOFAN CERIGNOLA MEDITERRANEA 92", "AGS DIL. TORITTO", 0, 0, "Da giocare"),
+
     ("A05_1889", "Girone A", 5, "Dom 06/12/2026 20:15", "PALLACANESTRO OLIMPIA CORATO", "ASD VI.G.OR BASKET SAN SEVERO", 0, 0, "Da giocare"),
+
     ("A05_1890", "Girone A", 5, "Dom 06/12/2026 18:30", "ASD POL. BASKET BITRITTO", "ASD VIRTUS FOGGIA", 0, 0, "Da giocare"),
+
     ("A05_1891", "Girone A", 5, "Sab 05/12/2026 19:30", "GINNASTICA ANGIULLI BARI", "POL. DIL. NUOVA MATTEOTTI CORATO", 0, 0, "Da giocare"),
+
     ("A06_1892", "Girone A", 6, "Dom 13/12/2026 18:30", "FORTITUDO BASKET APRICENA", "ASD POL. BASKET BITRITTO", 0, 0, "Da giocare"),
+
     ("A06_1893", "Girone A", 6, "Dom 13/12/2026 20:15", "PALLACANESTRO OLIMPIA CORATO", "ASD MAGIC BARI", 0, 0, "Da giocare"),
+
     ("A06_1894", "Girone A", 6, "Sab 12/12/2026 19:00", "POL. DIL. NUOVA MATTEOTTI CORATO", "ASD VI.G.OR BASKET SAN SEVERO", 0, 0, "Da giocare"),
+
     ("A06_1895", "Girone A", 6, "Dom 13/12/2026 18:00", "POLISPORTIVA ORSA CAPURSO SSD ARL", "GINNASTICA ANGIULLI BARI", 0, 0, "Da giocare"),
+
     ("A06_1896", "Girone A", 6, "Gio 17/12/2026 20:00", "ASD VIRTUS FOGGIA", "ECOFAN CERIGNOLA MEDITERRANEA 92", 0, 0, "Da giocare"),
+
     ("A07_1897", "Girone A", 7, "Sab 19/12/2026 18:00", "ASD VI.G.OR BASKET SAN SEVERO", "FORTITUDO BASKET APRICENA", 0, 0, "Da giocare"),
+
     ("A07_1898", "Girone A", 7, "Dom 20/12/2026 19:00", "ECOFAN CERIGNOLA MEDITERRANEA 92", "PALLACANESTRO OLIMPIA CORATO", 0, 0, "Da giocare"),
+
     ("A07_1899", "Girone A", 7, "Dom 20/12/2026 18:30", "ASD POL. BASKET BITRITTO", "POL. DIL. NUOVA MATTEOTTI CORATO", 0, 0, "Da giocare"),
+
     ("A07_1900", "Girone A", 7, "Dom 20/12/2026 19:00", "AGS DIL. TORITTO", "POLISPORTIVA ORSA CAPURSO SSD ARL", 0, 0, "Da giocare"),
+
     ("A07_1901", "Girone A", 7, "Dom 20/12/2026 17:30", "ASD MAGIC BARI", "ASD VIRTUS FOGGIA", 0, 0, "Da giocare"),
+
     ("A08_1902", "Girone A", 8, "Dom 10/01/2027 18:30", "FORTITUDO BASKET APRICENA", "GINNASTICA ANGIULLI BARI", 0, 0, "Da giocare"),
+
     ("A08_1903", "Girone A", 8, "Dom 10/01/2027 19:00", "AGS DIL. TORITTO", "ASD VI.G.OR BASKET SAN SEVERO", 0, 0, "Da giocare"),
+
     ("A08_1904", "Girone A", 8, "Dom 10/01/2027 19:00", "ECOFAN CERIGNOLA MEDITERRANEA 92", "ASD MAGIC BARI", 0, 0, "Da giocare"),
+
     ("A08_1905", "Girone A", 8, "Sab 09/01/2027 19:00", "POL. DIL. NUOVA MATTEOTTI CORATO", "POLISPORTIVA ORSA CAPURSO SSD ARL", 0, 0, "Da giocare"),
+
     ("A08_1906", "Girone A", 8, "Dom 10/01/2027 20:15", "PALLACANESTRO OLIMPIA CORATO", "ASD VIRTUS FOGGIA", 0, 0, "Da giocare"),
+
     ("A09_1907", "Girone A", 9, "Sab 16/01/2027 18:00", "ASD VI.G.OR BASKET SAN SEVERO", "ASD MAGIC BARI", 0, 0, "Da giocare"),
+
     ("A09_1908", "Girone A", 9, "Sab 16/01/2027 18:30", "ASD VIRTUS FOGGIA", "AGS DIL. TORITTO", 0, 0, "Da giocare"),
+
     ("A09_1909", "Girone A", 9, "Dom 17/01/2027 18:00", "POLISPORTIVA ORSA CAPURSO SSD ARL", "ECOFAN CERIGNOLA MEDITERRANEA 92", 0, 0, "Da giocare"),
+
     ("A09_1910", "Girone A", 9, "Sab 16/01/2027 19:30", "GINNASTICA ANGIULLI BARI", "ASD POL. BASKET BITRITTO", 0, 0, "Da giocare"),
+
     ("A09_1911", "Girone A", 9, "Sab 16/01/2027 17:00", "POL. DIL. NUOVA MATTEOTTI CORATO", "FORTITUDO BASKET APRICENA", 0, 0, "Da giocare"),
+
     ("A10_1912", "Girone A", 10, "Dom 24/01/2027 19:00", "AGS DIL. TORITTO", "PALLACANESTRO OLIMPIA CORATO", 0, 0, "Da giocare"),
+
     ("A10_1913", "Girone A", 10, "Dom 24/01/2027 19:00", "ECOFAN CERIGNOLA MEDITERRANEA 92", "ASD POL. BASKET BITRITTO", 0, 0, "Da giocare"),
+
     ("A10_1914", "Girone A", 10, "Dom 24/01/2027 18:00", "POLISPORTIVA ORSA CAPURSO SSD ARL", "FORTITUDO BASKET APRICENA", 0, 0, "Da giocare"),
+
     ("A10_1915", "Girone A", 10, "Sab 23/01/2027 19:30", "GINNASTICA ANGIULLI BARI", "ASD VI.G.OR BASKET SAN SEVERO", 0, 0, "Da giocare"),
+
     ("A10_1916", "Girone A", 10, "Sab 23/01/2027 18:30", "ASD VIRTUS FOGGIA", "POL. DIL. NUOVA MATTEOTTI CORATO", 0, 0, "Da giocare"),
+
     ("A11_1917", "Girone A", 11, "Dom 31/01/2027 17:30", "ASD MAGIC BARI", "AGS DIL. TORITTO", 0, 0, "Da giocare"),
+
     ("A11_1918", "Girone A", 11, "Dom 31/01/2027 18:30", "ASD POL. BASKET BITRITTO", "POLISPORTIVA ORSA CAPURSO SSD ARL", 0, 0, "Da giocare"),
+
     ("A11_1919", "Girone A", 11, "Dom 31/01/2027 18:30", "FORTITUDO BASKET APRICENA", "ASD VIRTUS FOGGIA", 0, 0, "Da giocare"),
+
     ("A11_1920", "Girone A", 11, "Dom 31/01/2027 20:15", "PALLACANESTRO OLIMPIA CORATO", "GINNASTICA ANGIULLI BARI", 0, 0, "Da giocare"),
+
     ("A11_1921", "Girone A", 11, "Sab 30/01/2027 18:00", "ASD VI.G.OR BASKET SAN SEVERO", "ECOFAN CERIGNOLA MEDITERRANEA 92", 0, 0, "Da giocare"),
+
     ("A12_1922", "Girone A", 12, "Dom 07/02/2027 18:00", "POLISPORTIVA ORSA CAPURSO SSD ARL", "ASD VIRTUS FOGGIA", 0, 0, "Da giocare"),
+
     ("A12_1923", "Girone A", 12, "Dom 07/02/2027 19:00", "ECOFAN CERIGNOLA MEDITERRANEA 92", "FORTITUDO BASKET APRICENA", 0, 0, "Da giocare"),
+
     ("A12_1924", "Girone A", 12, "Dom 07/02/2027 17:30", "ASD MAGIC BARI", "GINNASTICA ANGIULLI BARI", 0, 0, "Da giocare"),
+
     ("A12_1925", "Girone A", 12, "Sab 06/02/2027 19:00", "AGS DIL. TORITTO", "ASD POL. BASKET BITRITTO", 0, 0, "Da giocare"),
+
     ("A12_1926", "Girone A", 12, "Dom 07/02/2027 20:15", "PALLACANESTRO OLIMPIA CORATO", "POL. DIL. NUOVA MATTEOTTI CORATO", 0, 0, "Da giocare"),
+
     ("A13_1927", "Girone A", 13, "Sab 13/02/2027 18:30", "ASD VIRTUS FOGGIA", "ASD VI.G.OR BASKET SAN SEVERO", 0, 0, "Da giocare"),
+
     ("A13_1928", "Girone A", 13, "Sab 13/02/2027 19:30", "GINNASTICA ANGIULLI BARI", "AGS DIL. TORITTO", 0, 0, "Da giocare"),
+
     ("A13_1929", "Girone A", 13, "Sab 13/02/2027 19:00", "POL. DIL. NUOVA MATTEOTTI CORATO", "ECOFAN CERIGNOLA MEDITERRANEA 92", 0, 0, "Da giocare"),
+
     ("A13_1930", "Girone A", 13, "Dom 14/02/2027 20:15", "ASD POL. BASKET BITRITTO", "ASD MAGIC BARI", 0, 0, "Da giocare"),
+
     ("A13_1931", "Girone A", 13, "Dom 14/02/2027 18:30", "FORTITUDO BASKET APRICENA", "PALLACANESTRO OLIMPIA CORATO", 0, 0, "Da giocare"),
+
     ("A14_1932", "Girone A", 14, "Sab 20/02/2027 18:00", "ASD VI.G.OR BASKET SAN SEVERO", "POLISPORTIVA ORSA CAPURSO SSD ARL", 0, 0, "Da giocare"),
+
     ("A14_1933", "Girone A", 14, "Dom 21/02/2027 19:00", "AGS DIL. TORITTO", "POL. DIL. NUOVA MATTEOTTI CORATO", 0, 0, "Da giocare"),
+
     ("A14_1934", "Girone A", 14, "Dom 21/02/2027 20:15", "PALLACANESTRO OLIMPIA CORATO", "ASD POL. BASKET BITRITTO", 0, 0, "Da giocare"),
+
     ("A14_1935", "Girone A", 14, "Dom 21/02/2027 19:00", "ECOFAN CERIGNOLA MEDITERRANEA 92", "GINNASTICA ANGIULLI BARI", 0, 0, "Da giocare"),
+
     ("A14_1936", "Girone A", 14, "Dom 21/02/2027 17:30", "ASD MAGIC BARI", "FORTITUDO BASKET APRICENA", 0, 0, "Da giocare"),
+
     ("A15_1937", "Girone A", 15, "Sab 27/02/2027 20:00", "POL. DIL. NUOVA MATTEOTTI CORATO", "ASD MAGIC BARI", 0, 0, "Da giocare"),
+
     ("A15_1938", "Girone A", 15, "Dom 28/02/2027 18:30", "FORTITUDO BASKET APRICENA", "AGS DIL. TORITTO", 0, 0, "Da giocare"),
+
     ("A15_1939", "Girone A", 15, "Dom 28/02/2027 20:15", "ASD POL. BASKET BITRITTO", "ASD VI.G.OR BASKET SAN SEVERO", 0, 0, "Da giocare"),
+
     ("A15_1940", "Girone A", 15, "Dom 28/02/2027 20:15", "PALLACANESTRO OLIMPIA CORATO", "POLISPORTIVA ORSA CAPURSO SSD ARL", 0, 0, "Da giocare"),
+
     ("A15_1941", "Girone A", 15, "Sab 27/02/2027 19:30", "GINNASTICA ANGIULLI BARI", "ASD VIRTUS FOGGIA", 0, 0, "Da giocare"),
+
     ("A16_1942", "Girone A", 16, "Sab 06/03/2027 18:00", "ASD VI.G.OR BASKET SAN SEVERO", "PALLACANESTRO OLIMPIA CORATO", 0, 0, "Da giocare"),
+
     ("A16_1943", "Girone A", 16, "Dom 07/03/2027 18:00", "POLISPORTIVA ORSA CAPURSO SSD ARL", "ASD MAGIC BARI", 0, 0, "Da giocare"),
+
     ("A16_1944", "Girone A", 16, "Dom 07/03/2027 19:00", "AGS DIL. TORITTO", "ECOFAN CERIGNOLA MEDITERRANEA 92", 0, 0, "Da giocare"),
+
     ("A16_1945", "Girone A", 16, "Sab 06/03/2027 17:00", "POL. DIL. NUOVA MATTEOTTI CORATO", "GINNASTICA ANGIULLI BARI", 0, 0, "Da giocare"),
+
     ("A16_1946", "Girone A", 16, "Sab 06/03/2027 18:30", "ASD VIRTUS FOGGIA", "ASD POL. BASKET BITRITTO", 0, 0, "Da giocare"),
+
     ("A17_1947", "Girone A", 17, "Sab 13/03/2027 19:30", "GINNASTICA ANGIULLI BARI", "POLISPORTIVA ORSA CAPURSO SSD ARL", 0, 0, "Da giocare"),
+
     ("A17_1948", "Girone A", 17, "Dom 14/03/2027 19:00", "ECOFAN CERIGNOLA MEDITERRANEA 92", "ASD VIRTUS FOGGIA", 0, 0, "Da giocare"),
+
     ("A17_1949", "Girone A", 17, "Sab 13/03/2027 18:00", "ASD VI.G.OR BASKET SAN SEVERO", "POL. DIL. NUOVA MATTEOTTI CORATO", 0, 0, "Da giocare"),
+
     ("A17_1950", "Girone A", 17, "Dom 14/03/2027 17:30", "ASD MAGIC BARI", "PALLACANESTRO OLIMPIA CORATO", 0, 0, "Da giocare"),
+
     ("A17_1951", "Girone A", 17, "Dom 14/03/2027 18:30", "ASD POL. BASKET BITRITTO", "FORTITUDO BASKET APRICENA", 0, 0, "Da giocare"),
+
     ("A18_1952", "Girone A", 18, "Dom 21/03/2027 18:30", "ASD VIRTUS FOGGIA", "ASD MAGIC BARI", 0, 0, "Da giocare"),
+
     ("A18_1953", "Girone A", 18, "Dom 21/03/2027 18:00", "POLISPORTIVA ORSA CAPURSO SSD ARL", "AGS DIL. TORITTO", 0, 0, "Da giocare"),
+
     ("A18_1954", "Girone A", 18, "Dom 21/03/2027 18:30", "FORTITUDO BASKET APRICENA", "ASD VI.G.OR BASKET SAN SEVERO", 0, 0, "Da giocare"),
+
     ("A18_1955", "Girone A", 18, "Sab 20/03/2027 19:00", "POL. DIL. NUOVA MATTEOTTI CORATO", "ASD POL. BASKET BITRITTO", 0, 0, "Da giocare"),
+
     ("A18_1956", "Girone A", 18, "Dom 21/03/2027 20:15", "PALLACANESTRO OLIMPIA CORATO", "ECOFAN CERIGNOLA MEDITERRANEA 92", 0, 0, "Da giocare"),
+
     ("A19_1957", "Girone A", 19, "Sab 03/04/2027 18:30", "ASD VIRTUS FOGGIA", "PALLACANESTRO OLIMPIA CORATO", 0, 0, "Da giocare"),
+
     ("A19_1958", "Girone A", 19, "Sab 03/04/2027 18:00", "ASD VI.G.OR BASKET SAN SEVERO", "AGS DIL. TORITTO", 0, 0, "Da giocare"),
+
     ("A19_1959", "Girone A", 19, "Dom 04/04/2027 17:30", "ASD MAGIC BARI", "ECOFAN CERIGNOLA MEDITERRANEA 92", 0, 0, "Da giocare"),
+
     ("A19_1960", "Girone A", 19, "Sab 03/04/2027 19:30", "GINNASTICA ANGIULLI BARI", "FORTITUDO BASKET APRICENA", 0, 0, "Da giocare"),
+
     ("A19_1961", "Girone A", 19, "Dom 04/04/2027 18:00", "POLISPORTIVA ORSA CAPURSO SSD ARL", "POL. DIL. NUOVA MATTEOTTI CORATO", 0, 0, "Da giocare"),
+
     ("A20_1962", "Girone A", 20, "Dom 11/04/2027 19:00", "ECOFAN CERIGNOLA MEDITERRANEA 92", "POLISPORTIVA ORSA CAPURSO SSD ARL", 0, 0, "Da giocare"),
+
     ("A20_1963", "Girone A", 20, "Dom 11/04/2027 17:30", "ASD MAGIC BARI", "ASD VI.G.OR BASKET SAN SEVERO", 0, 0, "Da giocare"),
+
     ("A20_1964", "Girone A", 20, "Dom 11/04/2027 18:30", "FORTITUDO BASKET APRICENA", "POL. DIL. NUOVA MATTEOTTI CORATO", 0, 0, "Da giocare"),
+
     ("A20_1965", "Girone A", 20, "Dom 11/04/2027 19:00", "AGS DIL. TORITTO", "ASD VIRTUS FOGGIA", 0, 0, "Da giocare"),
+
     ("A20_1966", "Girone A", 20, "Dom 11/04/2027 18:30", "ASD POL. BASKET BITRITTO", "GINNASTICA ANGIULLI BARI", 0, 0, "Da giocare"),
+
     ("A21_1967", "Girone A", 21, "Dom 18/04/2027 20:15", "PALLACANESTRO OLIMPIA CORATO", "AGS DIL. TORITTO", 0, 0, "Da giocare"),
+
     ("A21_1968", "Girone A", 21, "Dom 18/04/2027 18:30", "ASD POL. BASKET BITRITTO", "ECOFAN CERIGNOLA MEDITERRANEA 92", 0, 0, "Da giocare"),
+
     ("A21_1969", "Girone A", 21, "Sab 17/04/2027 18:00", "ASD VI.G.OR BASKET SAN SEVERO", "GINNASTICA ANGIULLI BARI", 0, 0, "Da giocare"),
+
     ("A21_1970", "Girone A", 21, "Dom 18/04/2027 18:30", "FORTITUDO BASKET APRICENA", "POLISPORTIVA ORSA CAPURSO SSD ARL", 0, 0, "Da giocare"),
+
     ("A21_1971", "Girone A", 21, "Sab 17/04/2027 19:00", "POL. DIL. NUOVA MATTEOTTI CORATO", "ASD VIRTUS FOGGIA", 0, 0, "Da giocare"),
+
     ("A22_1972", "Girone A", 22, "Sab 24/04/2027 18:00", "POLISPORTIVA ORSA CAPURSO SSD ARL", "ASD POL. BASKET BITRITTO", 0, 0, "Da giocare"),
+
     ("A22_1973", "Girone A", 22, "Dom 25/04/2027 19:00", "AGS DIL. TORITTO", "ASD MAGIC BARI", 0, 0, "Da giocare"),
+
     ("A22_1974", "Girone A", 22, "Dom 25/04/2027 19:00", "ECOFAN CERIGNOLA MEDITERRANEA 92", "ASD VI.G.OR BASKET SAN SEVERO", 0, 0, "Da giocare"),
+
     ("A22_1975", "Girone A", 22, "Sab 24/04/2027 18:30", "ASD VIRTUS FOGGIA", "FORTITUDO BASKET APRICENA", 0, 0, "Da giocare"),
+
     ("A22_1976", "Girone A", 22, "Sab 24/04/2027 19:30", "GINNASTICA ANGIULLI BARI", "PALLACANESTRO OLIMPIA CORATO", 0, 0, "Da giocare"),
 
-    # ==========================================
-    # GIRONE B (Giornate 1-22 + Risultati G1-G3)
-    # ==========================================
-    ("B01_2109", "Girone B", 1, "Sab 07/11/2026 18:45", "ASD SCUOLA BASKET MARTINESE", "ASD DREAM BASKET ALTAMURA", 41, 62, "Giocata"),
-    ("B01_2110", "Girone B", 1, "Dom 08/11/2026 17:30", "ASD MURGIA BASKET SANTERAMO", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", 70, 59, "Giocata"),
-    ("B01_2111", "Girone B", 1, "Dom 08/11/2026 18:00", "SUPPORT_O TARANTO", "DOMITI LA PINTA BASKET PULSANO", 71, 59, "Giocata"),
-    ("B01_2112", "Girone B", 1, "Sab 07/11/2026 19:00", "ASD BASKET FASANO", "ASD ATLETICA BASKET PUTIGNANO", 49, 63, "Giocata"),
-    ("B01_2113", "Girone B", 1, "Sab 07/11/2026 19:00", "ASD CLUB GIGANTI CISTERNINO", "ASD MESSAPICA BASKET CEGLIE", 69, 57, "Giocata"),
-    ("B02_2114", "Girone B", 2, "Sab 14/11/2026 20:00", "ASD MESSAPICA BASKET CEGLIE", "POL. OLYMPIA CLUB RUTIGLIANO", 65, 85, "Giocata"),
-    ("B02_2115", "Girone B", 2, "Dom 15/11/2026 18:00", "ASD DREAM BASKET ALTAMURA", "ASD BASKET FASANO", 66, 59, "Giocata"),
-    ("B02_2116", "Girone B", 2, "Sab 14/11/2026 18:00", "ASD ATLETICA BASKET PUTIGNANO", "ASD SCUOLA BASKET MARTINESE", 55, 34, "Giocata"),
-    ("B02_2117", "Girone B", 2, "Dom 15/11/2026 18:30", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", "SUPPORT_O TARANTO", 64, 55, "Giocata"),
-    ("B02_2118", "Girone B", 2, "Dom 15/11/2026 18:00", "DOMITI LA PINTA BASKET PULSANO", "ASD MURGIA BASKET SANTERAMO", 59, 56, "Giocata"),
-    ("B03_2119", "Girone B", 3, "Dom 22/11/2026 18:00", "ASD BASKET FASANO", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", 75, 61, "Giocata"),
-    ("B03_2120", "Girone B", 3, "Sab 21/11/2026 18:45", "ASD SCUOLA BASKET MARTINESE", "DOMITI LA PINTA BASKET PULSANO", 54, 57, "Giocata"),
-    ("B03_2121", "Girone B", 3, "Dom 22/11/2026 18:00", "POL. OLYMPIA CLUB RUTIGLIANO", "ASD CLUB GIGANTI CISTERNINO", 76, 54, "Giocata"),
-    ("B03_2122", "Girone B", 3, "Dom 22/11/2026 18:00", "SUPPORT_O TARANTO", "ASD DREAM BASKET ALTAMURA", 65, 70, "Giocata"),
-    ("B03_2123", "Girone B", 3, "Dom 22/11/2026 17:30", "ASD MURGIA BASKET SANTERAMO", "ASD ATLETICA BASKET PUTIGNANO", 54, 57, "Giocata"),
-    ("B04_2124", "Girone B", 4, "Sab 28/11/2026 19:00", "ASD CLUB GIGANTI CISTERNINO", "ASD DREAM BASKET ALTAMURA", 0, 0, "Da giocare"),
-    ("B04_2125", "Girone B", 4, "Sab 28/11/2026 20:00", "ASD MESSAPICA BASKET CEGLIE", "ASD MURGIA BASKET SANTERAMO", 0, 0, "Da giocare"),
-    ("B04_2126", "Girone B", 4, "Dom 29/11/2026 18:00", "DOMITI LA PINTA BASKET PULSANO", "ASD BASKET FASANO", 0, 0, "Da giocare"),
-    ("B04_2127", "Girone B", 4, "Dom 29/11/2026 18:30", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", "ASD SCUOLA BASKET MARTINESE", 0, 0, "Da giocare"),
-    ("B04_2128", "Girone B", 4, "Dom 29/11/2026 18:00", "POL. OLYMPIA CLUB RUTIGLIANO", "SUPPORT_O TARANTO", 0, 0, "Da giocare"),
-    ("B05_2129", "Girone B", 5, "Dom 06/12/2026 17:30", "ASD MURGIA BASKET SANTERAMO", "ASD SCUOLA BASKET MARTINESE", 0, 0, "Da giocare"),
-    ("B05_2130", "Girone B", 5, "Gio 03/12/2026 20:30", "ASD DREAM BASKET ALTAMURA", "POL. OLYMPIA CLUB RUTIGLIANO", 0, 0, "Da giocare"),
-    ("B05_2131", "Girone B", 5, "Dom 06/12/2026 18:00", "SUPPORT_O TARANTO", "ASD MESSAPICA BASKET CEGLIE", 0, 0, "Da giocare"),
-    ("B05_2132", "Girone B", 5, "Dom 06/12/2026 18:30", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", "ASD CLUB GIGANTI CISTERNINO", 0, 0, "Da giocare"),
-    ("B05_2133", "Girone B", 5, "Sab 05/12/2026 18:00", "ASD ATLETICA BASKET PUTIGNANO", "DOMITI LA PINTA BASKET PULSANO", 0, 0, "Da giocare"),
-    ("B06_2134", "Girone B", 6, "Sab 12/12/2026 18:45", "ASD SCUOLA BASKET MARTINESE", "POL. OLYMPIA CLUB RUTIGLIANO", 0, 0, "Da giocare"),
-    ("B06_2135", "Girone B", 6, "Sab 12/12/2026 19:00", "ASD BASKET FASANO", "SUPPORT_O TARANTO", 0, 0, "Da giocare"),
-    ("B06_2136", "Girone B", 6, "Dom 13/12/2026 18:00", "ASD DREAM BASKET ALTAMURA", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", 0, 0, "Da giocare"),
-    ("B06_2137", "Girone B", 6, "Sab 12/12/2026 20:00", "ASD MESSAPICA BASKET CEGLIE", "ASD ATLETICA BASKET PUTIGNANO", 0, 0, "Da giocare"),
-    ("B06_2138", "Girone B", 6, "Sab 12/12/2026 19:00", "ASD CLUB GIGANTI CISTERNINO", "ASD MURGIA BASKET SANTERAMO", 0, 0, "Da giocare"),
-    ("B07_2139", "Girone B", 7, "Sab 19/12/2026 18:00", "ASD ATLETICA BASKET PUTIGNANO", "ASD DREAM BASKET ALTAMURA", 0, 0, "Da giocare"),
-    ("B07_2140", "Girone B", 7, "Dom 20/12/2026 18:30", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", "ASD MESSAPICA BASKET CEGLIE", 0, 0, "Da giocare"),
-    ("B07_2141", "Girone B", 7, "Sab 19/12/2026 19:30", "DOMITI LA PINTA BASKET PULSANO", "ASD CLUB GIGANTI CISTERNINO", 0, 0, "Da giocare"),
-    ("B07_2142", "Girone B", 7, "Dom 20/12/2026 18:00", "SUPPORT_O TARANTO", "ASD SCUOLA BASKET MARTINESE", 0, 0, "Da giocare"),
-    ("B07_2143", "Girone B", 7, "Dom 20/12/2026 18:00", "POL. OLYMPIA CLUB RUTIGLIANO", "ASD BASKET FASANO", 0, 0, "Da giocare"),
-    ("B08_2144", "Girone B", 8, "Sab 09/01/2027 19:00", "ASD BASKET FASANO", "ASD MURGIA BASKET SANTERAMO", 0, 0, "Da giocare"),
-    ("B08_2145", "Girone B", 8, "Sab 09/01/2027 18:00", "ASD ATLETICA BASKET PUTIGNANO", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", 0, 0, "Da giocare"),
-    ("B08_2146", "Girone B", 8, "Sab 09/01/2027 18:45", "ASD SCUOLA BASKET MARTINESE", "ASD CLUB GIGANTI CISTERNINO", 0, 0, "Da giocare"),
-    ("B08_2147", "Girone B", 8, "Dom 10/01/2027 18:00", "DOMITI LA PINTA BASKET PULSANO", "POL. OLYMPIA CLUB RUTIGLIANO", 0, 0, "Da giocare"),
-    ("B08_2148", "Girone B", 8, "Dom 10/01/2027 18:00", "ASD DREAM BASKET ALTAMURA", "ASD MESSAPICA BASKET CEGLIE", 0, 0, "Da giocare"),
-    ("B09_2149", "Girone B", 9, "Sab 16/01/2027 20:00", "ASD MESSAPICA BASKET CEGLIE", "DOMITI LA PINTA BASKET PULSANO", 0, 0, "Da giocare"),
-    ("B09_2150", "Girone B", 9, "Dom 17/01/2027 18:00", "POL. OLYMPIA CLUB RUTIGLIANO", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", 0, 0, "Da giocare"),
-    ("B09_2151", "Girone B", 9, "Sab 16/01/2027 19:00", "ASD CLUB GIGANTI CISTERNINO", "ASD ATLETICA BASKET PUTIGNANO", 0, 0, "Da giocare"),
-    ("B09_2152", "Girone B", 9, "Dom 17/01/2027 18:30", "ASD MURGIA BASKET SANTERAMO", "SUPPORT_O TARANTO", 0, 0, "Da giocare"),
-    ("B09_2153", "Girone B", 9, "Sab 16/01/2027 18:45", "ASD SCUOLA BASKET MARTINESE", "ASD BASKET FASANO", 0, 0, "Da giocare"),
-    ("B10_2154", "Girone B", 10, "Sab 23/01/2027 19:00", "ASD CLUB GIGANTI CISTERNINO", "ASD BASKET FASANO", 0, 0, "Da giocare"),
-    ("B10_2155", "Girone B", 10, "Dom 24/01/2027 18:00", "DOMITI LA PINTA BASKET PULSANO", "ASD DREAM BASKET ALTAMURA", 0, 0, "Da giocare"),
-    ("B10_2156", "Girone B", 10, "Sab 23/01/2027 19:30", "ASD ATLETICA BASKET PUTIGNANO", "SUPPORT_O TARANTO", 0, 0, "Da giocare"),
-    ("B10_2157", "Girone B", 10, "Ven 22/01/2027 21:00", "ASD MESSAPICA BASKET CEGLIE", "ASD SCUOLA BASKET MARTINESE", 0, 0, "Da giocare"),
-    ("B10_2158", "Girone B", 10, "Dom 24/01/2027 18:30", "ASD MURGIA BASKET SANTERAMO", "POL. OLYMPIA CLUB RUTIGLIANO", 0, 0, "Da giocare"),
-    ("B11_2159", "Girone B", 11, "Dom 31/01/2027 18:00", "ASD DREAM BASKET ALTAMURA", "ASD MURGIA BASKET SANTERAMO", 0, 0, "Da giocare"),
-    ("B11_2160", "Girone B", 11, "Dom 31/01/2027 18:00", "SUPPORT_O TARANTO", "ASD CLUB GIGANTI CISTERNINO", 0, 0, "Da giocare"),
-    ("B11_2161", "Girone B", 11, "Dom 31/01/2027 18:00", "ASD BASKET FASANO", "ASD MESSAPICA BASKET CEGLIE", 0, 0, "Da giocare"),
-    ("B11_2162", "Girone B", 11, "Dom 31/01/2027 18:00", "POL. OLYMPIA CLUB RUTIGLIANO", "ASD ATLETICA BASKET PUTIGNANO", 0, 0, "Da giocare"),
-    ("B11_2163", "Girone B", 11, "Dom 31/01/2027 18:30", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", "DOMITI LA PINTA BASKET PULSANO", 0, 0, "Da giocare"),
-    ("B12_2164", "Girone B", 12, "Sab 06/02/2027 20:00", "ASD MESSAPICA BASKET CEGLIE", "ASD CLUB GIGANTI CISTERNINO", 0, 0, "Da giocare"),
-    ("B12_2165", "Girone B", 12, "Dom 07/02/2027 18:00", "DOMITI LA PINTA BASKET PULSANO", "SUPPORT_O TARANTO", 0, 0, "Da giocare"),
-    ("B12_2166", "Girone B", 12, "Sab 06/02/2027 18:00", "ASD ATLETICA BASKET PUTIGNANO", "ASD BASKET FASANO", 0, 0, "Da giocare"),
-    ("B12_2167", "Girone B", 12, "Dom 07/02/2027 18:30", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", "ASD MURGIA BASKET SANTERAMO", 0, 0, "Da giocare"),
-    ("B12_2168", "Girone B", 12, "Dom 07/02/2027 18:00", "ASD DREAM BASKET ALTAMURA", "ASD SCUOLA BASKET MARTINESE", 0, 0, "Da giocare"),
-    ("B13_2169", "Girone B", 13, "Sab 13/02/2027 19:00", "ASD BASKET FASANO", "ASD DREAM BASKET ALTAMURA", 0, 0, "Da giocare"),
-    ("B13_2170", "Girone B", 13, "Dom 14/02/2027 18:30", "ASD MURGIA BASKET SANTERAMO", "DOMITI LA PINTA BASKET PULSANO", 0, 0, "Da giocare"),
-    ("B13_2171", "Girone B", 13, "Sab 13/02/2027 18:45", "ASD SCUOLA BASKET MARTINESE", "ASD ATLETICA BASKET PUTIGNANO", 0, 0, "Da giocare"),
-    ("B13_2172", "Girone B", 13, "Dom 14/02/2027 18:00", "POL. OLYMPIA CLUB RUTIGLIANO", "ASD MESSAPICA BASKET CEGLIE", 0, 0, "Da giocare"),
-    ("B13_2173", "Girone B", 13, "Dom 14/02/2027 18:00", "SUPPORT_O TARANTO", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", 0, 0, "Da giocare"),
-    ("B14_2174", "Girone B", 14, "Dom 21/02/2027 18:00", "ASD DREAM BASKET ALTAMURA", "SUPPORT_O TARANTO", 0, 0, "Da giocare"),
-    ("B14_2175", "Girone B", 14, "Dom 21/02/2027 18:00", "DOMITI LA PINTA BASKET PULSANO", "ASD SCUOLA BASKET MARTINESE", 0, 0, "Da giocare"),
-    ("B14_2176", "Girone B", 14, "Sab 20/02/2027 18:00", "ASD ATLETICA BASKET PUTIGNANO", "ASD MURGIA BASKET SANTERAMO", 0, 0, "Da giocare"),
-    ("B14_2177", "Girone B", 14, "Sab 20/02/2027 19:00", "ASD CLUB GIGANTI CISTERNINO", "POL. OLYMPIA CLUB RUTIGLIANO", 0, 0, "Da giocare"),
-    ("B14_2178", "Girone B", 14, "Dom 21/02/2027 18:30", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", "ASD BASKET FASANO", 0, 0, "Da giocare"),
-    ("B15_2179", "Girone B", 15, "Dom 28/02/2027 18:30", "ASD MURGIA BASKET SANTERAMO", "ASD MESSAPICA BASKET CEGLIE", 0, 0, "Da giocare"),
-    ("B15_2180", "Girone B", 15, "Sab 27/02/2027 18:45", "ASD SCUOLA BASKET MARTINESE", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", 0, 0, "Da giocare"),
-    ("B15_2181", "Girone B", 15, "Dom 28/02/2027 18:00", "ASD DREAM BASKET ALTAMURA", "ASD CLUB GIGANTI CISTERNINO", 0, 0, "Da giocare"),
-    ("B15_2182", "Girone B", 15, "Dom 28/02/2027 18:00", "SUPPORT_O TARANTO", "POL. OLYMPIA CLUB RUTIGLIANO", 0, 0, "Da giocare"),
-    ("B15_2183", "Girone B", 15, "Dom 28/02/2027 18:00", "ASD BASKET FASANO", "DOMITI LA PINTA BASKET PULSANO", 0, 0, "Da giocare"),
-    ("B16_2184", "Girone B", 16, "Dom 07/03/2027 18:00", "POL. OLYMPIA CLUB RUTIGLIANO", "ASD DREAM BASKET ALTAMURA", 0, 0, "Da giocare"),
-    ("B16_2185", "Girone B", 16, "Sab 06/03/2027 18:45", "ASD SCUOLA BASKET MARTINESE", "ASD MURGIA BASKET SANTERAMO", 0, 0, "Da giocare"),
-    ("B16_2186", "Girone B", 16, "Ven 05/03/2027 19:00", "ASD MESSAPICA BASKET CEGLIE", "SUPPORT_O TARANTO", 0, 0, "Da giocare"),
-    ("B16_2187", "Girone B", 16, "Dom 07/03/2027 18:00", "DOMITI LA PINTA BASKET PULSANO", "ASD ATLETICA BASKET PUTIGNANO", 0, 0, "Da giocare"),
-    ("B16_2188", "Girone B", 16, "Sab 06/03/2027 19:00", "ASD CLUB GIGANTI CISTERNINO", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", 0, 0, "Da giocare"),
-    ("B17_2189", "Girone B", 17, "Dom 14/03/2027 18:00", "POL. OLYMPIA CLUB RUTIGLIANO", "ASD SCUOLA BASKET MARTINESE", 0, 0, "Da giocare"),
-    ("B17_2190", "Girone B", 17, "Dom 14/03/2027 18:30", "ASD MURGIA BASKET SANTERAMO", "ASD CLUB GIGANTI CISTERNINO", 0, 0, "Da giocare"),
-    ("B17_2191", "Girone B", 17, "Dom 14/03/2027 18:00", "SUPPORT_O TARANTO", "ASD BASKET FASANO", 0, 0, "Da giocare"),
-    ("B17_2192", "Girone B", 17, "Gio 11/03/2027 21:00", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", "ASD DREAM BASKET ALTAMURA", 0, 0, "Da giocare"),
-    ("B17_2193", "Girone B", 17, "Sab 13/03/2027 18:00", "ASD ATLETICA BASKET PUTIGNANO", "ASD MESSAPICA BASKET CEGLIE", 0, 0, "Da giocare"),
-    ("B18_2194", "Girone B", 18, "Sab 20/03/2027 19:00", "ASD CLUB GIGANTI CISTERNINO", "DOMITI LA PINTA BASKET PULSANO", 0, 0, "Da giocare"),
-    ("B18_2195", "Girone B", 18, "Sab 20/03/2027 18:45", "ASD SCUOLA BASKET MARTINESE", "SUPPORT_O TARANTO", 0, 0, "Da giocare"),
-    ("B18_2196", "Girone B", 18, "Ven 19/03/2027 21:00", "ASD MESSAPICA BASKET CEGLIE", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", 0, 0, "Da giocare"),
-    ("B18_2197", "Girone B", 18, "Dom 21/03/2027 18:00", "ASD BASKET FASANO", "POL. OLYMPIA CLUB RUTIGLIANO", 0, 0, "Da giocare"),
-    ("B18_2198", "Girone B", 18, "Dom 21/03/2027 18:00", "ASD DREAM BASKET ALTAMURA", "ASD ATLETICA BASKET PUTIGNANO", 0, 0, "Da giocare"),
-    ("B19_2199", "Girone B", 19, "Dom 04/04/2027 18:30", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", "ASD ATLETICA BASKET PUTIGNANO", 0, 0, "Da giocare"),
-    ("B19_2200", "Girone B", 19, "Dom 04/04/2027 18:30", "ASD MURGIA BASKET SANTERAMO", "ASD BASKET FASANO", 0, 0, "Da giocare"),
-    ("B19_2201", "Girone B", 19, "Dom 04/04/2027 18:00", "POL. OLYMPIA CLUB RUTIGLIANO", "DOMITI LA PINTA BASKET PULSANO", 0, 0, "Da giocare"),
-    ("B19_2202", "Girone B", 19, "Sab 03/04/2027 20:00", "ASD MESSAPICA BASKET CEGLIE", "ASD DREAM BASKET ALTAMURA", 0, 0, "Da giocare"),
-    ("B19_2203", "Girone B", 19, "Sab 03/04/2027 19:00", "ASD CLUB GIGANTI CISTERNINO", "ASD SCUOLA BASKET MARTINESE", 0, 0, "Da giocare"),
-    ("B20_2204", "Girone B", 20, "Dom 11/04/2027 18:00", "DOMITI LA PINTA BASKET PULSANO", "ASD MESSAPICA BASKET CEGLIE", 0, 0, "Da giocare"),
-    ("B20_2205", "Girone B", 20, "Dom 11/04/2027 18:00", "SUPPORT_O TARANTO", "ASD MURGIA BASKET SANTERAMO", 0, 0, "Da giocare"),
-    ("B20_2206", "Girone B", 20, "Sab 10/04/2027 19:00", "ASD BASKET FASANO", "ASD SCUOLA BASKET MARTINESE", 0, 0, "Da giocare"),
-    ("B20_2207", "Girone B", 20, "Dom 11/04/2027 18:30", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", "POL. OLYMPIA CLUB RUTIGLIANO", 0, 0, "Da giocare"),
-    ("B20_2208", "Girone B", 20, "Sab 10/04/2027 18:00", "ASD ATLETICA BASKET PUTIGNANO", "ASD CLUB GIGANTI CISTERNINO", 0, 0, "Da giocare"),
-    ("B21_2209", "Girone B", 21, "Dom 18/04/2027 18:00", "DOMITI LA PINTA BASKET PULSANO", "ASD DREAM BASKET ALTAMURA", 0, 0, "Da giocare"),
-    ("B21_2210", "Girone B", 21, "Dom 18/04/2027 18:00", "POL. OLYMPIA CLUB RUTIGLIANO", "ASD MURGIA BASKET SANTERAMO", 0, 0, "Da giocare"),
-    ("B21_2211", "Girone B", 21, "Sab 17/04/2027 18:45", "ASD SCUOLA BASKET MARTINESE", "ASD MESSAPICA BASKET CEGLIE", 0, 0, "Da giocare"),
-    ("B21_2212", "Girone B", 21, "Sab 17/04/2027 19:00", "ASD CLUB GIGANTI CISTERNINO", "ASD BASKET FASANO", 0, 0, "Da giocare"),
-    ("B21_2213", "Girone B", 21, "Dom 18/04/2027 18:00", "SUPPORT_O TARANTO", "ASD ATLETICA BASKET PUTIGNANO", 0, 0, "Da giocare"),
-    ("B22_2214", "Girone B", 22, "Dom 25/04/2027 18:00", "DOMITI LA PINTA BASKET PULSANO", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", 0, 0, "Da giocare"),
-    ("B22_2215", "Girone B", 22, "Dom 25/04/2027 18:30", "ASD MURGIA BASKET SANTERAMO", "ASD DREAM BASKET ALTAMURA", 0, 0, "Da giocare"),
-    ("B22_2216", "Girone B", 22, "Sab 24/04/2027 20:00", "ASD MESSAPICA BASKET CEGLIE", "ASD BASKET FASANO", 0, 0, "Da giocare"),
-    ("B22_2217", "Girone B", 22, "Sab 24/04/2027 18:00", "ASD ATLETICA BASKET PUTIGNANO", "POL. OLYMPIA CLUB RUTIGLIANO", 0, 0, "Da giocare"),
-    ("B22_2218", "Girone B", 22, "Sab 24/04/2027 19:00", "ASD CLUB GIGANTI CISTERNINO", "SUPPORT_O TARANTO", 0, 0, "Da giocare"),
+
 
     # ==========================================
-    # GIRONE C (Giornate 1-22 + Risultati G1-G3)
+
+    # GIRONE B (Giornate 1-22 + Risultati G1-G3)
+
     # ==========================================
+
+    ("B01_2109", "Girone B", 1, "Sab 07/11/2026 18:45", "ASD SCUOLA BASKET MARTINESE", "ASD DREAM BASKET ALTAMURA", 41, 62, "Giocata"),
+
+    ("B01_2110", "Girone B", 1, "Dom 08/11/2026 17:30", "ASD MURGIA BASKET SANTERAMO", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", 70, 59, "Giocata"),
+
+    ("B01_2111", "Girone B", 1, "Dom 08/11/2026 18:00", "SUPPORT_O TARANTO", "DOMITI LA PINTA BASKET PULSANO", 71, 59, "Giocata"),
+
+    ("B01_2112", "Girone B", 1, "Sab 07/11/2026 19:00", "ASD BASKET FASANO", "ASD ATLETICA BASKET PUTIGNANO", 49, 63, "Giocata"),
+
+    ("B01_2113", "Girone B", 1, "Sab 07/11/2026 19:00", "ASD CLUB GIGANTI CISTERNINO", "ASD MESSAPICA BASKET CEGLIE", 69, 57, "Giocata"),
+
+    ("B02_2114", "Girone B", 2, "Sab 14/11/2026 20:00", "ASD MESSAPICA BASKET CEGLIE", "POL. OLYMPIA CLUB RUTIGLIANO", 65, 85, "Giocata"),
+
+    ("B02_2115", "Girone B", 2, "Dom 15/11/2026 18:00", "ASD DREAM BASKET ALTAMURA", "ASD BASKET FASANO", 66, 59, "Giocata"),
+
+    ("B02_2116", "Girone B", 2, "Sab 14/11/2026 18:00", "ASD ATLETICA BASKET PUTIGNANO", "ASD SCUOLA BASKET MARTINESE", 55, 34, "Giocata"),
+
+    ("B02_2117", "Girone B", 2, "Dom 15/11/2026 18:30", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", "SUPPORT_O TARANTO", 64, 55, "Giocata"),
+
+    ("B02_2118", "Girone B", 2, "Dom 15/11/2026 18:00", "DOMITI LA PINTA BASKET PULSANO", "ASD MURGIA BASKET SANTERAMO", 59, 56, "Giocata"),
+
+    ("B03_2119", "Girone B", 3, "Dom 22/11/2026 18:00", "ASD BASKET FASANO", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", 75, 61, "Giocata"),
+
+    ("B03_2120", "Girone B", 3, "Sab 21/11/2026 18:45", "ASD SCUOLA BASKET MARTINESE", "DOMITI LA PINTA BASKET PULSANO", 54, 57, "Giocata"),
+
+    ("B03_2121", "Girone B", 3, "Dom 22/11/2026 18:00", "POL. OLYMPIA CLUB RUTIGLIANO", "ASD CLUB GIGANTI CISTERNINO", 76, 54, "Giocata"),
+
+    ("B03_2122", "Girone B", 3, "Dom 22/11/2026 18:00", "SUPPORT_O TARANTO", "ASD DREAM BASKET ALTAMURA", 65, 70, "Giocata"),
+
+    ("B03_2123", "Girone B", 3, "Dom 22/11/2026 17:30", "ASD MURGIA BASKET SANTERAMO", "ASD ATLETICA BASKET PUTIGNANO", 54, 57, "Giocata"),
+
+    ("B04_2124", "Girone B", 4, "Sab 28/11/2026 19:00", "ASD CLUB GIGANTI CISTERNINO", "ASD DREAM BASKET ALTAMURA", 0, 0, "Da giocare"),
+
+    ("B04_2125", "Girone B", 4, "Sab 28/11/2026 20:00", "ASD MESSAPICA BASKET CEGLIE", "ASD MURGIA BASKET SANTERAMO", 0, 0, "Da giocare"),
+
+    ("B04_2126", "Girone B", 4, "Dom 29/11/2026 18:00", "DOMITI LA PINTA BASKET PULSANO", "ASD BASKET FASANO", 0, 0, "Da giocare"),
+
+    ("B04_2127", "Girone B", 4, "Dom 29/11/2026 18:30", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", "ASD SCUOLA BASKET MARTINESE", 0, 0, "Da giocare"),
+
+    ("B04_2128", "Girone B", 4, "Dom 29/11/2026 18:00", "POL. OLYMPIA CLUB RUTIGLIANO", "SUPPORT_O TARANTO", 0, 0, "Da giocare"),
+
+    ("B05_2129", "Girone B", 5, "Dom 06/12/2026 17:30", "ASD MURGIA BASKET SANTERAMO", "ASD SCUOLA BASKET MARTINESE", 0, 0, "Da giocare"),
+
+    ("B05_2130", "Girone B", 5, "Gio 03/12/2026 20:30", "ASD DREAM BASKET ALTAMURA", "POL. OLYMPIA CLUB RUTIGLIANO", 0, 0, "Da giocare"),
+
+    ("B05_2131", "Girone B", 5, "Dom 06/12/2026 18:00", "SUPPORT_O TARANTO", "ASD MESSAPICA BASKET CEGLIE", 0, 0, "Da giocare"),
+
+    ("B05_2132", "Girone B", 5, "Dom 06/12/2026 18:30", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", "ASD CLUB GIGANTI CISTERNINO", 0, 0, "Da giocare"),
+
+    ("B05_2133", "Girone B", 5, "Sab 05/12/2026 18:00", "ASD ATLETICA BASKET PUTIGNANO", "DOMITI LA PINTA BASKET PULSANO", 0, 0, "Da giocare"),
+
+    ("B06_2134", "Girone B", 6, "Sab 12/12/2026 18:45", "ASD SCUOLA BASKET MARTINESE", "POL. OLYMPIA CLUB RUTIGLIANO", 0, 0, "Da giocare"),
+
+    ("B06_2135", "Girone B", 6, "Sab 12/12/2026 19:00", "ASD BASKET FASANO", "SUPPORT_O TARANTO", 0, 0, "Da giocare"),
+
+    ("B06_2136", "Girone B", 6, "Dom 13/12/2026 18:00", "ASD DREAM BASKET ALTAMURA", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", 0, 0, "Da giocare"),
+
+    ("B06_2137", "Girone B", 6, "Sab 12/12/2026 20:00", "ASD MESSAPICA BASKET CEGLIE", "ASD ATLETICA BASKET PUTIGNANO", 0, 0, "Da giocare"),
+
+    ("B06_2138", "Girone B", 6, "Sab 12/12/2026 19:00", "ASD CLUB GIGANTI CISTERNINO", "ASD MURGIA BASKET SANTERAMO", 0, 0, "Da giocare"),
+
+    ("B07_2139", "Girone B", 7, "Sab 19/12/2026 18:00", "ASD ATLETICA BASKET PUTIGNANO", "ASD DREAM BASKET ALTAMURA", 0, 0, "Da giocare"),
+
+    ("B07_2140", "Girone B", 7, "Dom 20/12/2026 18:30", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", "ASD MESSAPICA BASKET CEGLIE", 0, 0, "Da giocare"),
+
+    ("B07_2141", "Girone B", 7, "Sab 19/12/2026 19:30", "DOMITI LA PINTA BASKET PULSANO", "ASD CLUB GIGANTI CISTERNINO", 0, 0, "Da giocare"),
+
+    ("B07_2142", "Girone B", 7, "Dom 20/12/2026 18:00", "SUPPORT_O TARANTO", "ASD SCUOLA BASKET MARTINESE", 0, 0, "Da giocare"),
+
+    ("B07_2143", "Girone B", 7, "Dom 20/12/2026 18:00", "POL. OLYMPIA CLUB RUTIGLIANO", "ASD BASKET FASANO", 0, 0, "Da giocare"),
+
+    ("B08_2144", "Girone B", 8, "Sab 09/01/2027 19:00", "ASD BASKET FASANO", "ASD MURGIA BASKET SANTERAMO", 0, 0, "Da giocare"),
+
+    ("B08_2145", "Girone B", 8, "Sab 09/01/2027 18:00", "ASD ATLETICA BASKET PUTIGNANO", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", 0, 0, "Da giocare"),
+
+    ("B08_2146", "Girone B", 8, "Sab 09/01/2027 18:45", "ASD SCUOLA BASKET MARTINESE", "ASD CLUB GIGANTI CISTERNINO", 0, 0, "Da giocare"),
+
+    ("B08_2147", "Girone B", 8, "Dom 10/01/2027 18:00", "DOMITI LA PINTA BASKET PULSANO", "POL. OLYMPIA CLUB RUTIGLIANO", 0, 0, "Da giocare"),
+
+    ("B08_2148", "Girone B", 8, "Dom 10/01/2027 18:00", "ASD DREAM BASKET ALTAMURA", "ASD MESSAPICA BASKET CEGLIE", 0, 0, "Da giocare"),
+
+    ("B09_2149", "Girone B", 9, "Sab 16/01/2027 20:00", "ASD MESSAPICA BASKET CEGLIE", "DOMITI LA PINTA BASKET PULSANO", 0, 0, "Da giocare"),
+
+    ("B09_2150", "Girone B", 9, "Dom 17/01/2027 18:00", "POL. OLYMPIA CLUB RUTIGLIANO", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", 0, 0, "Da giocare"),
+
+    ("B09_2151", "Girone B", 9, "Sab 16/01/2027 19:00", "ASD CLUB GIGANTI CISTERNINO", "ASD ATLETICA BASKET PUTIGNANO", 0, 0, "Da giocare"),
+
+    ("B09_2152", "Girone B", 9, "Dom 17/01/2027 18:30", "ASD MURGIA BASKET SANTERAMO", "SUPPORT_O TARANTO", 0, 0, "Da giocare"),
+
+    ("B09_2153", "Girone B", 9, "Sab 16/01/2027 18:45", "ASD SCUOLA BASKET MARTINESE", "ASD BASKET FASANO", 0, 0, "Da giocare"),
+
+    ("B10_2154", "Girone B", 10, "Sab 23/01/2027 19:00", "ASD CLUB GIGANTI CISTERNINO", "ASD BASKET FASANO", 0, 0, "Da giocare"),
+
+    ("B10_2155", "Girone B", 10, "Dom 24/01/2027 18:00", "DOMITI LA PINTA BASKET PULSANO", "ASD DREAM BASKET ALTAMURA", 0, 0, "Da giocare"),
+
+    ("B10_2156", "Girone B", 10, "Sab 23/01/2027 19:30", "ASD ATLETICA BASKET PUTIGNANO", "SUPPORT_O TARANTO", 0, 0, "Da giocare"),
+
+    ("B10_2157", "Girone B", 10, "Ven 22/01/2027 21:00", "ASD MESSAPICA BASKET CEGLIE", "ASD SCUOLA BASKET MARTINESE", 0, 0, "Da giocare"),
+
+    ("B10_2158", "Girone B", 10, "Dom 24/01/2027 18:30", "ASD MURGIA BASKET SANTERAMO", "POL. OLYMPIA CLUB RUTIGLIANO", 0, 0, "Da giocare"),
+
+    ("B11_2159", "Girone B", 11, "Dom 31/01/2027 18:00", "ASD DREAM BASKET ALTAMURA", "ASD MURGIA BASKET SANTERAMO", 0, 0, "Da giocare"),
+
+    ("B11_2160", "Girone B", 11, "Dom 31/01/2027 18:00", "SUPPORT_O TARANTO", "ASD CLUB GIGANTI CISTERNINO", 0, 0, "Da giocare"),
+
+    ("B11_2161", "Girone B", 11, "Dom 31/01/2027 18:00", "ASD BASKET FASANO", "ASD MESSAPICA BASKET CEGLIE", 0, 0, "Da giocare"),
+
+    ("B11_2162", "Girone B", 11, "Dom 31/01/2027 18:00", "POL. OLYMPIA CLUB RUTIGLIANO", "ASD ATLETICA BASKET PUTIGNANO", 0, 0, "Da giocare"),
+
+    ("B11_2163", "Girone B", 11, "Dom 31/01/2027 18:30", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", "DOMITI LA PINTA BASKET PULSANO", 0, 0, "Da giocare"),
+
+    ("B12_2164", "Girone B", 12, "Sab 06/02/2027 20:00", "ASD MESSAPICA BASKET CEGLIE", "ASD CLUB GIGANTI CISTERNINO", 0, 0, "Da giocare"),
+
+    ("B12_2165", "Girone B", 12, "Dom 07/02/2027 18:00", "DOMITI LA PINTA BASKET PULSANO", "SUPPORT_O TARANTO", 0, 0, "Da giocare"),
+
+    ("B12_2166", "Girone B", 12, "Sab 06/02/2027 18:00", "ASD ATLETICA BASKET PUTIGNANO", "ASD BASKET FASANO", 0, 0, "Da giocare"),
+
+    ("B12_2167", "Girone B", 12, "Dom 07/02/2027 18:30", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", "ASD MURGIA BASKET SANTERAMO", 0, 0, "Da giocare"),
+
+    ("B12_2168", "Girone B", 12, "Dom 07/02/2027 18:00", "ASD DREAM BASKET ALTAMURA", "ASD SCUOLA BASKET MARTINESE", 0, 0, "Da giocare"),
+
+    ("B13_2169", "Girone B", 13, "Sab 13/02/2027 19:00", "ASD BASKET FASANO", "ASD DREAM BASKET ALTAMURA", 0, 0, "Da giocare"),
+
+    ("B13_2170", "Girone B", 13, "Dom 14/02/2027 18:30", "ASD MURGIA BASKET SANTERAMO", "DOMITI LA PINTA BASKET PULSANO", 0, 0, "Da giocare"),
+
+    ("B13_2171", "Girone B", 13, "Sab 13/02/2027 18:45", "ASD SCUOLA BASKET MARTINESE", "ASD ATLETICA BASKET PUTIGNANO", 0, 0, "Da giocare"),
+
+    ("B13_2172", "Girone B", 13, "Dom 14/02/2027 18:00", "POL. OLYMPIA CLUB RUTIGLIANO", "ASD MESSAPICA BASKET CEGLIE", 0, 0, "Da giocare"),
+
+    ("B13_2173", "Girone B", 13, "Dom 14/02/2027 18:00", "SUPPORT_O TARANTO", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", 0, 0, "Da giocare"),
+
+    ("B14_2174", "Girone B", 14, "Dom 21/02/2027 18:00", "ASD DREAM BASKET ALTAMURA", "SUPPORT_O TARANTO", 0, 0, "Da giocare"),
+
+    ("B14_2175", "Girone B", 14, "Dom 21/02/2027 18:00", "DOMITI LA PINTA BASKET PULSANO", "ASD SCUOLA BASKET MARTINESE", 0, 0, "Da giocare"),
+
+    ("B14_2176", "Girone B", 14, "Sab 20/02/2027 18:00", "ASD ATLETICA BASKET PUTIGNANO", "ASD MURGIA BASKET SANTERAMO", 0, 0, "Da giocare"),
+
+    ("B14_2177", "Girone B", 14, "Sab 20/02/2027 19:00", "ASD CLUB GIGANTI CISTERNINO", "POL. OLYMPIA CLUB RUTIGLIANO", 0, 0, "Da giocare"),
+
+    ("B14_2178", "Girone B", 14, "Dom 21/02/2027 18:30", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", "ASD BASKET FASANO", 0, 0, "Da giocare"),
+
+    ("B15_2179", "Girone B", 15, "Dom 28/02/2027 18:30", "ASD MURGIA BASKET SANTERAMO", "ASD MESSAPICA BASKET CEGLIE", 0, 0, "Da giocare"),
+
+    ("B15_2180", "Girone B", 15, "Sab 27/02/2027 18:45", "ASD SCUOLA BASKET MARTINESE", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", 0, 0, "Da giocare"),
+
+    ("B15_2181", "Girone B", 15, "Dom 28/02/2027 18:00", "ASD DREAM BASKET ALTAMURA", "ASD CLUB GIGANTI CISTERNINO", 0, 0, "Da giocare"),
+
+    ("B15_2182", "Girone B", 15, "Dom 28/02/2027 18:00", "SUPPORT_O TARANTO", "POL. OLYMPIA CLUB RUTIGLIANO", 0, 0, "Da giocare"),
+
+    ("B15_2183", "Girone B", 15, "Dom 28/02/2027 18:00", "ASD BASKET FASANO", "DOMITI LA PINTA BASKET PULSANO", 0, 0, "Da giocare"),
+
+    ("B16_2184", "Girone B", 16, "Dom 07/03/2027 18:00", "POL. OLYMPIA CLUB RUTIGLIANO", "ASD DREAM BASKET ALTAMURA", 0, 0, "Da giocare"),
+
+    ("B16_2185", "Girone B", 16, "Sab 06/03/2027 18:45", "ASD SCUOLA BASKET MARTINESE", "ASD MURGIA BASKET SANTERAMO", 0, 0, "Da giocare"),
+
+    ("B16_2186", "Girone B", 16, "Ven 05/03/2027 19:00", "ASD MESSAPICA BASKET CEGLIE", "SUPPORT_O TARANTO", 0, 0, "Da giocare"),
+
+    ("B16_2187", "Girone B", 16, "Dom 07/03/2027 18:00", "DOMITI LA PINTA BASKET PULSANO", "ASD ATLETICA BASKET PUTIGNANO", 0, 0, "Da giocare"),
+
+    ("B16_2188", "Girone B", 16, "Sab 06/03/2027 19:00", "ASD CLUB GIGANTI CISTERNINO", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", 0, 0, "Da giocare"),
+
+    ("B17_2189", "Girone B", 17, "Dom 14/03/2027 18:00", "POL. OLYMPIA CLUB RUTIGLIANO", "ASD SCUOLA BASKET MARTINESE", 0, 0, "Da giocare"),
+
+    ("B17_2190", "Girone B", 17, "Dom 14/03/2027 18:30", "ASD MURGIA BASKET SANTERAMO", "ASD CLUB GIGANTI CISTERNINO", 0, 0, "Da giocare"),
+
+    ("B17_2191", "Girone B", 17, "Dom 14/03/2027 18:00", "SUPPORT_O TARANTO", "ASD BASKET FASANO", 0, 0, "Da giocare"),
+
+    ("B17_2192", "Girone B", 17, "Gio 11/03/2027 21:00", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", "ASD DREAM BASKET ALTAMURA", 0, 0, "Da giocare"),
+
+    ("B17_2193", "Girone B", 17, "Sab 13/03/2027 18:00", "ASD ATLETICA BASKET PUTIGNANO", "ASD MESSAPICA BASKET CEGLIE", 0, 0, "Da giocare"),
+
+    ("B18_2194", "Girone B", 18, "Sab 20/03/2027 19:00", "ASD CLUB GIGANTI CISTERNINO", "DOMITI LA PINTA BASKET PULSANO", 0, 0, "Da giocare"),
+
+    ("B18_2195", "Girone B", 18, "Sab 20/03/2027 18:45", "ASD SCUOLA BASKET MARTINESE", "SUPPORT_O TARANTO", 0, 0, "Da giocare"),
+
+    ("B18_2196", "Girone B", 18, "Ven 19/03/2027 21:00", "ASD MESSAPICA BASKET CEGLIE", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", 0, 0, "Da giocare"),
+
+    ("B18_2197", "Girone B", 18, "Dom 21/03/2027 18:00", "ASD BASKET FASANO", "POL. OLYMPIA CLUB RUTIGLIANO", 0, 0, "Da giocare"),
+
+    ("B18_2198", "Girone B", 18, "Dom 21/03/2027 18:00", "ASD DREAM BASKET ALTAMURA", "ASD ATLETICA BASKET PUTIGNANO", 0, 0, "Da giocare"),
+
+    ("B19_2199", "Girone B", 19, "Dom 04/04/2027 18:30", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", "ASD ATLETICA BASKET PUTIGNANO", 0, 0, "Da giocare"),
+
+    ("B19_2200", "Girone B", 19, "Dom 04/04/2027 18:30", "ASD MURGIA BASKET SANTERAMO", "ASD BASKET FASANO", 0, 0, "Da giocare"),
+
+    ("B19_2201", "Girone B", 19, "Dom 04/04/2027 18:00", "POL. OLYMPIA CLUB RUTIGLIANO", "DOMITI LA PINTA BASKET PULSANO", 0, 0, "Da giocare"),
+
+    ("B19_2202", "Girone B", 19, "Sab 03/04/2027 20:00", "ASD MESSAPICA BASKET CEGLIE", "ASD DREAM BASKET ALTAMURA", 0, 0, "Da giocare"),
+
+    ("B19_2203", "Girone B", 19, "Sab 03/04/2027 19:00", "ASD CLUB GIGANTI CISTERNINO", "ASD SCUOLA BASKET MARTINESE", 0, 0, "Da giocare"),
+
+    ("B20_2204", "Girone B", 20, "Dom 11/04/2027 18:00", "DOMITI LA PINTA BASKET PULSANO", "ASD MESSAPICA BASKET CEGLIE", 0, 0, "Da giocare"),
+
+    ("B20_2205", "Girone B", 20, "Dom 11/04/2027 18:00", "SUPPORT_O TARANTO", "ASD MURGIA BASKET SANTERAMO", 0, 0, "Da giocare"),
+
+    ("B20_2206", "Girone B", 20, "Sab 10/04/2027 19:00", "ASD BASKET FASANO", "ASD SCUOLA BASKET MARTINESE", 0, 0, "Da giocare"),
+
+    ("B20_2207", "Girone B", 20, "Dom 11/04/2027 18:30", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", "POL. OLYMPIA CLUB RUTIGLIANO", 0, 0, "Da giocare"),
+
+    ("B20_2208", "Girone B", 20, "Sab 10/04/2027 18:00", "ASD ATLETICA BASKET PUTIGNANO", "ASD CLUB GIGANTI CISTERNINO", 0, 0, "Da giocare"),
+
+    ("B21_2209", "Girone B", 21, "Dom 18/04/2027 18:00", "DOMITI LA PINTA BASKET PULSANO", "ASD DREAM BASKET ALTAMURA", 0, 0, "Da giocare"),
+
+    ("B21_2210", "Girone B", 21, "Dom 18/04/2027 18:00", "POL. OLYMPIA CLUB RUTIGLIANO", "ASD MURGIA BASKET SANTERAMO", 0, 0, "Da giocare"),
+
+    ("B21_2211", "Girone B", 21, "Sab 17/04/2027 18:45", "ASD SCUOLA BASKET MARTINESE", "ASD MESSAPICA BASKET CEGLIE", 0, 0, "Da giocare"),
+
+    ("B21_2212", "Girone B", 21, "Sab 17/04/2027 19:00", "ASD CLUB GIGANTI CISTERNINO", "ASD BASKET FASANO", 0, 0, "Da giocare"),
+
+    ("B21_2213", "Girone B", 21, "Dom 18/04/2027 18:00", "SUPPORT_O TARANTO", "ASD ATLETICA BASKET PUTIGNANO", 0, 0, "Da giocare"),
+
+    ("B22_2214", "Girone B", 22, "Dom 25/04/2027 18:00", "DOMITI LA PINTA BASKET PULSANO", "MASSERIA SEMERARO NEW SPORTING MOTTOLA", 0, 0, "Da giocare"),
+
+    ("B22_2215", "Girone B", 22, "Dom 25/04/2027 18:30", "ASD MURGIA BASKET SANTERAMO", "ASD DREAM BASKET ALTAMURA", 0, 0, "Da giocare"),
+
+    ("B22_2216", "Girone B", 22, "Sab 24/04/2027 20:00", "ASD MESSAPICA BASKET CEGLIE", "ASD BASKET FASANO", 0, 0, "Da giocare"),
+
+    ("B22_2217", "Girone B", 22, "Sab 24/04/2027 18:00", "ASD ATLETICA BASKET PUTIGNANO", "POL. OLYMPIA CLUB RUTIGLIANO", 0, 0, "Da giocare"),
+
+    ("B22_2218", "Girone B", 22, "Sab 24/04/2027 19:00", "ASD CLUB GIGANTI CISTERNINO", "SUPPORT_O TARANTO", 0, 0, "Da giocare"),
+
+
+
+    # ==========================================
+
+    # GIRONE C (Giornate 1-22 + Risultati G1-G3)
+
+    # ==========================================
+
     ("C01_2219", "Girone C", 1, "Dom 08/11/2026 18:00", "ASD BASKET TRICASE", "A.POL.DIL.AURORA BRINDISI", 51, 57, "Giocata"),
+
     ("C01_2220", "Girone C", 1, "Sab 07/11/2026 18:00", "ALL STAR BASKET FRANCAVILLA", "ASD BELLFIKA MESAGNE", 72, 67, "Giocata"),
+
     ("C01_2221", "Girone C", 1, "Dom 08/11/2026 18:30", "DIERRE ARREDAMENTI CALIMERA BASKET", "ASD MAGIC GALATINA", 77, 51, "Giocata"),
+
     ("C01_2222", "Girone C", 1, "Dom 08/11/2026 18:00", "ASD ASSI BASKET BRINDISI", "ASD NEW BASKET CARMIANO", 73, 47, "Giocata"),
+
     ("C01_2223", "Girone C", 1, "Dom 08/11/2026 18:30", "SENSI PALLACANESTRO LUPA LECCE", "AZ DISINFESTAZIONI SRL VIRTUS BRINDISI", 91, 75, "Giocata"),
+
     ("C02_2224", "Girone C", 2, "Sab 14/11/2026 18:00", "ASD NEW BASKET CARMIANO", "ALL STAR BASKET FRANCAVILLA", 89, 70, "Giocata"),
+
     ("C02_2225", "Girone C", 2, "Sab 14/11/2026 18:30", "ASD MAGIC GALATINA", "ASD BASKET TRICASE", 100, 58, "Giocata"),
+
     ("C02_2226", "Girone C", 2, "Sab 14/11/2026 16:30", "AZ DISINFESTAZIONI SRL VIRTUS BRINDISI", "ASD POLISPORTIVA MANDURIA", 57, 63, "Giocata"),
+
     ("C02_2227", "Girone C", 2, "Dom 15/11/2026 18:00", "ASD BELLFIKA MESAGNE", "ASD ASSI BASKET BRINDISI", 75, 71, "Giocata"),
+
     ("C02_2228", "Girone C", 2, "Sab 14/11/2026 18:00", "A.POL.DIL.AURORA BRINDISI", "DIERRE ARREDAMENTI CALIMERA BASKET", 37, 60, "Giocata"),
+
     ("C03_2229", "Girone C", 3, "Sab 21/11/2026 18:00", "ALL STAR BASKET FRANCAVILLA", "ASD MAGIC GALATINA", 91, 78, "Giocata"),
+
     ("C03_2230", "Girone C", 3, "Sab 21/11/2026 18:00", "A.POL.DIL.AURORA BRINDISI", "ASD ASSI BASKET BRINDISI", 64, 95, "Giocata"),
+
     ("C03_2231", "Girone C", 3, "Dom 22/11/2026 18:30", "DIERRE ARREDAMENTI CALIMERA BASKET", "ASD BELLFIKA MESAGNE", 52, 57, "Giocata"),
+
     ("C03_2232", "Girone C", 3, "Dom 22/11/2026 18:00", "ASD POLISPORTIVA MANDURIA", "SENSI PALLACANESTRO LUPA LECCE", 53, 59, "Giocata"),
+
     ("C03_2233", "Girone C", 3, "Dom 22/11/2026 18:00", "ASD BASKET TRICASE", "ASD NEW BASKET CARMIANO", 28, 81, "Giocata"),
+
     ("C04_2234", "Girone C", 4, "Dom 29/11/2026 17:00", "ASD BELLFIKA MESAGNE", "ASD BASKET TRICASE", 0, 0, "Da giocare"),
+
     ("C04_2235", "Girone C", 4, "Dom 29/11/2026 18:00", "ASD POLISPORTIVA MANDURIA", "ALL STAR BASKET FRANCAVILLA", 0, 0, "Da giocare"),
+
     ("C04_2236", "Girone C", 4, "Sab 28/11/2026 18:00", "ASD NEW BASKET CARMIANO", "DIERRE ARREDAMENTI CALIMERA BASKET", 0, 0, "Da giocare"),
+
     ("C04_2237", "Girone C", 4, "Sab 28/11/2026 16:30", "AZ DISINFESTAZIONI SRL VIRTUS BRINDISI", "ASD ASSI BASKET BRINDISI", 0, 0, "Da giocare"),
+
     ("C04_2238", "Girone C", 4, "Sab 28/11/2026 16:30", "SENSI PALLACANESTRO LUPA LECCE", "ASD MAGIC GALATINA", 0, 0, "Da giocare"),
+
     ("C05_2239", "Girone C", 5, "Dom 06/12/2026 18:30", "DIERRE ARREDAMENTI CALIMERA BASKET", "ASD ASSI BASKET BRINDISI", 0, 0, "Da giocare"),
+
     ("C05_2240", "Girone C", 5, "Sab 05/12/2026 18:30", "ASD MAGIC GALATINA", "ASD POLISPORTIVA MANDURIA", 0, 0, "Da giocare"),
+
     ("C05_2241", "Girone C", 5, "Sab 05/12/2026 18:00", "A.POL.DIL.AURORA BRINDISI", "ASD BELLFIKA MESAGNE", 0, 0, "Da giocare"),
+
     ("C05_2242", "Girone C", 5, "Sab 05/12/2026 18:30", "SENSI PALLACANESTRO LUPA LECCE", "ASD NEW BASKET CARMIANO", 0, 0, "Da giocare"),
+
     ("C05_2243", "Girone C", 5, "Sab 05/12/2026 18:00", "ALL STAR BASKET FRANCAVILLA", "AZ DISINFESTAZIONI SRL VIRTUS BRINDISI", 0, 0, "Da giocare"),
+
     ("C06_2244", "Girone C", 6, "Sab 12/12/2026 16:30", "AZ DISINFESTAZIONI SRL VIRTUS BRINDISI", "A.POL.DIL.AURORA BRINDISI", 0, 0, "Da giocare"),
+
     ("C06_2245", "Girone C", 6, "Dom 13/12/2026 18:30", "DIERRE ARREDAMENTI CALIMERA BASKET", "ASD POLISPORTIVA MANDURIA", 0, 0, "Da giocare"),
+
     ("C06_2246", "Girone C", 6, "Dom 13/12/2026 18:00", "ASD MAGIC GALATINA", "ASD NEW BASKET CARMIANO", 0, 0, "Da giocare"),
+
     ("C06_2247", "Girone C", 6, "Dom 13/12/2026 18:00", "ASD BASKET TRICASE", "ALL STAR BASKET FRANCAVILLA", 0, 0, "Da giocare"),
+
     ("C06_2248", "Girone C", 6, "Sab 12/12/2026 18:00", "ASD ASSI BASKET BRINDISI", "SENSI PALLACANESTRO LUPA LECCE", 0, 0, "Da giocare"),
+
     ("C07_2249", "Girone C", 7, "Sab 19/12/2026 18:00", "ALL STAR BASKET FRANCAVILLA", "DIERRE ARREDAMENTI CALIMERA BASKET", 0, 0, "Da giocare"),
+
     ("C07_2250", "Girone C", 7, "Dom 20/12/2026 20:00", "ASD NEW BASKET CARMIANO", "AZ DISINFESTAZIONI SRL VIRTUS BRINDISI", 0, 0, "Da giocare"),
+
     ("C07_2251", "Girone C", 7, "Ven 18/12/2026 20:30", "ASD POLISPORTIVA MANDURIA", "ASD BASKET TRICASE", 0, 0, "Da giocare"),
+
     ("C07_2252", "Girone C", 7, "Sab 19/12/2026 18:30", "SENSI PALLACANESTRO LUPA LECCE", "ASD BELLFIKA MESAGNE", 0, 0, "Da giocare"),
+
     ("C07_2253", "Girone C", 7, "Sab 19/12/2026 18:00", "A.POL.DIL.AURORA BRINDISI", "ASD MAGIC GALATINA", 0, 0, "Da giocare"),
+
     ("C08_2254", "Girone C", 8, "Dom 10/01/2027 18:00", "ASD POLISPORTIVA MANDURIA", "ASD BELLFIKA MESAGNE", 0, 0, "Da giocare"),
+
     ("C08_2255", "Girone C", 8, "Sab 09/01/2027 18:00", "A.POL.DIL.AURORA BRINDISI", "ASD NEW BASKET CARMIANO", 0, 0, "Da giocare"),
+
     ("C08_2256", "Girone C", 8, "Dom 10/01/2027 18:00", "ASD BASKET TRICASE", "ASD ASSI BASKET BRINDISI", 0, 0, "Da giocare"),
+
     ("C08_2257", "Girone C", 8, "Dom 10/01/2027 18:30", "DIERRE ARREDAMENTI CALIMERA BASKET", "SENSI PALLACANESTRO LUPA LECCE", 0, 0, "Da giocare"),
+
     ("C08_2258", "Girone C", 8, "Sab 09/01/2027 18:30", "ASD MAGIC GALATINA", "AZ DISINFESTAZIONI SRL VIRTUS BRINDISI", 0, 0, "Da giocare"),
+
     ("C09_2259", "Girone C", 9, "Sab 16/01/2027 18:30", "SENSI PALLACANESTRO LUPA LECCE", "A.POL.DIL.AURORA BRINDISI", 0, 0, "Da giocare"),
+
     ("C09_2260", "Girone C", 9, "Sab 16/01/2027 16:30", "AZ DISINFESTAZIONI SRL VIRTUS BRINDISI", "ASD BELLFIKA MESAGNE", 0, 0, "Da giocare"),
+
     ("C09_2261", "Girone C", 9, "Dom 17/01/2027 18:00", "ASD POLISPORTIVA MANDURIA", "ASD NEW BASKET CARMIANO", 0, 0, "Da giocare"),
+
     ("C09_2262", "Girone C", 9, "Sab 16/01/2027 18:00", "ASD ASSI BASKET BRINDISI", "ALL STAR BASKET FRANCAVILLA", 0, 0, "Da giocare"),
+
     ("C09_2263", "Girone C", 9, "Dom 17/01/2027 18:30", "DIERRE ARREDAMENTI CALIMERA BASKET", "ASD BASKET TRICASE", 0, 0, "Da giocare"),
+
     ("C10_2264", "Girone C", 10, "Sab 23/01/2027 16:30", "SENSI PALLACANESTRO LUPA LECCE", "ASD BASKET TRICASE", 0, 0, "Da giocare"),
+
     ("C10_2265", "Girone C", 10, "Sab 23/01/2027 18:00", "ASD ASSI BASKET BRINDISI", "ASD POLISPORTIVA MANDURIA", 0, 0, "Da giocare"),
+
     ("C10_2266", "Girone C", 10, "Dom 24/01/2027 17:00", "ASD BELLFIKA MESAGNE", "ASD MAGIC GALATINA", 0, 0, "Da giocare"),
+
     ("C10_2267", "Girone C", 10, "Sab 23/01/2027 18:00", "A.POL.DIL.AURORA BRINDISI", "ALL STAR BASKET FRANCAVILLA", 0, 0, "Da giocare"),
+
     ("C10_2268", "Girone C", 10, "Sab 23/01/2027 16:30", "AZ DISINFESTAZIONI SRL VIRTUS BRINDISI", "DIERRE ARREDAMENTI CALIMERA BASKET", 0, 0, "Da giocare"),
+
     ("C11_2269", "Girone C", 11, "Dom 31/01/2027 20:00", "ASD NEW BASKET CARMIANO", "ASD BELLFIKA MESAGNE", 0, 0, "Da giocare"),
+
     ("C11_2270", "Girone C", 11, "Sab 30/01/2027 18:00", "ALL STAR BASKET FRANCAVILLA", "SENSI PALLACANESTRO LUPA LECCE", 0, 0, "Da giocare"),
+
     ("C11_2271", "Girone C", 11, "Dom 31/01/2027 18:00", "ASD POLISPORTIVA MANDURIA", "A.POL.DIL.AURORA BRINDISI", 0, 0, "Da giocare"),
+
     ("C11_2272", "Girone C", 11, "Dom 31/01/2027 18:00", "ASD MAGIC GALATINA", "ASD ASSI BASKET BRINDISI", 0, 0, "Da giocare"),
+
     ("C11_2273", "Girone C", 11, "Dom 31/01/2027 18:00", "ASD BASKET TRICASE", "AZ DISINFESTAZIONI SRL VIRTUS BRINDISI", 0, 0, "Da giocare"),
+
     ("C12_2274", "Girone C", 12, "Sab 06/02/2027 18:00", "A.POL.DIL.AURORA BRINDISI", "ASD BASKET TRICASE", 0, 0, "Da giocare"),
+
     ("C12_2275", "Girone C", 12, "Sab 06/02/2027 16:30", "AZ DISINFESTAZIONI SRL VIRTUS BRINDISI", "SENSI PALLACANESTRO LUPA LECCE", 0, 0, "Da giocare"),
+
     ("C12_2276", "Girone C", 12, "Dom 07/02/2027 18:00", "ASD NEW BASKET CARMIANO", "ASD ASSI BASKET BRINDISI", 0, 0, "Da giocare"),
+
     ("C12_2277", "Girone C", 12, "Dom 07/02/2027 18:00", "ASD BELLFIKA MESAGNE", "ALL STAR BASKET FRANCAVILLA", 0, 0, "Da giocare"),
+
     ("C12_2278", "Girone C", 12, "Sab 06/02/2027 18:30", "ASD MAGIC GALATINA", "DIERRE ARREDAMENTI CALIMERA BASKET", 0, 0, "Da giocare"),
+
     ("C13_2279", "Girone C", 13, "Sab 13/02/2027 18:00", "ALL STAR BASKET FRANCAVILLA", "ASD NEW BASKET CARMIANO", 0, 0, "Da giocare"),
+
     ("C13_2280", "Girone C", 13, "Dom 14/02/2027 18:00", "ASD BASKET TRICASE", "ASD MAGIC GALATINA", 0, 0, "Da giocare"),
+
     ("C13_2281", "Girone C", 13, "Dom 14/02/2027 18:30", "DIERRE ARREDAMENTI CALIMERA BASKET", "A.POL.DIL.AURORA BRINDISI", 0, 0, "Da giocare"),
+
     ("C13_2282", "Girone C", 13, "Sab 13/02/2027 18:00", "ASD ASSI BASKET BRINDISI", "ASD BELLFIKA MESAGNE", 0, 0, "Da giocare"),
+
     ("C13_2283", "Girone C", 13, "Dom 14/02/2027 18:00", "ASD POLISPORTIVA MANDURIA", "AZ DISINFESTAZIONI SRL VIRTUS BRINDISI", 0, 0, "Da giocare"),
+
     ("C14_2284", "Girone C", 14, "Dom 21/02/2027 18:00", "ASD NEW BASKET CARMIANO", "ASD BASKET TRICASE", 0, 0, "Da giocare"),
+
     ("C14_2285", "Girone C", 14, "Sab 20/02/2027 18:00", "A.POL.DIL.AURORA BRINDISI", "ASD ASSI BASKET BRINDISI", 0, 0, "Da giocare"),
+
     ("C14_2286", "Girone C", 14, "Dom 21/02/2027 17:00", "ASD BELLFIKA MESAGNE", "DIERRE ARREDAMENTI CALIMERA BASKET", 0, 0, "Da giocare"),
+
     ("C14_2287", "Girone C", 14, "Sab 20/02/2027 18:30", "ASD MAGIC GALATINA", "ALL STAR BASKET FRANCAVILLA", 0, 0, "Da giocare"),
+
     ("C14_2288", "Girone C", 14, "Sab 20/02/2027 18:30", "SENSI PALLACANESTRO LUPA LECCE", "ASD POLISPORTIVA MANDURIA", 0, 0, "Da giocare"),
+
     ("C15_2289", "Girone C", 15, "Dom 28/02/2027 18:00", "ASD ASSI BASKET BRINDISI", "AZ DISINFESTAZIONI SRL VIRTUS BRINDISI", 0, 0, "Da giocare"),
+
     ("C15_2290", "Girone C", 15, "Dom 28/02/2027 18:00", "ASD BASKET TRICASE", "ASD BELLFIKA MESAGNE", 0, 0, "Da giocare"),
+
     ("C15_2291", "Girone C", 15, "Dom 28/02/2027 18:00", "ASD MAGIC GALATINA", "SENSI PALLACANESTRO LUPA LECCE", 0, 0, "Da giocare"),
+
     ("C15_2292", "Girone C", 15, "Sab 27/02/2027 18:00", "ALL STAR BASKET FRANCAVILLA", "ASD POLISPORTIVA MANDURIA", 0, 0, "Da giocare"),
+
     ("C15_2293", "Girone C", 15, "Sab 27/02/2027 18:30", "DIERRE ARREDAMENTI CALIMERA BASKET", "ASD NEW BASKET CARMIANO", 0, 0, "Da giocare"),
+
     ("C16_2294", "Girone C", 16, "Dom 07/03/2027 18:00", "ASD POLISPORTIVA MANDURIA", "ASD MAGIC GALATINA", 0, 0, "Da giocare"),
+
     ("C16_2295", "Girone C", 16, "Dom 07/03/2027 17:00", "ASD BELLFIKA MESAGNE", "A.POL.DIL.AURORA BRINDISI", 0, 0, "Da giocare"),
+
     ("C16_2296", "Girone C", 16, "Dom 07/03/2027 18:00", "ASD NEW BASKET CARMIANO", "SENSI PALLACANESTRO LUPA LECCE", 0, 0, "Da giocare"),
+
     ("C16_2297", "Girone C", 16, "Sab 06/03/2027 16:30", "AZ DISINFESTAZIONI SRL VIRTUS BRINDISI", "ALL STAR BASKET FRANCAVILLA", 0, 0, "Da giocare"),
+
     ("C16_2298", "Girone C", 16, "Sab 06/03/2027 18:00", "ASD ASSI BASKET BRINDISI", "DIERRE ARREDAMENTI CALIMERA BASKET", 0, 0, "Da giocare"),
+
     ("C17_2299", "Girone C", 17, "Sab 13/03/2027 18:00", "ALL STAR BASKET FRANCAVILLA", "ASD BASKET TRICASE", 0, 0, "Da giocare"),
+
     ("C17_2300", "Girone C", 17, "Dom 14/03/2027 18:30", "SENSI PALLACANESTRO LUPA LECCE", "ASD ASSI BASKET BRINDISI", 0, 0, "Da giocare"),
+
     ("C17_2301", "Girone C", 17, "Dom 14/03/2027 18:00", "ASD POLISPORTIVA MANDURIA", "DIERRE ARREDAMENTI CALIMERA BASKET", 0, 0, "Da giocare"),
+
     ("C17_2302", "Girone C", 17, "Sab 13/03/2027 18:00", "A.POL.DIL.AURORA BRINDISI", "AZ DISINFESTAZIONI SRL VIRTUS BRINDISI", 0, 0, "Da giocare"),
+
     ("C17_2303", "Girone C", 17, "Sab 13/03/2027 18:00", "ASD NEW BASKET CARMIANO", "ASD MAGIC GALATINA", 0, 0, "Da giocare"),
+
     ("C18_2304", "Girone C", 18, "Dom 21/03/2027 17:00", "ASD BELLFIKA MESAGNE", "SENSI PALLACANESTRO LUPA LECCE", 0, 0, "Da giocare"),
+
     ("C18_2305", "Girone C", 18, "Dom 21/03/2027 18:30", "DIERRE ARREDAMENTI CALIMERA BASKET", "ALL STAR BASKET FRANCAVILLA", 0, 0, "Da giocare"),
+
     ("C18_2306", "Girone C", 18, "Sab 20/03/2027 16:30", "AZ DISINFESTAZIONI SRL VIRTUS BRINDISI", "ASD NEW BASKET CARMIANO", 0, 0, "Da giocare"),
+
     ("C18_2307", "Girone C", 18, "Dom 21/03/2027 18:00", "ASD BASKET TRICASE", "ASD POLISPORTIVA MANDURIA", 0, 0, "Da giocare"),
+
     ("C18_2308", "Girone C", 18, "Sab 20/03/2027 18:30", "ASD MAGIC GALATINA", "A.POL.DIL.AURORA BRINDISI", 0, 0, "Da giocare"),
+
     ("C19_2309", "Girone C", 19, "Dom 04/04/2027 18:30", "SENSI PALLACANESTRO LUPA LECCE", "DIERRE ARREDAMENTI CALIMERA BASKET", 0, 0, "Da giocare"),
+
     ("C19_2310", "Girone C", 19, "Sab 03/04/2027 18:00", "A.POL.DIL.AURORA BRINDISI", "ASD NEW BASKET CARMIANO", 0, 0, "Da giocare"),
+
     ("C19_2311", "Girone C", 19, "Sab 03/04/2027 16:30", "AZ DISINFESTAZIONI SRL VIRTUS BRINDISI", "ASD MAGIC GALATINA", 0, 0, "Da giocare"),
+
     ("C19_2312", "Girone C", 19, "Sab 03/04/2027 16:30", "ASD BELLFIKA MESAGNE", "ASD POLISPORTIVA MANDURIA", 0, 0, "Da giocare"),
+
     ("C19_2313", "Girone C", 19, "Sab 03/04/2027 18:00", "ASD ASSI BASKET BRINDISI", "ASD BASKET TRICASE", 0, 0, "Da giocare"),
+
     ("C20_2314", "Girone C", 20, "Sab 10/04/2027 18:00", "A.POL.DIL.AURORA BRINDISI", "SENSI PALLACANESTRO LUPA LECCE", 0, 0, "Da giocare"),
+
     ("C20_2315", "Girone C", 20, "Dom 11/04/2027 18:00", "DIERRE ARREDAMENTI CALIMERA BASKET", "ASD BASKET TRICASE", 0, 0, "Da giocare"),
+
     ("C20_2316", "Girone C", 20, "Dom 11/04/2027 17:00", "ASD BELLFIKA MESAGNE", "AZ DISINFESTAZIONI SRL VIRTUS BRINDISI", 0, 0, "Da giocare"),
+
     ("C20_2317", "Girone C", 20, "Sab 10/04/2027 18:00", "ASD NEW BASKET CARMIANO", "ASD POLISPORTIVA MANDURIA", 0, 0, "Da giocare"),
+
     ("C20_2318", "Girone C", 20, "Sab 10/04/2027 18:00", "ALL STAR BASKET FRANCAVILLA", "ASD ASSI BASKET BRINDISI", 0, 0, "Da giocare"),
+
     ("C21_2319", "Girone C", 21, "Sab 17/04/2027 18:30", "ASD MAGIC GALATINA", "ASD BELLFIKA MESAGNE", 0, 0, "Da giocare"),
+
     ("C21_2320", "Girone C", 21, "Dom 18/04/2027 18:30", "DIERRE ARREDAMENTI CALIMERA BASKET", "AZ DISINFESTAZIONI SRL VIRTUS BRINDISI", 0, 0, "Da giocare"),
+
     ("C21_2321", "Girone C", 21, "Dom 18/04/2027 18:00", "SENSI PALLACANESTRO LUPA LECCE", "ASD BASKET TRICASE", 0, 0, "Da giocare"),
+
     ("C21_2322", "Girone C", 21, "Dom 18/04/2027 18:00", "ASD POLISPORTIVA MANDURIA", "ASD ASSI BASKET BRINDISI", 0, 0, "Da giocare"),
+
     ("C21_2323", "Girone C", 21, "Sab 17/04/2027 18:00", "ALL STAR BASKET FRANCAVILLA", "A.POL.DIL.AURORA BRINDISI", 0, 0, "Da giocare"),
+
     ("C22_2324", "Girone C", 22, "Sab 24/04/2027 18:00", "ASD MAGIC GALATINA", "ASD ASSI BASKET BRINDISI", 0, 0, "Da giocare"),
+
     ("C22_2325", "Girone C", 22, "Sab 24/04/2027 16:30", "AZ DISINFESTAZIONI SRL VIRTUS BRINDISI", "ASD BASKET TRICASE", 0, 0, "Da giocare"),
+
     ("C22_2326", "Girone C", 22, "Sab 24/04/2027 18:00", "A.POL.DIL.AURORA BRINDISI", "ASD POLISPORTIVA MANDURIA", 0, 0, "Da giocare"),
+
     ("C22_2327", "Girone C", 22, "Sab 24/04/2027 18:30", "SENSI PALLACANESTRO LUPA LECCE", "ALL STAR BASKET FRANCAVILLA", 0, 0, "Da giocare"),
+
     ("C22_2328", "Girone C", 22, "Dom 25/04/2027 17:00", "ASD BELLFIKA MESAGNE", "ASD NEW BASKET CARMIANO", 0, 0, "Da giocare"),
+
 ]
 
 
+
+
+
 def _extract_jersey_number(name: str, explicit_num: object = None) -> int:
+
     """Estrae o valida un numero di maglia valido (0-99); restituisce 999 se assente o non valido."""
-    try:
-        if explicit_num is not None:
-            if isinstance(explicit_num, (list, tuple, dict, set)):
-                explicit_num = None
-            elif not (isinstance(explicit_num, float) and pd.isna(explicit_num)):
-                num_str = str(explicit_num).strip().lstrip("#")
-                if num_str != "":
-                    parsed = pd.to_numeric(num_str, errors="coerce")
-                    if pd.notna(parsed):
-                        val = int(float(parsed))
-                        if 0 <= val <= 99:
-                            return val
-    except Exception:
-        pass
 
     try:
-        m = re.match(r"^\s*#?(\d{1,2})\b", str(name or ""))
-        if m:
-            val = int(m.group(1))
-            if 0 <= val <= 99:
-                return val
+
+        if explicit_num is not None:
+
+            if isinstance(explicit_num, (list, tuple, dict, set)):
+
+                explicit_num = None
+
+            elif not (isinstance(explicit_num, float) and pd.isna(explicit_num)):
+
+                num_str = str(explicit_num).strip().lstrip("#")
+
+                if num_str != "":
+
+                    parsed = pd.to_numeric(num_str, errors="coerce")
+
+                    if pd.notna(parsed):
+
+                        val = int(float(parsed))
+
+                        if 0 <= val <= 99:
+
+                            return val
+
     except Exception:
+
         pass
+
+
+
+    try:
+
+        m = re.match(r"^\s*#?(\d{1,2})\b", str(name or ""))
+
+        if m:
+
+            val = int(m.group(1))
+
+            if 0 <= val <= 99:
+
+                return val
+
+    except Exception:
+
+        pass
+
+
 
     return 999
 
 
+
+
+
 def _format_jersey_display(num_val: object, empty_placeholder: str = "—") -> str:
+
     """Formatta in modo sicuro un numero di maglia (incluso '0' -> '#0') o restituisce empty_placeholder."""
+
     placeholder = str(empty_placeholder) if empty_placeholder is not None else "—"
+
     try:
+
         if num_val is None or isinstance(num_val, (list, tuple, dict, set)):
+
             return placeholder
+
         if isinstance(num_val, bool):
+
             return placeholder
+
         if isinstance(num_val, str):
+
             cleaned = num_val.strip()
+
             if not cleaned or cleaned in {"—", "-", "?", "None", "nan", "NaN"}:
+
                 return placeholder
+
             cleaned = cleaned.lstrip("#").strip()
+
             parsed = pd.to_numeric(cleaned, errors="coerce")
+
         else:
+
             if pd.isna(num_val):
+
                 return placeholder
+
             parsed = pd.to_numeric(num_val, errors="coerce")
 
+
+
         if pd.isna(parsed):
+
             return placeholder
+
         n = int(float(parsed))
+
         if 0 <= n <= 99:
+
             return f"#{n}"
+
         return placeholder
+
     except Exception:
+
         return placeholder
+
+
+
 
 
 def _p_row(
+
     giocatore: str,
+
     numero: int | None = None,
+
     pts: int = 0,
+
     minuti: str = "0",
+
     sf: bool = False,
+
     falli_c: int = 0,
+
     falli_s: int = 0,
+
     t2_r: int = 0,
+
     t2_t: int = 0,
+
     sc: int = 0,
+
     t3_r: int = 0,
+
     t3_t: int = 0,
+
     tl_r: int = 0,
+
     tl_t: int = 0,
+
     rim_o: int = 0,
+
     rim_d: int = 0,
+
     st_d: int = 0,
+
     st_s: int = 0,
+
     pal_p: int = 0,
+
     pal_r: int = 0,
+
     ass: int = 0,
+
     val_lega: int = 0,
+
     oer: float = 0.0,
+
 ) -> dict:
+
     resolved_num = _extract_jersey_number(str(giocatore), numero)
+
     return {
+
         "Giocatore": str(giocatore),
+
         "NUM": resolved_num,
+
         "PUN": int(pts),
+
         "MIN": str(minuti),
+
         "SF": bool(sf),
+
         "F_C": int(falli_c),
+
         "F_S": int(falli_s),
+
         "2PT_R": int(t2_r),
+
         "2PT_T": int(t2_t),
+
         "SC": int(sc),
+
         "3PT_R": int(t3_r),
+
         "3PT_T": int(t3_t),
+
         "TL_R": int(tl_r),
+
         "TL_T": int(tl_t),
+
         "RIM_O": int(rim_o),
+
         "RIM_D": int(rim_d),
+
         "ST_D": int(st_d),
+
         "ST_S": int(st_s),
+
         "PAL_P": int(pal_p),
+
         "PAL_R": int(pal_r),
+
         "ASS": int(ass),
+
         "VAL": int(val_lega),
+
         "OER": float(oer),
+
     }
 
 
+
+
+
 DEFAULT_ROUND3_DETAILS: dict[str, dict] = {
+
     "A03_1880": {
+
         "coach_home": "",
+
         "coach_away": "",
+
         "quarters_home": [19, 15, 15, 15],
+
         "quarters_away": [29, 14, 11, 23],
+
         "ot_home": 0,
+
         "ot_away": 0,
+
         "home_players": [
+
             _p_row("Maldera N.", pts=6),
+
             _p_row("D'Imperio M.", pts=14),
+
             _p_row("Turturo J.", pts=6),
+
             _p_row("Lavacca G.", pts=12),
+
             _p_row("Eremita A.", pts=10),
+
             _p_row("Ricci R.", pts=6),
+
             _p_row("Lovero L.", pts=10),
+
         ],
+
         "away_players": [
+
             _p_row("Provaroni F.", numero=0, pts=3, minuti="13:03", sf=True, falli_c=1, t3_r=1, t3_t=1),
+
             _p_row("Derosa L.", pts=23, minuti="35:42", sf=True, falli_c=4, t2_r=7, t2_t=10, tl_r=9, tl_t=12),
+
             _p_row("Desiante V.", pts=5, minuti="15:24", sf=True, falli_c=3, t2_r=1, t2_t=1, t3_r=1, t3_t=1),
+
             _p_row("D'Erasmo F.", pts=15, minuti="30:18", sf=True, falli_c=4, t2_r=4, t2_t=4, tl_r=7, tl_t=10),
+
             _p_row("Housni Z.", pts=9, minuti="36:17", sf=True, falli_c=2, t2_r=4, t2_t=6, tl_r=1, tl_t=3),
+
             _p_row("Silletti D.", pts=8, minuti="30:33", sf=True, falli_c=3, t3_r=2, t3_t=2, tl_r=2, tl_t=2),
+
             _p_row("Micunco M.", pts=2, minuti="02:27", sf=True, falli_c=2, t2_r=1, t2_t=1),
+
             _p_row("Colangelo A.", pts=12, minuti="29:52", sf=True, falli_c=4, t2_r=3, t2_t=3, t3_r=1, t3_t=1, tl_r=3, tl_t=3),
+
             _p_row("Dario Iacobone", pts=0, minuti="03:53", falli_c=1),
+
             _p_row("Fraccalvieri A.", pts=0, minuti="02:31", falli_c=1),
+
             _p_row("Antonio Vero (N.E.)", pts=0),
+
             _p_row("Gianpiero Calabrese (N.E.)", pts=0),
+
         ],
+
     },
+
     "A03_1877": {
+
         "coach_home": "",
+
         "coach_away": "",
+
         "quarters_home": [21, 13, 28, 24],
+
         "quarters_away": [17, 23, 14, 21],
+
         "ot_home": 0,
+
         "ot_away": 0,
+
         "home_players": [
+
             _p_row("Ruotolo A.", pts=15),
+
             _p_row("Mastromarco P.", pts=2),
+
             _p_row("Mariani G.", pts=25, t3_r=4),
+
             _p_row("Natali F.", pts=1),
+
             _p_row("Ruotolo L.", pts=19, t3_r=3),
+
             _p_row("Riganti A.", pts=18),
+
             _p_row("Germanà A.", pts=6),
+
         ],
+
         "away_players": [
+
             _p_row("Daniello M. G.", pts=2),
+
             _p_row("Tricarico F.", pts=9),
+
             _p_row("Russo R.", pts=2),
+
             _p_row("Khelfat N.", pts=8),
+
             _p_row("Rinaldi P.", pts=21),
+
             _p_row("Marano A.", pts=12),
+
             _p_row("Pepe S.", pts=14),
+
             _p_row("Kharebava N.", pts=5),
+
             _p_row("Russo W.", pts=2),
+
         ],
+
     },
+
     "A03_1879": {
+
         "coach_home": "",
+
         "coach_away": "",
+
         "quarters_home": [19, 23, 24, 12],
+
         "quarters_away": [20, 12, 23, 20],
+
         "ot_home": 0,
+
         "ot_away": 0,
+
         "home_players": [
+
             _p_row("Centrone L.", pts=10),
+
             _p_row("Iacovelli A.", pts=15),
+
             _p_row("Panessa A.", pts=6),
+
             _p_row("Rutigliano A.", pts=3),
+
             _p_row("Maietta G.", pts=17, t3_r=5),
+
             _p_row("De Meo N.", pts=6),
+
             _p_row("Larocchia A.", pts=16),
+
             _p_row("Mazzarano M.", pts=3),
+
             _p_row("Pastore A.", pts=2),
+
         ],
+
         "away_players": [
+
             _p_row("Barletta F.", pts=5),
+
             _p_row("Fuiano M.", pts=7),
+
             _p_row("Miale A. M.", pts=6),
+
             _p_row("Santagata C. A.", pts=2),
+
             _p_row("Miglio E.", pts=8),
+
             _p_row("Cicculli V.", pts=2),
+
             _p_row("Mazzeo R.", pts=22),
+
             _p_row("Scarponi I.", pts=23, t3_r=6),
+
         ],
+
     },
+
     "A03_1878": {
+
         "coach_home": "",
+
         "coach_away": "",
+
         "quarters_home": [13, 22, 24, 10],
+
         "quarters_away": [15, 22, 18, 24],
+
         "ot_home": 0,
+
         "ot_away": 0,
+
         "home_players": [
+
             _p_row("Di Gennaro D.", pts=9),
+
             _p_row("Ferrara A.", pts=11),
+
             _p_row("Guida M.", pts=7),
+
             _p_row("Tarantella E.", pts=16),
+
             _p_row("De Capua A.", pts=9),
+
             _p_row("Tartaglione R.", pts=8),
+
             _p_row("Di Santo F.", pts=5),
+
             _p_row("Conte A.", pts=4),
+
         ],
+
         "away_players": [
+
             _p_row("Carlucci A.", pts=9),
+
             _p_row("D'Errico M.", pts=9),
-            _p_row("Montemurro D.", pts=4),
+
+            _p_row("Montemurro D. M.", pts=4),
+
             _p_row("Lorusso D.", pts=6),
+
             _p_row("Manigrasso A.", pts=25),
+
             _p_row("Merlo N.", pts=12),
+
             _p_row("Gaeta R.", pts=2),
+
             _p_row("Grittani G.", pts=3),
+
             _p_row("Genchi R.", pts=3),
+
             _p_row("Stamerra S.", pts=3),
+
             _p_row("Emiliano M.", pts=1),
+
             _p_row("Vaccaro V. A.", pts=2),
+
+            _p_row("Valerio L'Abbate (N.E.)", pts=0),
+
         ],
+
     },
+
     "A03_1881": {
+
         "coach_home": "",
+
         "coach_away": "",
+
         "quarters_home": [7, 16, 13, 15],
+
         "quarters_away": [16, 11, 10, 13],
+
         "ot_home": 0,
+
         "ot_away": 0,
+
         "home_players": [
+
             _p_row("Cannarella R.", pts=16),
+
             _p_row("Chieco S.", pts=2),
+
             _p_row("Bozzi G.", pts=9),
+
             _p_row("Sicolo M.", pts=8),
+
             _p_row("Santeramo M.", pts=2),
+
             _p_row("Panebianco S.", pts=4),
+
             _p_row("Piccaluga R.", pts=3),
+
             _p_row("Urso M.", pts=7),
+
         ],
+
         "away_players": [
+
             _p_row("De Marco G.", pts=4),
+
             _p_row("Colonna F.", pts=6),
+
             _p_row("Sciscioli P.", pts=2),
+
             _p_row("Catano K.", pts=5),
+
             _p_row("Ferrante D.", pts=2),
+
             _p_row("Cantatore E.", pts=9),
+
             _p_row("Di Vittorio S.", pts=6),
+
             _p_row("Mangione N.", pts=7),
+
             _p_row("Lasorsa C.", pts=9),
+
         ],
+
     },
+
 }
 
 
+
+
+
 # ==========================================
+
 # PERSISTENZA SU GITHUB
+
 # ==========================================
+
 def _get_github_config() -> dict[str, str]:
+
     token = ""
+
     owner = DEFAULT_GITHUB_OWNER
+
     repo = DEFAULT_GITHUB_REPO
+
     branch = DEFAULT_GITHUB_BRANCH
 
+
+
     try:
+
         if "GITHUB_TOKEN" in st.secrets:
+
             token = str(st.secrets["GITHUB_TOKEN"]).strip()
+
         if "GITHUB_OWNER" in st.secrets and str(st.secrets["GITHUB_OWNER"]).strip():
+
             owner = str(st.secrets["GITHUB_OWNER"]).strip()
+
         if "GITHUB_REPO" in st.secrets and str(st.secrets["GITHUB_REPO"]).strip():
+
             repo = str(st.secrets["GITHUB_REPO"]).strip()
+
         if "GITHUB_BRANCH" in st.secrets and str(st.secrets["GITHUB_BRANCH"]).strip():
+
             branch = str(st.secrets["GITHUB_BRANCH"]).strip()
+
     except Exception:
+
         pass
 
+
+
     token = token or os.environ.get("GITHUB_TOKEN", "").strip()
+
     owner = os.environ.get("GITHUB_OWNER", owner).strip() or DEFAULT_GITHUB_OWNER
+
     repo = os.environ.get("GITHUB_REPO", repo).strip() or DEFAULT_GITHUB_REPO
+
     branch = os.environ.get("GITHUB_BRANCH", branch).strip() or DEFAULT_GITHUB_BRANCH
 
+
+
     if "/" in repo:
+
         parts = [p for p in repo.split("/") if p]
+
         if len(parts) >= 2:
+
             owner, repo = parts[0], parts[1]
+
+
 
     return {"token": token, "owner": owner, "repo": repo, "branch": branch}
 
 
+
+
+
 def _github_get_json_file(cfg: dict[str, str], file_path: str) -> tuple[dict, str | None]:
+
     if not cfg["token"]:
+
         return {}, None
 
+
+
     url = (
+
         f"https://api.github.com/repos/{cfg['owner']}/{cfg['repo']}/contents/{file_path}"
+
         f"?ref={quote(cfg['branch'], safe='')}"
+
     )
+
     req = Request(
+
         url,
+
         headers={
+
             "Authorization": f"Bearer {cfg['token']}",
+
             "Accept": "application/vnd.github+json",
+
             "X-GitHub-Api-Version": "2022-11-28",
+
             "User-Agent": "dr2-puglia-app",
+
         },
+
         method="GET",
+
     )
+
     try:
+
         with urlopen(req, timeout=10) as resp:
+
             payload = json.loads(resp.read().decode("utf-8"))
+
             sha = payload.get("sha")
+
             raw_b64 = payload.get("content", "")
+
             decoded = base64.b64decode(raw_b64).decode("utf-8") if raw_b64 else "{}"
+
             parsed = json.loads(decoded)
+
             return (parsed if isinstance(parsed, dict) else {}), sha
+
     except HTTPError as err:
+
         if err.code == 404:
+
             return {}, None
+
         raise
 
 
+
+
+
 def _github_put_json_file(cfg: dict[str, str], file_path: str, data: dict, commit_msg: str) -> tuple[bool, str]:
+
     content_str = json.dumps(data, indent=2, ensure_ascii=False) + "\n"
+
     if not cfg["token"]:
+
         return (
+
             False,
+
             "GITHUB_TOKEN non trovato nei Secrets: modifica salvata solo temporaneamente in sessione.",
+
         )
+
+
 
     try:
+
         _, current_sha = _github_get_json_file(cfg, file_path)
+
         content_b64 = base64.b64encode(content_str.encode("utf-8")).decode("ascii")
+
         body: dict[str, str] = {
+
             "message": commit_msg,
+
             "content": content_b64,
+
             "branch": cfg["branch"],
+
         }
+
         if current_sha:
+
             body["sha"] = current_sha
 
+
+
         url = f"https://api.github.com/repos/{cfg['owner']}/{cfg['repo']}/contents/{file_path}"
+
         req = Request(
+
             url,
+
             data=json.dumps(body).encode("utf-8"),
+
             headers={
+
                 "Authorization": f"Bearer {cfg['token']}",
+
                 "Accept": "application/vnd.github+json",
+
                 "Content-Type": "application/json",
+
                 "X-GitHub-Api-Version": "2022-11-28",
+
                 "User-Agent": "dr2-puglia-app",
+
             },
+
             method="PUT",
+
         )
+
         with urlopen(req, timeout=12) as resp:
+
             _ = resp.read()
+
         return True, "Modifica salvata in modo permanente su GitHub!"
+
     except HTTPError as err:
+
         detail = ""
+
         try:
+
             detail = err.read().decode("utf-8")
+
         except Exception:
+
             pass
+
         return (
+
             False,
+
             f"Errore GitHub ({err.code}): verifica che GITHUB_REPO sia 'dr2-girone-a' e che il token abbia permesso Contents: Read and write. {detail}",
+
         )
+
     except Exception as exc:
+
         return False, f"Errore durante il salvataggio su GitHub: {exc}"
 
 
+
+
+
 def load_game_overrides() -> dict[str, dict]:
+
     cfg = _get_github_config()
+
     if cfg["token"]:
+
         try:
+
             data, _ = _github_get_json_file(cfg, OVERRIDES_PATH)
+
             LOCAL_OVERRIDES_FILE.write_text(
+
                 json.dumps(data, indent=2, ensure_ascii=False),
+
                 encoding="utf-8",
+
             )
+
             return data
+
         except Exception:
+
             pass
 
+
+
     if LOCAL_OVERRIDES_FILE.is_file():
+
         try:
+
             data = json.loads(LOCAL_OVERRIDES_FILE.read_text(encoding="utf-8"))
+
             return data if isinstance(data, dict) else {}
+
         except Exception:
+
             return {}
+
     return {}
 
 
+
+
+
 def save_game_override_persistent(match_id: str, values: dict) -> tuple[bool, str, dict[str, dict]]:
+
     cfg = _get_github_config()
+
     overrides = load_game_overrides()
+
     overrides[str(match_id)] = values
 
+
+
     LOCAL_OVERRIDES_FILE.write_text(
+
         json.dumps(overrides, indent=2, ensure_ascii=False) + "\n",
+
         encoding="utf-8",
+
     )
+
     ok, msg = _github_put_json_file(cfg, OVERRIDES_PATH, overrides, f"Aggiorna partita {match_id}")
+
     return ok, msg, overrides
 
 
+
+
+
 def load_match_details_store() -> dict[str, dict]:
+
     merged: dict[str, dict] = {k: json.loads(json.dumps(v)) for k, v in DEFAULT_ROUND3_DETAILS.items()}
+
     cfg = _get_github_config()
+
     remote_data: dict[str, dict] = {}
 
+
+
     if cfg["token"]:
+
         try:
+
             data, _ = _github_get_json_file(cfg, DETAILS_PATH)
+
             if isinstance(data, dict):
+
                 remote_data = data
+
                 LOCAL_DETAILS_FILE.write_text(
+
                     json.dumps(data, indent=2, ensure_ascii=False) + "\n",
+
                     encoding="utf-8",
+
                 )
+
         except Exception:
+
             pass
 
+
+
     if not remote_data and LOCAL_DETAILS_FILE.is_file():
+
         try:
+
             data = json.loads(LOCAL_DETAILS_FILE.read_text(encoding="utf-8"))
+
             if isinstance(data, dict):
+
                 remote_data = data
+
         except Exception:
+
             remote_data = {}
 
+
+
     for mid, mdata in remote_data.items():
+
         if isinstance(mdata, dict):
+
             merged[str(mid)] = mdata
+
+
 
     return merged
 
 
+
+
+
 def save_match_detail_persistent(match_id: str, detail_payload: dict) -> tuple[bool, str, dict[str, dict]]:
+
     cfg = _get_github_config()
+
     store = st.session_state.get("match_details_store")
+
     if not isinstance(store, dict):
+
         store = load_match_details_store()
+
     store[str(match_id)] = detail_payload
 
+
+
     LOCAL_DETAILS_FILE.write_text(
+
         json.dumps(store, indent=2, ensure_ascii=False) + "\n",
+
         encoding="utf-8",
+
     )
+
     ok, msg = _github_put_json_file(cfg, DETAILS_PATH, store, f"Aggiorna dettagli partita {match_id}")
+
     return ok, msg, store
 
 
+
+
+
 def apply_overrides_to_df(df: pd.DataFrame, overrides: dict[str, dict]) -> pd.DataFrame:
+
     out = df.copy()
+
     if not overrides:
+
         return out
+
     for idx, row in out.iterrows():
+
         gid = str(row["ID_Partita"])
+
         if gid in overrides:
+
             ov = overrides[gid]
+
             if "Data" in ov:
+
                 out.loc[idx, "Data"] = str(ov["Data"])
+
             if "Stato" in ov:
+
                 out.loc[idx, "Stato"] = str(ov["Stato"])
+
             if "Punti_Casa" in ov:
+
                 out.loc[idx, "Punti_Casa"] = int(ov["Punti_Casa"])
+
             if "Punti_Trasferta" in ov:
+
                 out.loc[idx, "Punti_Trasferta"] = int(ov["Punti_Trasferta"])
+
     return out
 
 
+
+
+
 # ==========================================
+
 # STILI GRAFICI
+
 # ==========================================
+
 GLOBAL_UI_CSS = """
+
 <style>
+
 .stApp {
+
     background-color: #070d16;
+
     color: #f1f5f9;
+
 }
+
 section[data-testid="stSidebar"] {
+
     background-color: #0b1320;
+
     border-right: 1px solid rgba(148, 163, 184, 0.14);
+
 }
+
 .topbar-card {
+
     background: linear-gradient(120deg, #0d2240 0%, #133b6e 55%, #194d8c 100%);
+
     border: 1px solid rgba(255, 255, 255, 0.14);
+
     border-radius: 14px;
+
     padding: 18px 22px;
+
     margin-bottom: 18px;
+
     box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
+
 }
+
 .topbar-title {
+
     font-size: 24px;
+
     font-weight: 900;
+
     color: #ffffff;
+
     letter-spacing: -0.3px;
+
     margin: 0;
+
 }
+
 .topbar-sub {
+
     font-size: 13px;
+
     color: #bae6fd;
+
     margin-top: 4px;
+
     font-weight: 600;
+
 }
+
 </style>
+
 """
+
+
 
 STANDINGS_CSS = """
+
 <style>
+
 .board-box {
+
     background: linear-gradient(180deg, #0b192c 0%, #0f2440 100%);
+
     padding: 16px;
+
     border-radius: 14px;
+
     border: 1px solid rgba(148, 163, 184, 0.2);
+
     margin-bottom: 18px;
+
     box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
+
 }
+
 .board-head {
+
     display: grid;
+
     grid-template-columns: 44px 44px minmax(170px, 1.35fr) 36px 36px 36px 52px 52px 54px 54px 54px 60px 134px 48px;
+
     gap: 8px;
+
     padding: 0 10px 10px 10px;
+
     border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+
     margin-bottom: 8px;
+
     color: #fbbf24;
+
     font-weight: 800;
+
     font-size: 12px;
+
     letter-spacing: 0.4px;
+
     text-align: center;
+
 }
+
 .board-head .left { text-align: left; }
+
 .zone-tag {
+
     font-size: 10.5px;
+
     font-weight: 800;
+
     letter-spacing: 0.6px;
+
     text-transform: uppercase;
+
     margin: 10px 0 5px 4px;
+
     display: inline-block;
+
     padding: 2px 10px;
+
     border-radius: 6px;
+
 }
+
 .zone-promo { background: #15803d; color: #ffffff; }
+
 .zone-po { background: #b45309; color: #ffffff; }
+
 .zone-pout { background: #b91c1c; color: #ffffff; }
 
+
+
 .board-row {
+
     display: grid;
+
     grid-template-columns: 44px 44px minmax(170px, 1.35fr) 36px 36px 36px 52px 52px 54px 54px 54px 60px 134px 48px;
+
     gap: 8px;
+
     align-items: center;
+
     background: rgba(15, 28, 48, 0.88);
+
     border: 1px solid rgba(255, 255, 255, 0.1);
+
     border-radius: 10px;
+
     padding: 8px 10px;
+
     margin-bottom: 6px;
+
     color: #ffffff;
+
     transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+
 }
+
 .board-row:hover {
+
     background: rgba(23, 43, 74, 0.96);
+
     border-color: rgba(251, 191, 36, 0.45);
+
     transform: translateY(-1px);
+
 }
+
 .board-row.row-promo { border-left: 5px solid #22c55e; }
+
 .board-row.row-po { border-left: 5px solid #f59e0b; }
+
 .board-row.row-pout { border-left: 5px solid #ef4444; }
+
 .board-row.row-qual { border-left: 5px solid #22c55e; }
+
 .board-row.row-out { border-left: 5px solid #ef4444; }
 
+
+
 .b-pos {
+
     font-size: 17px;
+
     font-weight: 900;
+
     text-align: center;
+
     color: #fbbf24;
+
 }
+
 .b-logo {
+
     width: 36px;
+
     height: 36px;
+
     object-fit: contain;
+
     background: #ffffff;
+
     border-radius: 8px;
+
     padding: 2px;
+
     margin: 0 auto;
+
     display: block;
+
 }
+
 a.team-link {
+
     color: #ffffff !important;
+
     text-decoration: none !important;
+
     font-weight: 800;
+
     font-size: 13.5px;
+
     text-transform: uppercase;
+
 }
+
 a.team-link:hover {
+
     color: #fbbf24 !important;
+
     text-decoration: underline !important;
+
 }
+
 .b-sub {
+
     font-size: 11px;
+
     font-weight: 700;
+
     color: #93c5fd;
+
     margin-top: 2px;
+
 }
+
 .b-val {
+
     text-align: center;
+
     font-weight: 700;
+
     font-size: 13.5px;
+
     color: #e2e8f0;
+
 }
+
 .streak-track {
+
     display: inline-flex;
+
     align-items: center;
+
     gap: 4px;
+
     background: #090e17;
+
     border: 1px solid rgba(255, 255, 255, 0.12);
+
     border-radius: 8px;
+
     padding: 4px 10px 4px 6px;
+
     min-width: 118px;
+
     justify-content: flex-start;
+
 }
+
 .streak-item {
+
     position: relative;
+
     display: inline-flex;
+
     align-items: center;
+
     justify-content: center;
+
 }
+
 a.streak-link {
+
     text-decoration: none !important;
+
     display: inline-flex;
+
 }
+
 .streak-box {
+
     display: inline-flex;
+
     align-items: center;
+
     justify-content: center;
+
     width: 20px;
+
     height: 20px;
+
     border-radius: 4px;
+
     font-size: 11px;
+
     font-weight: 900;
+
     color: #ffffff;
+
     line-height: 1;
+
     cursor: pointer;
+
     transition: transform 0.12s ease, filter 0.12s ease;
+
 }
+
 .streak-item:hover .streak-box {
+
     transform: translateY(-2px);
+
     filter: brightness(1.15);
+
 }
+
 .streak-w {
+
     background: #16a34a;
+
     border: 1px solid #22c55e;
+
 }
+
 .streak-l {
+
     background: #dc2626;
+
     border: 1px solid #ef4444;
+
 }
+
 .streak-tooltip {
+
     visibility: hidden;
+
     opacity: 0;
+
     pointer-events: none;
+
     position: absolute;
+
     bottom: calc(100% + 8px);
+
     left: 50%;
+
     transform: translateX(-50%);
+
     z-index: 9999;
+
     min-width: 210px;
+
     max-width: 290px;
+
     background: #0f172a;
+
     border: 1px solid rgba(255, 255, 255, 0.2);
+
     border-radius: 9px;
+
     padding: 7px 10px;
+
     box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
+
     text-align: center;
+
     white-space: normal;
+
     transition: opacity 0.14s ease, visibility 0.14s ease;
+
 }
+
 .streak-tooltip::after {
+
     content: "";
+
     position: absolute;
+
     top: 100%;
+
     left: 50%;
+
     transform: translateX(-50%);
+
     border-width: 6px;
+
     border-style: solid;
+
     border-color: #0f172a transparent transparent transparent;
+
 }
+
 .streak-item:hover .streak-tooltip {
+
     visibility: visible;
+
     opacity: 1;
+
 }
+
 .tt-top {
+
     display: flex;
+
     align-items: center;
+
     justify-content: center;
+
     gap: 6px;
+
     font-size: 11px;
+
     font-weight: 700;
+
     color: #94a3b8;
+
     margin-bottom: 3px;
+
 }
+
 .tt-badge-w {
+
     background: rgba(22, 163, 74, 0.25);
+
     color: #4ade80;
+
     border-radius: 4px;
+
     padding: 1px 5px;
+
     font-size: 10px;
+
     font-weight: 900;
+
 }
+
 .tt-badge-l {
+
     background: rgba(220, 38, 38, 0.25);
+
     color: #f87171;
+
     border-radius: 4px;
+
     padding: 1px 5px;
+
     font-size: 10px;
+
     font-weight: 900;
+
 }
+
 .tt-match {
+
     font-size: 11.5px;
+
     font-weight: 800;
+
     color: #f8fafc;
+
     line-height: 1.3;
+
 }
+
 .tt-score {
+
     color: #fbbf24;
+
     font-weight: 900;
+
     margin: 0 4px;
+
 }
+
 .streak-empty {
+
     color: #64748b;
+
     font-size: 12px;
+
     font-weight: 700;
+
     padding: 0 4px;
+
 }
+
 .b-pts {
+
     text-align: center;
+
     font-weight: 900;
+
     font-size: 16px;
+
     color: #fbbf24;
+
 }
+
 .badge-ok {
+
     display: inline-block;
+
     background: #16a34a;
+
     color: #ffffff;
+
     font-size: 10px;
+
     font-weight: 800;
+
     padding: 2px 7px;
+
     border-radius: 5px;
+
     margin-left: 6px;
+
 }
+
 .badge-no {
+
     display: inline-block;
+
     background: rgba(239, 68, 68, 0.22);
+
     border: 1px solid #ef4444;
+
     color: #fecaca;
+
     font-size: 10px;
+
     font-weight: 800;
+
     padding: 2px 7px;
+
     border-radius: 5px;
+
     margin-left: 6px;
+
 }
+
+
 
 .board-head-thirds, .board-row-thirds {
+
     grid-template-columns: 52px 52px 1fr 50px 50px 50px 66px 156px 62px !important;
+
 }
+
 .board-row.row-highlight-team {
+
     background: linear-gradient(90deg, rgba(29, 78, 216, 0.34) 0%, rgba(15, 28, 48, 0.94) 100%);
+
     border-color: rgba(96, 165, 250, 0.75);
+
     box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.35);
+
 }
+
 </style>
+
 """
+
+
 
 CALENDAR_CSS = """
+
 <style>
+
 .cal-filter-banner {
+
     background: linear-gradient(135deg, #0c192d 0%, #132746 100%);
+
     border: 1px solid rgba(148, 163, 184, 0.26);
+
     border-left: 4px solid #fbbf24;
+
     border-radius: 14px;
+
     padding: 13px 16px;
+
     margin-bottom: 12px;
+
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.26);
+
     display: flex;
+
     align-items: center;
+
     justify-content: space-between;
+
     flex-wrap: wrap;
+
     gap: 10px;
+
 }
+
 .cal-filter-title {
+
     font-size: 13px;
+
     font-weight: 900;
+
     letter-spacing: 0.6px;
+
     text-transform: uppercase;
+
     color: #fbbf24;
+
 }
+
 .cal-filter-sub {
+
     font-size: 11.5px;
+
     font-weight: 600;
+
     color: #cbd5e1;
+
     margin-top: 2px;
+
 }
+
 .cal-filter-pills {
+
     display: flex;
+
     align-items: center;
+
     gap: 8px;
+
     flex-wrap: wrap;
+
 }
+
 .cal-pill {
+
     background: rgba(15, 23, 42, 0.85);
+
     border: 1px solid rgba(251, 191, 36, 0.35);
+
     color: #f8fafc;
+
     border-radius: 999px;
+
     padding: 4px 11px;
+
     font-size: 11px;
+
     font-weight: 800;
+
 }
+
 .cal-pill span {
+
     color: #fbbf24;
+
     font-weight: 900;
+
 }
+
 div[data-testid="stMultiSelect"] > label {
+
     font-size: 12px !important;
+
     font-weight: 800 !important;
+
     text-transform: uppercase !important;
+
     letter-spacing: 0.5px !important;
+
     color: #93c5fd !important;
+
     margin-bottom: 4px !important;
+
 }
+
 div[data-testid="stMultiSelect"] div[data-baseweb="select"] > div {
+
     background-color: #0e1a2e !important;
+
     border: 1px solid rgba(148, 163, 184, 0.35) !important;
+
     border-radius: 11px !important;
+
     min-height: 44px !important;
+
     box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+
 }
+
 div[data-testid="stMultiSelect"] div[data-baseweb="select"] > div:focus-within {
+
     border-color: #fbbf24 !important;
+
     box-shadow: 0 0 0 1px #fbbf24 !important;
+
 }
+
 div[data-testid="stMultiSelect"] span[data-baseweb="tag"] {
+
     background: linear-gradient(90deg, #1d4ed8 0%, #1e40af 100%) !important;
+
     border: 1px solid rgba(147, 197, 253, 0.45) !important;
+
     border-radius: 7px !important;
+
     color: #ffffff !important;
+
     font-weight: 700 !important;
+
 }
+
 .cal-phase-hdr {
+
     background: linear-gradient(90deg, #10243e 0%, #193861 100%);
+
     border: 1px solid rgba(148, 163, 184, 0.25);
+
     border-left: 4px solid #fbbf24;
+
     border-radius: 10px;
+
     padding: 9px 14px;
+
     margin-top: 8px;
+
     margin-bottom: 12px;
+
     font-size: 12.5px;
+
     font-weight: 900;
+
     letter-spacing: 0.6px;
+
     color: #f8fafc;
+
     text-transform: uppercase;
+
 }
+
 .cal-board {
+
     background: #0d1624;
+
     border: 1px solid rgba(148, 163, 184, 0.22);
+
     border-radius: 12px;
+
     overflow: hidden;
+
     margin-bottom: 16px;
+
     box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
+
 }
+
 .cal-board-head {
+
     display: grid;
+
     grid-template-columns: 128px 1fr 94px 1fr;
+
     gap: 8px;
+
     align-items: center;
+
     padding: 9px 12px;
+
     background: linear-gradient(90deg, #13243b 0%, #1a3150 100%);
+
     border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+
     color: #cbd5e1;
+
     font-size: 10.5px;
+
     font-weight: 800;
+
     letter-spacing: 0.5px;
+
     text-transform: uppercase;
+
 }
+
 .cal-board-head .c-center { text-align: center; color: #fbbf24; }
+
 .cal-board-head .c-right { text-align: right; }
+
 .cal-board-head .c-left { text-align: left; }
 
+
+
 a.cal-row-link {
+
     text-decoration: none !important;
+
     color: inherit !important;
+
     display: block;
+
 }
+
 .cal-row-card {
+
     display: grid;
+
     grid-template-columns: 128px 1fr 94px 1fr;
+
     gap: 8px;
+
     align-items: center;
+
     padding: 11px 12px;
+
     background: #0e1726;
+
     border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+
     transition: background 0.14s ease, transform 0.12s ease;
+
     cursor: pointer;
+
 }
+
 .cal-row-card:nth-child(even) {
+
     background: #111c2e;
+
 }
+
 .cal-row-card:hover {
+
     background: #182942;
+
 }
+
 .cal-row-card:last-child {
+
     border-bottom: none;
+
 }
+
 .cal-round-col {
+
     line-height: 1.25;
+
 }
+
 .cal-round-league {
+
     font-size: 10px;
+
     font-weight: 700;
+
     color: #94a3b8;
+
 }
+
 .cal-round-num {
+
     font-size: 11px;
+
     font-weight: 900;
+
     color: #fbbf24;
+
 }
+
 .cal-round-date {
+
     font-size: 11px;
+
     font-weight: 800;
+
     color: #f8fafc;
+
     margin-top: 1px;
+
 }
+
 .cal-side-home {
+
     display: flex;
+
     align-items: center;
+
     justify-content: flex-end;
+
     gap: 7px;
+
     text-align: right;
+
     min-width: 0;
+
 }
+
 .cal-side-away {
+
     display: flex;
+
     align-items: center;
+
     justify-content: flex-start;
+
     gap: 7px;
+
     text-align: left;
+
     min-width: 0;
+
 }
+
 .cal-side-name {
+
     font-size: 12px;
+
     font-weight: 700;
+
     color: #cbd5e1;
+
     line-height: 1.18;
+
 }
+
 .cal-side-name.win {
+
     color: #ffffff;
+
     font-weight: 900;
+
 }
+
 .cal-side-logo {
+
     width: 30px;
+
     height: 30px;
+
     object-fit: contain;
+
     background: #ffffff;
+
     border-radius: 50%;
+
     padding: 2px;
+
     border: 1px solid rgba(148, 163, 184, 0.35);
+
     flex-shrink: 0;
+
 }
+
 .cal-score-box {
+
     text-align: center;
+
     line-height: 1.15;
+
 }
+
 .cal-score-line {
+
     font-size: 17px;
+
     font-weight: 900;
+
     letter-spacing: 0.4px;
+
     white-space: nowrap;
+
 }
+
 .cal-pts-win { color: #f8fafc; }
+
 .cal-pts-lose { color: #94a3b8; }
+
 .cal-pts-vs { color: #fbbf24; font-size: 14px; }
+
 .cal-state-sub {
+
     font-size: 9px;
+
     font-weight: 800;
+
     letter-spacing: 0.6px;
+
     color: #94a3b8;
+
     margin-top: 2px;
+
     text-transform: uppercase;
+
 }
+
 .cal-state-sub.done { color: #4ade80; }
+
 .cal-state-sub.todo { color: #7dd3fc; }
 
+
+
 @media (max-width: 820px) {
+
     .cal-board-head { display: none; }
+
     .cal-row-card {
+
         grid-template-columns: 1fr auto 1fr;
+
         gap: 8px;
+
         padding: 12px;
+
     }
+
     .cal-round-col {
+
         grid-column: 1 / -1;
+
         display: flex;
+
         justify-content: space-between;
+
         align-items: center;
+
         padding-bottom: 6px;
+
         border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+
     }
+
     .cal-side-name { font-size: 11.5px; }
+
     .cal-side-logo { width: 28px; height: 28px; }
+
     .cal-score-line { font-size: 16px; }
+
 }
+
 </style>
+
 """
+
+
 
 TEAMS_GRID_CSS = """
+
 <style>
+
 .teams-row-4 {
+
     display: grid;
+
     grid-template-columns: repeat(4, minmax(0, 1fr));
+
     gap: 20px;
+
     margin-bottom: 24px;
+
 }
+
 .teams-row-3 {
+
     display: grid;
+
     grid-template-columns: repeat(3, minmax(0, 1fr));
+
     gap: 20px;
+
     max-width: 76%;
+
     margin: 0 auto 26px auto;
+
 }
+
 @media (max-width: 1100px) {
+
     .teams-row-4, .teams-row-3 {
+
         grid-template-columns: repeat(2, minmax(0, 1fr));
+
         max-width: 100%;
+
     }
+
 }
+
 @media (max-width: 580px) {
+
     .teams-row-4, .teams-row-3 {
+
         grid-template-columns: 1fr;
+
         max-width: 100%;
+
     }
+
 }
+
 a.team-tile-link {
+
     text-decoration: none !important;
+
     color: inherit !important;
+
     display: flex;
+
     flex-direction: column;
+
     align-items: center;
+
 }
+
 .team-square-card {
+
     width: 100%;
+
     aspect-ratio: 1 / 1;
+
     background: radial-gradient(circle at 50% 34%, rgba(37, 99, 235, 0.34) 0%, rgba(13, 29, 52, 0.96) 58%, #091323 100%);
+
     border: 1.5px solid rgba(148, 163, 184, 0.3);
+
     border-radius: 20px;
+
     padding: 14px;
+
     display: flex;
+
     flex-direction: column;
+
     align-items: center;
+
     justify-content: space-between;
+
     text-align: center;
+
     box-shadow: 0 12px 28px rgba(0, 0, 0, 0.42);
+
     transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+
     cursor: pointer;
+
     position: relative;
+
     overflow: hidden;
+
 }
+
 .team-square-card::before {
+
     content: "";
+
     position: absolute;
+
     top: 0;
+
     left: 0;
+
     right: 0;
+
     height: 4px;
+
     background: linear-gradient(90deg, #1d4ed8 0%, #fbbf24 50%, #1d4ed8 100%);
+
     opacity: 0.75;
+
 }
+
 a.team-tile-link:hover .team-square-card {
+
     transform: translateY(-6px);
+
     border-color: #fbbf24;
+
     background: radial-gradient(circle at 50% 34%, rgba(251, 191, 36, 0.25) 0%, rgba(18, 40, 71, 0.98) 60%, #0b172a 100%);
+
     box-shadow: 0 16px 34px rgba(251, 191, 36, 0.24);
+
 }
+
 .ts-watermark {
+
     position: absolute;
+
     top: 42%;
+
     left: 50%;
+
     transform: translate(-50%, -50%) scale(1.85);
+
     width: 75%;
+
     height: 75%;
+
     object-fit: contain;
+
     opacity: 0.06;
+
     pointer-events: none;
+
     filter: grayscale(30%);
+
     z-index: 0;
+
 }
+
 .ts-top-row {
+
     width: 100%;
+
     display: flex;
+
     align-items: center;
+
     justify-content: space-between;
+
     font-size: 11.5px;
+
     font-weight: 900;
+
     z-index: 2;
+
 }
+
 .ts-pos-pill {
+
     background: rgba(251, 191, 36, 0.2);
+
     color: #fbbf24;
+
     border: 1px solid rgba(251, 191, 36, 0.5);
+
     border-radius: 999px;
+
     padding: 3px 10px;
+
 }
+
 .ts-pts-pill {
+
     background: rgba(15, 23, 42, 0.88);
+
     color: #bae6fd;
+
     border: 1px solid rgba(148, 163, 184, 0.3);
+
     border-radius: 999px;
+
     padding: 3px 10px;
+
 }
+
 .ts-logo-stage {
+
     flex: 1;
+
     width: 100%;
+
     display: flex;
+
     align-items: center;
+
     justify-content: center;
+
     padding: 6px 0;
+
     z-index: 2;
+
 }
+
 .ts-logo-box {
+
     width: 118px;
+
     height: 118px;
+
     background: #ffffff;
+
     border-radius: 22px;
+
     padding: 9px;
+
     display: flex;
+
     align-items: center;
+
     justify-content: center;
+
     border: 2.5px solid rgba(255, 255, 255, 0.9);
+
     box-shadow: 0 10px 24px rgba(0, 0, 0, 0.42), 0 0 0 5px rgba(255, 255, 255, 0.08);
+
     transition: transform 0.18s ease, box-shadow 0.18s ease;
+
 }
+
 a.team-tile-link:hover .ts-logo-box {
+
     transform: scale(1.06);
+
     box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5), 0 0 0 5px rgba(251, 191, 36, 0.28);
+
 }
+
 .ts-logo-box img {
+
     width: 100%;
+
     height: 100%;
+
     object-fit: contain;
+
 }
+
 .ts-bottom-panel {
+
     width: 100%;
+
     background: rgba(8, 14, 24, 0.84);
+
     border: 1px solid rgba(148, 163, 184, 0.22);
+
     border-radius: 12px;
+
     padding: 8px 10px;
+
     z-index: 2;
+
     backdrop-filter: blur(4px);
+
 }
+
 .ts-metrics-row {
+
     display: flex;
+
     align-items: center;
+
     justify-content: space-between;
+
     font-size: 11.5px;
+
     font-weight: 800;
+
     color: #e2e8f0;
+
     margin-bottom: 6px;
+
 }
+
 .ts-rec-w { color: #4ade80; font-weight: 900; }
+
 .ts-rec-l { color: #f87171; font-weight: 900; }
+
 .ts-diff-pos { color: #4ade80; font-weight: 900; }
+
 .ts-diff-neg { color: #f87171; font-weight: 900; }
+
 .ts-diff-zero { color: #94a3b8; font-weight: 800; }
+
 .ts-streak-pills {
+
     display: flex;
+
     align-items: center;
+
     justify-content: center;
+
     gap: 5px;
+
 }
+
 .ts-mini-w {
+
     display: inline-flex;
+
     align-items: center;
+
     justify-content: center;
+
     width: 20px;
+
     height: 20px;
+
     border-radius: 5px;
+
     font-size: 10.5px;
+
     font-weight: 900;
+
     background: #16a34a;
+
     color: #ffffff;
+
     border: 1px solid #22c55e;
+
 }
+
 .ts-mini-l {
+
     display: inline-flex;
+
     align-items: center;
+
     justify-content: center;
+
     width: 20px;
+
     height: 20px;
+
     border-radius: 5px;
+
     font-size: 10.5px;
+
     font-weight: 900;
+
     background: #dc2626;
+
     color: #ffffff;
+
     border: 1px solid #ef4444;
+
 }
+
 .ts-mini-none {
+
     font-size: 10.5px;
+
     color: #94a3b8;
+
     font-weight: 700;
+
 }
+
 .ts-caption-below {
+
     margin-top: 10px;
+
     font-size: 13px;
+
     font-weight: 900;
+
     color: #f8fafc;
+
     text-align: center;
+
     text-transform: uppercase;
+
     line-height: 1.25;
+
     letter-spacing: 0.2px;
+
     transition: color 0.15s ease;
+
 }
+
 a.team-tile-link:hover .ts-caption-below {
+
     color: #fbbf24;
+
 }
+
 </style>
+
 """
+
+
 
 MATCH_DETAIL_CSS = """
+
 <style>
+
 .md-hero {
+
     background: linear-gradient(135deg, #09182b 0%, #102a4c 55%, #163b69 100%);
+
     border: 1px solid rgba(148, 163, 184, 0.24);
+
     border-radius: 14px;
+
     padding: 24px 20px;
+
     margin-bottom: 16px;
+
     box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
+
 }
+
 .md-grid {
+
     display: grid;
+
     grid-template-columns: 1fr auto 1fr;
+
     gap: 16px;
+
     align-items: center;
+
     text-align: center;
+
 }
+
 .md-team-block {
+
     display: flex;
+
     flex-direction: column;
+
     align-items: center;
+
     gap: 10px;
+
 }
+
 .md-logo-box {
+
     width: 74px;
+
     height: 74px;
+
     background: #ffffff;
+
     border-radius: 16px;
+
     padding: 8px;
+
     display: flex;
+
     align-items: center;
+
     justify-content: center;
+
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+
 }
+
 .md-logo-box img {
+
     max-width: 100%;
+
     max-height: 100%;
+
     object-fit: contain;
+
 }
+
 .md-team-name {
+
     font-size: 15px;
+
     font-weight: 800;
+
     color: #f8fafc;
+
     text-transform: uppercase;
+
 }
+
 .md-center {
+
     display: flex;
+
     flex-direction: column;
+
     align-items: center;
+
     gap: 4px;
+
 }
+
 .md-date {
+
     font-size: 12.5px;
+
     font-weight: 700;
+
     color: #bae6fd;
+
 }
+
 .md-score {
+
     font-size: 46px;
+
     font-weight: 900;
+
     color: #ffffff;
+
     letter-spacing: 2px;
+
     line-height: 1.1;
+
 }
+
 .md-status {
+
     font-size: 11.5px;
+
     font-weight: 800;
+
     letter-spacing: 1.2px;
+
     color: #fbbf24;
+
     text-transform: uppercase;
+
 }
+
 .md-sec-card {
+
     background: linear-gradient(180deg, #0d1828 0%, #0a121f 100%);
+
     border: 1px solid rgba(148, 163, 184, 0.2);
+
     border-radius: 14px;
+
     padding: 18px;
+
     margin-bottom: 16px;
+
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+
 }
+
 .md-sec-title {
+
     font-size: 13px;
+
     font-weight: 900;
+
     letter-spacing: 0.8px;
+
     text-transform: uppercase;
+
     color: #fbbf24;
+
     margin-bottom: 14px;
+
     display: flex;
+
     align-items: center;
+
     justify-content: space-between;
+
 }
+
 .md-res-table {
+
     width: 100%;
+
     border-collapse: collapse;
+
     color: #f1f5f9;
+
     font-size: 13.5px;
+
 }
+
 .md-res-table th {
+
     text-align: center;
+
     color: #94a3b8;
+
     font-size: 11.5px;
+
     font-weight: 800;
+
     text-transform: uppercase;
+
     padding: 9px 10px;
+
     border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+
     background: rgba(15, 23, 42, 0.65);
+
 }
+
 .md-res-table th.team-col, .md-res-table td.team-col {
+
     text-align: left;
+
     font-weight: 800;
+
 }
+
 .md-res-table td {
+
     text-align: center;
+
     padding: 10px;
+
     border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+
 }
+
 .md-res-table td.tot-col {
+
     font-weight: 900;
+
     color: #fbbf24;
+
     font-size: 15px;
+
 }
+
+
 
 .lba-box-card {
+
     margin-bottom: 20px;
+
     border-radius: 14px;
+
     overflow: hidden;
+
     box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
+
     border: 1px solid rgba(148, 163, 184, 0.28);
+
     background: #ffffff;
+
 }
+
 .lba-team-banner {
+
     display: flex;
+
     align-items: center;
+
     justify-content: space-between;
+
     gap: 14px;
+
     background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%);
+
     color: #ffffff;
+
     padding: 14px 18px;
+
     border-bottom: 2px solid #f59e0b;
+
 }
+
 .lba-banner-left {
+
     display: flex;
+
     align-items: center;
+
     gap: 14px;
+
 }
+
 .lba-team-logo {
+
     width: 46px;
+
     height: 46px;
+
     object-fit: contain;
+
     background: #ffffff;
+
     border-radius: 10px;
+
     padding: 4px;
+
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+
 }
+
 .lba-team-title {
+
     font-size: 18px;
+
     font-weight: 900;
+
     color: #ffffff;
+
     letter-spacing: -0.2px;
+
     text-transform: uppercase;
+
     line-height: 1.15;
+
 }
+
 .lba-team-coach {
+
     font-size: 12px;
+
     font-weight: 600;
+
     color: #cbd5e1;
+
     margin-top: 3px;
+
 }
+
 .lba-tag-pill {
+
     font-size: 10.5px;
+
     font-weight: 800;
+
     text-transform: uppercase;
+
     letter-spacing: 0.6px;
+
     padding: 4px 10px;
+
     border-radius: 999px;
+
     background: rgba(251, 191, 36, 0.16);
+
     color: #fbbf24;
+
     border: 1px solid rgba(251, 191, 36, 0.45);
+
     white-space: nowrap;
+
 }
+
 .lba-table-wrap {
+
     width: 100%;
+
     overflow-x: auto;
+
     background: #ffffff;
+
 }
+
 table.lba-box {
+
     width: 100%;
+
     border-collapse: collapse;
+
     font-size: 12px;
+
     color: #1e293b;
+
 }
+
 table.lba-box.full-stats {
+
     min-width: 900px;
+
 }
+
 table.lba-box.compact-stats {
+
     min-width: 580px;
+
 }
+
 table.lba-box th.grp-hdr {
+
     background: #1e293b;
+
     color: #f8fafc;
+
     font-weight: 800;
+
     font-size: 10px;
+
     letter-spacing: 0.6px;
+
     padding: 6px 6px;
+
     text-align: center;
+
     border-right: 1px solid #334155;
+
 }
+
 table.lba-box th.grp-empty {
+
     background: #1e293b;
+
     border-right: 1px solid #334155;
+
 }
+
 table.lba-box th.sub-hdr {
+
     background: #f8fafc;
+
     color: #334155;
+
     font-weight: 800;
+
     font-size: 10px;
+
     padding: 7px 6px;
+
     text-align: center;
+
     border-bottom: 2px solid #cbd5e1;
+
     border-right: 1px solid #e2e8f0;
+
 }
+
 table.lba-box th.sub-hdr.left-col {
+
     text-align: left;
+
     padding-left: 12px;
+
 }
+
 table.lba-box th.sub-hdr.pts-col {
+
     color: #d97706;
+
 }
+
 table.lba-box td {
+
     padding: 7px 6px;
+
     text-align: center;
+
     border-bottom: 1px solid #e2e8f0;
+
     border-right: 1px solid #f1f5f9;
+
     font-weight: 500;
+
 }
+
 table.lba-box td.player-name {
+
     text-align: left;
+
     padding-left: 12px;
+
     font-weight: 700;
+
     color: #0f172a;
+
     white-space: nowrap;
+
 }
+
 .num-badge {
+
     display: inline-block;
+
     min-width: 24px;
+
     padding: 1px 6px;
+
     border-radius: 5px;
+
     background: #f1f5f9;
+
     color: #0f172a;
+
     font-weight: 800;
+
     font-size: 11px;
+
     margin-right: 6px;
+
     border: 1px solid #cbd5e1;
+
 }
+
 table.lba-box td.pts-val {
+
     font-weight: 900;
+
     color: #d97706;
+
 }
+
 table.lba-box td.pct-val {
+
     font-weight: 800;
+
     color: #d97706;
+
 }
+
 table.lba-box td.sf-check {
+
     color: #15803d;
+
     font-weight: 900;
+
 }
+
 table.lba-box tr:nth-child(even) td {
+
     background: #fcfcfd;
+
 }
+
 table.lba-box tr.total-row td {
+
     background: #e2e8f0;
+
     font-weight: 900;
+
     color: #0f172a;
+
     border-top: 2px solid #94a3b8;
+
     font-size: 12.5px;
+
 }
+
 table.lba-box tr.total-row td.pts-val,
+
 table.lba-box tr.total-row td.pct-val {
+
     color: #b45309;
+
 }
+
+
 
 .formation-3col {
+
     display: grid;
+
     grid-template-columns: minmax(215px, 1fr) minmax(420px, 600px) minmax(215px, 1fr);
+
     gap: 14px;
+
     align-items: center;
+
 }
+
 @media (max-width: 1100px) {
+
     .formation-3col {
+
         grid-template-columns: 1fr;
+
     }
+
 }
+
 .roster-side-card {
+
     background: #0d1624;
+
     border: 1px solid rgba(148, 163, 184, 0.22);
+
     border-radius: 12px;
+
     padding: 12px 14px;
+
     height: 100%;
+
 }
+
 .roster-side-head {
+
     display: flex;
+
     align-items: center;
+
     gap: 8px;
+
     padding-bottom: 8px;
+
     margin-bottom: 8px;
+
     border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+
     font-size: 12px;
+
     font-weight: 900;
+
     color: #f8fafc;
+
     text-transform: uppercase;
+
 }
+
 .roster-side-head img {
+
     width: 24px;
+
     height: 24px;
+
     object-fit: contain;
+
     background: #ffffff;
+
     border-radius: 5px;
+
     padding: 2px;
+
 }
+
 .roster-group-lbl {
+
     font-size: 10px;
+
     font-weight: 800;
+
     letter-spacing: 0.6px;
+
     text-transform: uppercase;
+
     color: #fbbf24;
+
     margin-bottom: 6px;
+
 }
+
 .roster-player-line {
+
     display: flex;
+
     align-items: center;
+
     gap: 7px;
+
     padding: 4px 6px;
+
     border-radius: 6px;
+
     font-size: 12px;
+
     font-weight: 700;
+
     color: #f1f5f9;
+
     margin-bottom: 3px;
+
     background: rgba(15, 23, 42, 0.75);
+
 }
+
 .roster-player-line.starter {
+
     border-left: 3px solid #22c55e;
+
 }
+
 .roster-num-pill {
+
     min-width: 24px;
+
     text-align: center;
+
     font-size: 11px;
+
     font-weight: 900;
+
     color: #fbbf24;
+
     background: rgba(30, 41, 59, 0.95);
+
     border-radius: 4px;
+
     padding: 1px 4px;
+
 }
+
 .roster-divider {
+
     border: none;
+
     border-top: 1px dashed rgba(148, 163, 184, 0.35);
+
     margin: 8px 0;
+
 }
+
+
 
 .court-compact-wrap {
+
     display: flex;
+
     flex-direction: column;
+
     align-items: center;
+
     width: 100%;
+
 }
+
 .court-stage {
+
     position: relative;
+
     width: 100%;
+
     max-width: 600px;
+
     aspect-ratio: 28 / 15;
+
     min-height: 270px;
+
     border-radius: 14px;
+
     overflow: hidden;
+
     border: 1.5px solid rgba(148, 163, 184, 0.32);
+
     background: radial-gradient(circle at center, #1c2b45 0%, #101929 100%);
+
     box-shadow: 0 12px 26px rgba(0, 0, 0, 0.45), inset 0 0 28px rgba(0, 0, 0, 0.45);
+
 }
+
 .court-svg-bg {
+
     position: absolute;
+
     inset: 0;
+
     width: 100%;
+
     height: 100%;
+
     z-index: 1;
+
 }
+
 .court-players-layer {
+
     position: relative;
+
     z-index: 2;
+
     display: grid;
+
     grid-template-columns: 1fr 1fr;
+
     height: 100%;
+
     padding: 12px 10px;
+
     gap: 10px;
+
 }
+
 .half-court-col {
+
     display: flex;
+
     flex-direction: column;
+
     justify-content: space-between;
+
     align-items: center;
+
 }
+
 .half-row-top, .half-row-bot {
+
     display: flex;
+
     justify-content: center;
+
     gap: 12px;
+
     flex-wrap: wrap;
+
 }
+
 .half-row-mid {
+
     display: flex;
+
     justify-content: center;
+
 }
+
 .jersey-card {
+
     display: flex;
+
     flex-direction: column;
+
     align-items: center;
+
     gap: 2px;
+
     transition: transform 0.16s ease;
+
 }
+
 .jersey-card:hover {
+
     transform: translateY(-3px) scale(1.08);
+
 }
+
 .jersey-svg-wrap {
+
     width: 44px;
+
     height: 46px;
+
     display: flex;
+
     align-items: center;
+
     justify-content: center;
+
     filter: drop-shadow(0 5px 8px rgba(0, 0, 0, 0.52));
+
 }
+
 .jersey-name {
+
     background: rgba(9, 15, 27, 0.88);
+
     color: #f8fafc;
+
     border: 1px solid rgba(255, 255, 255, 0.18);
+
     border-radius: 6px;
+
     padding: 1px 7px;
+
     font-size: 10px;
+
     font-weight: 800;
+
     text-transform: uppercase;
+
     letter-spacing: 0.3px;
+
     max-width: 96px;
+
     white-space: nowrap;
+
     overflow: hidden;
+
     text-overflow: ellipsis;
+
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+
 }
+
+
 
 .hist-grid {
+
     display: grid;
+
     grid-template-columns: 1fr 1fr;
+
     gap: 16px;
+
 }
+
 @media (max-width: 850px) {
+
     .hist-grid {
+
         grid-template-columns: 1fr;
+
     }
+
 }
+
 .hist-col {
+
     background: #0d1624;
+
     border: 1px solid rgba(148, 163, 184, 0.2);
+
     border-radius: 12px;
+
     padding: 14px;
+
 }
+
 .hist-col-head {
+
     display: flex;
+
     align-items: center;
+
     gap: 10px;
+
     padding-bottom: 10px;
+
     margin-bottom: 10px;
+
     border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+
     font-size: 13px;
+
     font-weight: 900;
+
     color: #ffffff;
+
     text-transform: uppercase;
+
 }
+
 .hist-col-head img {
+
     width: 28px;
+
     height: 28px;
+
     object-fit: contain;
+
     background: #ffffff;
+
     border-radius: 6px;
+
     padding: 2px;
+
 }
+
 .hist-item {
+
     display: grid;
+
     grid-template-columns: 62px 1fr auto;
+
     gap: 8px;
+
     align-items: center;
+
     padding: 8px 10px;
+
     border-radius: 8px;
+
     background: rgba(15, 23, 42, 0.85);
+
     border: 1px solid rgba(148, 163, 184, 0.12);
+
     margin-bottom: 7px;
+
     font-size: 12px;
+
 }
+
 .hist-badge-w {
+
     background: rgba(22, 163, 74, 0.22);
+
     color: #4ade80;
+
     border: 1px solid rgba(74, 222, 128, 0.45);
+
     border-radius: 5px;
+
     padding: 2px 6px;
+
     font-weight: 900;
+
     font-size: 10.5px;
+
     text-align: center;
+
 }
+
 .hist-badge-l {
+
     background: rgba(220, 38, 38, 0.22);
+
     color: #f87171;
+
     border: 1px solid rgba(248, 113, 113, 0.45);
+
     border-radius: 5px;
+
     padding: 2px 6px;
+
     font-weight: 900;
+
     font-size: 10.5px;
+
     text-align: center;
+
 }
+
 .hist-score {
+
     font-weight: 900;
+
     color: #fbbf24;
+
     white-space: nowrap;
+
 }
+
+
 
 .team-hero {
+
     background: linear-gradient(135deg, #09182b 0%, #10325c 100%);
+
     border: 1px solid rgba(148, 163, 184, 0.24);
+
     border-radius: 14px;
+
     padding: 20px;
+
     margin-bottom: 16px;
+
     display: flex;
+
     align-items: center;
+
     gap: 18px;
+
 }
+
 .team-hero-title {
+
     font-size: 23px;
+
     font-weight: 900;
+
     color: #ffffff;
+
     text-transform: uppercase;
+
 }
+
 .team-hero-sub {
+
     font-size: 13px;
+
     font-weight: 700;
+
     color: #bae6fd;
+
     margin-top: 2px;
+
 }
+
 .kpi-grid {
+
     display: grid;
+
     grid-template-columns: repeat(auto-fit, minmax(115px, 1fr));
+
     gap: 10px;
+
     margin-bottom: 16px;
+
 }
+
 .kpi-card {
+
     background: #0d1624;
+
     border: 1px solid rgba(148, 163, 184, 0.18);
+
     border-radius: 10px;
+
     padding: 12px;
+
     text-align: center;
+
 }
+
 .kpi-label {
+
     font-size: 11px;
+
     font-weight: 800;
+
     color: #94a3b8;
+
     text-transform: uppercase;
+
 }
+
 .kpi-val {
+
     font-size: 20px;
+
     font-weight: 900;
+
     color: #fbbf24;
+
     margin-top: 2px;
+
 }
+
 </style>
+
 """
 
+
+
 TEAM_PAGE_CSS = """
+
 <style>
+
 .tp-stats-card {
+
     background: #ffffff;
+
     border-radius: 14px;
+
     overflow: hidden;
+
     border: 1px solid rgba(148, 163, 184, 0.28);
+
     box-shadow: 0 10px 26px rgba(0, 0, 0, 0.32);
+
     margin-bottom: 20px;
+
 }
+
 .tp-stats-head {
+
     background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%);
+
     color: #ffffff;
+
     padding: 12px 16px;
+
     font-size: 13px;
+
     font-weight: 900;
+
     letter-spacing: 0.6px;
+
     text-transform: uppercase;
+
     border-bottom: 2px solid #f59e0b;
+
     display: flex;
+
     justify-content: space-between;
+
     align-items: center;
+
 }
+
 .tp-table-wrap {
+
     width: 100%;
+
     overflow-x: auto;
+
     background: #ffffff;
+
 }
+
 table.tp-stats-table {
+
     width: 100%;
+
     border-collapse: collapse;
+
     font-size: 12px;
+
     color: #1e293b;
+
     min-width: 780px;
+
 }
+
 table.tp-stats-table th {
+
     background: #f8fafc;
+
     color: #334155;
+
     font-weight: 800;
+
     font-size: 10.5px;
+
     text-transform: uppercase;
+
     padding: 8px 7px;
+
     border-bottom: 2px solid #cbd5e1;
+
     border-right: 1px solid #e2e8f0;
+
     text-align: center;
+
     white-space: nowrap;
+
 }
+
 table.tp-stats-table th.left-col {
+
     text-align: left;
+
     padding-left: 12px;
+
 }
+
 table.tp-stats-table th.hi-col {
+
     color: #d97706;
+
 }
+
 table.tp-stats-table td {
+
     padding: 7px 7px;
+
     text-align: center;
+
     border-bottom: 1px solid #e2e8f0;
+
     border-right: 1px solid #f1f5f9;
+
     font-weight: 600;
+
 }
+
 table.tp-stats-table td.num-col {
+
     font-weight: 900;
+
     color: #0f172a;
+
     background: #f8fafc;
+
 }
+
 table.tp-stats-table td.name-col {
+
     text-align: left;
+
     padding-left: 12px;
+
     font-weight: 800;
+
     color: #0f172a;
+
     white-space: nowrap;
+
 }
+
 table.tp-stats-table td.pts-col {
+
     font-weight: 900;
+
     color: #d97706;
+
 }
+
 table.tp-stats-table tr:nth-child(even) td {
+
     background: #fcfcfd;
+
 }
+
 table.tp-stats-table tr:nth-child(even) td.num-col {
+
     background: #f1f5f9;
+
 }
+
 a.tp-player-link {
+
     color: #0f172a !important;
+
     text-decoration: none !important;
+
     font-weight: 800;
+
     border-bottom: 1.5px dashed rgba(217, 119, 6, 0.55);
+
     transition: color 0.14s ease, border-color 0.14s ease;
+
 }
+
 a.tp-player-link:hover {
+
     color: #d97706 !important;
+
     border-bottom-color: #d97706;
+
 }
+
 .pm-hero-card {
+
     background: linear-gradient(135deg, #09182b 0%, #132d52 100%);
+
     border: 1px solid rgba(251, 191, 36, 0.35);
+
     border-radius: 14px;
+
     padding: 14px 18px;
+
     margin-bottom: 14px;
+
     display: flex;
+
     align-items: center;
+
     justify-content: space-between;
+
     gap: 12px;
+
 }
+
 .pm-name-title {
+
     font-size: 20px;
+
     font-weight: 900;
+
     color: #ffffff;
+
     line-height: 1.2;
+
 }
+
 .pm-jersey-tag {
+
     color: #fbbf24;
+
     font-weight: 900;
+
     margin-right: 6px;
+
 }
+
 .pm-team-sub {
+
     display: flex;
+
     align-items: center;
+
     gap: 8px;
+
     margin-top: 6px;
+
     font-size: 11.5px;
+
     font-weight: 800;
+
     color: #93c5fd;
+
     text-transform: uppercase;
+
 }
+
 .pm-team-sub img {
+
     width: 24px;
+
     height: 24px;
+
     object-fit: contain;
+
     background: #ffffff;
+
     border-radius: 6px;
+
     padding: 2px;
+
 }
+
 .pm-kpi-grid {
+
     display: grid;
+
     grid-template-columns: repeat(4, minmax(0, 1fr));
+
     gap: 10px;
+
     margin-bottom: 12px;
+
 }
+
 @media (max-width: 680px) {
+
     .pm-kpi-grid {
+
         grid-template-columns: repeat(2, minmax(0, 1fr));
+
     }
+
 }
+
 .pm-kpi-box {
+
     background: #0d1624;
+
     border: 1px solid rgba(148, 163, 184, 0.22);
+
     border-radius: 10px;
+
     padding: 10px 12px;
+
 }
+
 .pm-kpi-lbl {
+
     font-size: 10.5px;
+
     font-weight: 800;
+
     color: #94a3b8;
+
     text-transform: uppercase;
+
 }
+
 .pm-kpi-val {
+
     font-size: 21px;
+
     font-weight: 900;
+
     color: #f8fafc;
+
     margin-top: 2px;
+
 }
+
 .pm-kpi-val.gold {
+
     color: #fbbf24;
+
 }
+
 .pm-extra-bar {
+
     background: rgba(15, 23, 42, 0.85);
+
     border: 1px solid rgba(148, 163, 184, 0.18);
+
     border-radius: 9px;
+
     padding: 8px 12px;
+
     font-size: 11.5px;
+
     font-weight: 700;
+
     color: #cbd5e1;
+
     margin-bottom: 14px;
+
 }
+
 .pm-hist-section-title {
+
     font-size: 12px;
+
     font-weight: 900;
+
     letter-spacing: 0.6px;
+
     text-transform: uppercase;
+
     color: #fbbf24;
+
     margin: 6px 0 10px 0;
+
 }
+
 .pm-game-card {
+
     background: #0e1726;
+
     border: 1px solid rgba(148, 163, 184, 0.22);
+
     border-radius: 12px;
+
     overflow: hidden;
+
     margin-bottom: 10px;
+
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+
 }
+
 .pm-game-row {
+
     display: grid;
+
     grid-template-columns: 112px 1fr 86px 1fr;
+
     gap: 8px;
+
     align-items: center;
+
     padding: 10px 12px;
+
     background: linear-gradient(90deg, #101b2e 0%, #142238 100%);
+
 }
+
 .pm-game-footer {
+
     background: #09101c;
+
     border-top: 1px solid rgba(148, 163, 184, 0.14);
+
     padding: 7px 12px;
+
     display: flex;
+
     align-items: center;
+
     justify-content: space-between;
+
     flex-wrap: wrap;
+
     gap: 6px;
+
     font-size: 11.5px;
+
     color: #cbd5e1;
+
 }
+
 .pm-stat-pills {
+
     display: flex;
+
     align-items: center;
+
     gap: 6px;
+
     flex-wrap: wrap;
+
 }
+
 .pm-stat-chip {
+
     background: rgba(30, 41, 59, 0.9);
+
     border: 1px solid rgba(148, 163, 184, 0.25);
+
     border-radius: 6px;
+
     padding: 2px 7px;
+
     font-size: 11px;
+
     font-weight: 800;
+
     color: #e2e8f0;
+
 }
+
 .pm-stat-chip.pts {
+
     background: rgba(251, 191, 36, 0.16);
+
     border-color: rgba(251, 191, 36, 0.48);
+
     color: #fbbf24;
+
     font-weight: 900;
+
 }
+
 </style>
+
 """
+
+
+
 
 
 @st.cache_data(show_spinner=False)
+
 def build_games_df(version: str = DATA_VERSION) -> pd.DataFrame:
+
     _ = version
+
     return pd.DataFrame(
+
         [
+
             {
+
                 "ID_Partita": gid,
+
                 "Girone": girone,
+
                 "Giornata": int(giornata),
+
                 "Data": data_ora,
+
                 "Casa": casa,
+
                 "Trasferta": trasferta,
+
                 "Punti_Casa": int(pts_casa),
+
                 "Punti_Trasferta": int(pts_trasf),
+
                 "Stato": stato,
+
             }
+
             for gid, girone, giornata, data_ora, casa, trasferta, pts_casa, pts_trasf, stato in DEFAULT_GAMES_RAW
+
         ]
+
     )
+
+
+
 
 
 def load_full_games_df() -> pd.DataFrame:
+
     base_df = build_games_df(DATA_VERSION).copy()
+
     overrides = load_game_overrides()
+
     st.session_state["game_overrides"] = overrides
+
     return apply_overrides_to_df(base_df, overrides)
 
 
+
+
+
 @st.cache_data(show_spinner=False)
+
 def resolve_logo_src(logo_filename: str, github_base: str) -> str:
+
     clean_name = (logo_filename or "").strip()
+
     if not clean_name:
+
         return ""
+
     if github_base:
+
         return f"{github_base.rstrip('/')}/{quote(clean_name, safe='._-')}"
+
     for candidate in (Path(clean_name), Path("loghi") / clean_name, Path("assets") / clean_name):
+
         if candidate.is_file():
+
             ext = candidate.suffix.lower().lstrip(".")
+
             mime = "image/jpeg" if ext in ("jpg", "jpeg") else f"image/{ext or 'png'}"
+
             encoded = base64.b64encode(candidate.read_bytes()).decode("ascii")
+
             return f"data:{mime};base64,{encoded}"
+
     return ""
 
 
+
+
+
 @st.cache_data(show_spinner=False)
+
 def build_team_logo_html_map(github_base: str) -> dict[str, str]:
+
     mapping: dict[str, str] = {}
+
     for teams in GIRONI_TEAMS.values():
+
         for t in teams:
+
             src = resolve_logo_src(t["logo"], github_base)
+
             squadra = t["squadra"]
+
             mapping[f"raw_src::{squadra}"] = src
+
             mapping[f"board::{squadra}"] = (
+
                 f'<img class="b-logo" src="{src}" alt="{squadra}" loading="lazy" />'
+
                 if src
+
                 else '<div class="b-pos">🏀</div>'
+
             )
+
             mapping[f"cal::{squadra}"] = (
+
                 f'<img class="cal-logo" src="{src}" alt="" loading="lazy" />'
+
                 if src
+
                 else "🏀"
+
             )
+
             mapping[f"hero::{squadra}"] = (
+
                 f'<div class="md-logo-box"><img src="{src}" alt="{squadra}" /></div>'
+
                 if src
+
                 else '<div class="md-logo-box"><span style="font-size:32px;">🏀</span></div>'
+
             )
+
             mapping[f"lba::{squadra}"] = (
+
                 f'<img class="lba-team-logo" src="{src}" alt="{squadra}" />'
+
                 if src
+
                 else '<div class="lba-team-logo" style="display:flex;align-items:center;justify-content:center;font-size:22px;">🏀</div>'
+
             )
+
     return mapping
 
 
+
+
+
 def _find_team_girone(team_name: str) -> str | None:
+
     for g_name, items in GIRONI_TEAMS.items():
+
         for item in items:
+
             if item["squadra"] == team_name:
+
                 return g_name
+
     return None
 
 
+
+
+
 def _format_tooltip_data(g) -> dict[str, str]:
+
     tokens = str(g.Data).strip().split()
+
     date_part = tokens[1] if len(tokens) >= 3 else (tokens[0] if len(tokens) >= 1 else "")
+
     return {
+
         "date": date_part,
+
         "home": str(g.Casa),
+
         "away": str(g.Trasferta),
+
         "score": f"{int(g.Punti_Casa)} - {int(g.Punti_Trasferta)}",
+
     }
+
+
+
 
 
 def _render_streak_html(events: list[dict], max_items: int = 5) -> str:
+
     recent = events[-max_items:]
+
     if not recent:
+
         return '<div class="streak-track"><span class="streak-empty">—</span></div>'
+
     items = []
+
     for ev in recent:
+
         res = ev["res"]
+
         gid = quote(str(ev["game_id"]), safe="")
+
         tip = ev.get("tooltip_data", {})
+
         date_str = str(tip.get("date", "")).replace("<", "&lt;").replace(">", "&gt;")
+
         home_str = str(tip.get("home", "")).replace("<", "&lt;").replace(">", "&gt;")
+
         away_str = str(tip.get("away", "")).replace("<", "&lt;").replace(">", "&gt;")
+
         score_str = str(tip.get("score", "")).replace("<", "&lt;").replace(">", "&gt;")
+
         cls = "streak-w" if res == "W" else "streak-l"
+
         badge_cls = "tt-badge-w" if res == "W" else "tt-badge-l"
+
         esito_txt = "VITTORIA" if res == "W" else "SCONFITTA"
+
         items.append(
+
             f'<div class="streak-item">'
+
             f'<div class="streak-tooltip">'
+
             f'<div class="tt-top"><span>{date_str}</span><span class="{badge_cls}">{esito_txt}</span></div>'
+
             f'<div class="tt-match">{home_str}<span class="tt-score">{score_str}</span>{away_str}</div>'
+
             f'</div>'
+
             f'<a class="streak-link" href="?match={gid}" target="_self">'
+
             f'<span class="streak-box {cls}">{res}</span>'
+
             f'</a>'
+
             f'</div>'
+
         )
+
     return f'<div class="streak-track">{"".join(items)}</div>'
 
 
+
+
+
 def _h2h_points_for_group(group_teams: list[str], played_games: list[tuple]) -> dict[str, int]:
+
     h2h_pts = {team: 0 for team in group_teams}
+
     team_set = set(group_teams)
+
     for g in played_games:
+
         home = str(g.Casa)
+
         away = str(g.Trasferta)
+
         if home in team_set and away in team_set:
+
             p_home = int(g.Punti_Casa)
+
             p_away = int(g.Punti_Trasferta)
+
             if p_home > p_away:
+
                 h2h_pts[home] += 2
+
             elif p_away > p_home:
+
                 h2h_pts[away] += 2
+
     return h2h_pts
 
 
+
+
+
 def _rank_tied_group(group_rows: list[dict], played_games: list[tuple]) -> list[dict]:
+
     if len(group_rows) <= 1:
+
         return group_rows
+
     group_names = [r["squadra"] for r in group_rows]
+
     h2h_pts = _h2h_points_for_group(group_names, played_games)
+
     return sorted(
+
         group_rows,
+
         key=lambda r: (-h2h_pts.get(r["squadra"], 0), -r["diff"], r["squadra"]),
+
     )
 
 
+
+
+
 def _compute_quarter_differentials_by_team(girone: str, games_df: pd.DataFrame) -> dict[str, dict]:
+
     teams = [t["squadra"] for t in GIRONI_TEAMS.get(girone, [])]
+
     q_stats = {
+
         sq: {
+
             "games_with_q": 0,
+
             "q_pf": [0, 0, 0, 0],
+
             "q_ps": [0, 0, 0, 0],
+
             "q_diff_avg": [0.0, 0.0, 0.0, 0.0],
+
         }
+
         for sq in teams
+
     }
+
     played = games_df[
+
         (games_df["Girone"] == girone)
+
         & (games_df["Stato"].astype(str).str.strip().str.lower() == "giocata")
+
     ]
+
     for g in played.itertuples(index=False):
+
         gid = str(g.ID_Partita)
+
         home = str(g.Casa)
+
         away = str(g.Trasferta)
+
         det = _get_match_detail(gid)
+
         qh = det.get("quarters_home", [0, 0, 0, 0])
+
         qa = det.get("quarters_away", [0, 0, 0, 0])
+
         if sum(qh) == 0 and sum(qa) == 0:
+
             continue
+
         if home in q_stats:
+
             q_stats[home]["games_with_q"] += 1
+
             for i in range(4):
+
                 q_stats[home]["q_pf"][i] += int(qh[i])
+
                 q_stats[home]["q_ps"][i] += int(qa[i])
+
         if away in q_stats:
+
             q_stats[away]["games_with_q"] += 1
+
             for i in range(4):
+
                 q_stats[away]["q_pf"][i] += int(qa[i])
+
                 q_stats[away]["q_ps"][i] += int(qh[i])
 
+
+
     for sq, d in q_stats.items():
+
         n = d["games_with_q"]
+
         if n > 0:
+
             d["q_diff_avg"] = [round((d["q_pf"][i] - d["q_ps"][i]) / n, 1) for i in range(4)]
+
     return q_stats
 
 
+
+
+
 def compute_standings(girone: str, games_df: pd.DataFrame) -> list[dict]:
+
     teams = GIRONI_TEAMS.get(girone, [])
+
     stats: dict[str, dict] = {
+
         item["squadra"]: {
+
             "girone": girone,
+
             "squadra": item["squadra"],
+
             "p": 0,
+
             "w": 0,
+
             "l": 0,
+
             "pf": 0,
+
             "ps": 0,
+
             "diff": 0,
+
             "pf_g": 0.0,
+
             "ps_g": 0.0,
+
             "home_w": 0,
+
             "home_l": 0,
+
             "away_w": 0,
+
             "away_l": 0,
+
             "vs50_w": 0,
+
             "vs50_l": 0,
+
             "streak_events": [],
+
             "pts": 0,
+
         }
+
         for item in teams
+
     }
 
+
+
     g_played = games_df[
+
         (games_df["Girone"] == girone)
+
         & (games_df["Stato"].astype(str).str.strip().str.lower() == "giocata")
+
     ].sort_values(by=["Giornata", "ID_Partita"])
+
+
 
     played_tuples = list(g_played.itertuples(index=False))
 
+
+
     for g in played_tuples:
+
         home = str(g.Casa)
+
         away = str(g.Trasferta)
+
         p_home = int(g.Punti_Casa)
+
         p_away = int(g.Punti_Trasferta)
+
         gid = str(g.ID_Partita)
+
         tip_data = _format_tooltip_data(g)
 
+
+
         if home not in stats or away not in stats:
+
             continue
+
+
 
         stats[home]["p"] += 1
+
         stats[away]["p"] += 1
+
         stats[home]["pf"] += p_home
+
         stats[home]["ps"] += p_away
+
         stats[away]["pf"] += p_away
+
         stats[away]["ps"] += p_home
 
+
+
         if p_home > p_away:
+
             stats[home]["w"] += 1
+
             stats[home]["home_w"] += 1
+
             stats[away]["l"] += 1
+
             stats[away]["away_l"] += 1
+
             stats[home]["pts"] += 2
+
             stats[home]["streak_events"].append({"res": "W", "game_id": gid, "tooltip_data": tip_data})
+
             stats[away]["streak_events"].append({"res": "L", "game_id": gid, "tooltip_data": tip_data})
+
         elif p_away > p_home:
+
             stats[away]["w"] += 1
+
             stats[away]["away_w"] += 1
+
             stats[home]["l"] += 1
+
             stats[home]["home_l"] += 1
+
             stats[away]["pts"] += 2
+
             stats[away]["streak_events"].append({"res": "W", "game_id": gid, "tooltip_data": tip_data})
+
             stats[home]["streak_events"].append({"res": "L", "game_id": gid, "tooltip_data": tip_data})
 
+
+
     above_50_teams = {
+
         sq for sq, r in stats.items() if r["p"] > 0 and (r["w"] / r["p"]) >= 0.5
+
     }
 
+
+
     for g in played_tuples:
+
         home = str(g.Casa)
+
         away = str(g.Trasferta)
+
         p_home = int(g.Punti_Casa)
+
         p_away = int(g.Punti_Trasferta)
+
         if home not in stats or away not in stats:
+
             continue
+
         if away in above_50_teams:
+
             if p_home > p_away:
+
                 stats[home]["vs50_w"] += 1
+
             elif p_away > p_home:
+
                 stats[home]["vs50_l"] += 1
+
         if home in above_50_teams:
+
             if p_away > p_home:
+
                 stats[away]["vs50_w"] += 1
+
             elif p_home > p_away:
+
                 stats[away]["vs50_l"] += 1
 
+
+
     for r in stats.values():
+
         r["diff"] = r["pf"] - r["ps"]
+
         r["pf_g"] = round(r["pf"] / r["p"], 1) if r["p"] > 0 else 0.0
+
         r["ps_g"] = round(r["ps"] / r["p"], 1) if r["p"] > 0 else 0.0
 
+
+
     by_pts: dict[int, list[dict]] = {}
+
     for r in stats.values():
+
         by_pts.setdefault(r["pts"], []).append(r)
 
+
+
     ordered_rows: list[dict] = []
+
     for pts_val in sorted(by_pts.keys(), reverse=True):
+
         ordered_rows.extend(_rank_tied_group(by_pts[pts_val], played_tuples))
+
+
 
     return ordered_rows
 
 
+
+
+
 def compute_thirds_standings(games_df: pd.DataFrame) -> list[dict]:
+
     thirds = []
+
     for g_name in ("Girone A", "Girone B", "Girone C"):
+
         board = compute_standings(g_name, games_df)
+
         if len(board) >= 3:
+
             thirds.append(board[2])
+
     return sorted(thirds, key=lambda r: (-r["pts"], -r["diff"], r["squadra"]))
 
 
+
+
+
 def render_standings(
+
     girone: str,
+
     rows: list[dict],
+
     thirds_board: list[dict],
+
     logo_html_map: dict[str, str],
+
     games_df: pd.DataFrame | None = None,
+
 ) -> None:
+
     st.markdown(STANDINGS_CSS, unsafe_allow_html=True)
+
     playout_start = max(len(rows) - 3, 5)
+
     best_third = thirds_board[0] if thirds_board else None
 
+
+
     st.subheader(f"Classifica — {girone}")
+
     st.caption("Clicca sul nome di una squadra per aprire la scheda squadra oppure passa sul quadratino W/L per i dettagli gara.")
 
+
+
     html = [
+
         '<div class="board-box" style="overflow-x:auto;">',
+
         '<div class="board-head" style="min-width:960px;">'
+
         '<div>POS</div><div>LOGO</div><div class="left">SQUADRA</div>'
+
         '<div>P</div><div>W</div><div>L</div>'
+
         '<div>PF/G</div><div>PS/G</div><div>CASA</div><div>TRASF</div><div>vs ≥50%</div>'
+
         '<div>DIFF</div><div>STREAK</div><div>PTS</div>'
+
         '</div>',
+
     ]
 
+
+
     for pos, r in enumerate(rows, start=1):
+
         row_cls = ""
+
         is_best_third = (
+
             pos == 3
+
             and best_third is not None
+
             and best_third["squadra"] == r["squadra"]
+
             and best_third["girone"] == girone
+
         )
+
+
 
         if pos == 1:
+
             html.append('<div class="zone-tag zone-promo">Promozione Diretta (1° Posto)</div>')
+
             row_cls = "row-promo"
+
         elif pos == 2 or is_best_third:
+
             label_po = "Play-off (Migliore Terza)" if is_best_third else "Play-off (2° Posto)"
+
             html.append(f'<div class="zone-tag zone-po">{label_po}</div>')
+
             row_cls = "row-po"
+
         elif pos == playout_start:
+
             html.append('<div class="zone-tag zone-pout">Play-out (Ultime 4)</div>')
 
+
+
         if pos >= playout_start:
+
             row_cls = "row-pout"
 
+
+
         if str(r["squadra"]).strip().upper() == HIGHLIGHT_TEAM.upper():
+
             row_cls = f"{row_cls} row-highlight-team".strip()
 
+
+
         diff_val = r["diff"]
+
         diff_str = f"+{diff_val}" if diff_val > 0 else str(diff_val)
+
         streak_html = _render_streak_html(r.get("streak_events", []))
+
         team_encoded = quote(str(r["squadra"]), safe="")
+
         logo_tag = logo_html_map.get(f"board::{r['squadra']}", '<div class="b-pos">🏀</div>')
 
+
+
         casa_rec = f"{r.get('home_w', 0)}-{r.get('home_l', 0)}"
+
         trasf_rec = f"{r.get('away_w', 0)}-{r.get('away_l', 0)}"
+
         vs50_rec = f"{r.get('vs50_w', 0)}-{r.get('vs50_l', 0)}"
 
+
+
         html.append(
+
             f'<div class="board-row {row_cls}" style="min-width:960px;">'
+
             f'<div class="b-pos">{pos}</div>'
+
             f'<div><a href="?team={team_encoded}" target="_self">{logo_tag}</a></div>'
+
             f'<div><a class="team-link" href="?team={team_encoded}" target="_self">{r["squadra"]}</a></div>'
+
             f'<div class="b-val">{r["p"]}</div>'
+
             f'<div class="b-val">{r["w"]}</div>'
+
             f'<div class="b-val">{r["l"]}</div>'
+
             f'<div class="b-val" style="color:#4ade80;">{r.get("pf_g", 0.0):.1f}</div>'
+
             f'<div class="b-val" style="color:#fca5a5;">{r.get("ps_g", 0.0):.1f}</div>'
+
             f'<div class="b-val">{casa_rec}</div>'
+
             f'<div class="b-val">{trasf_rec}</div>'
+
             f'<div class="b-val" style="color:#93c5fd;">{vs50_rec}</div>'
+
             f'<div class="b-val">{diff_str}</div>'
+
             f'<div style="text-align:center;">{streak_html}</div>'
+
             f'<div class="b-pts">{r["pts"]}</div>'
+
             f'</div>'
+
         )
 
+
+
     html.append("</div>")
+
     st.markdown("".join(html), unsafe_allow_html=True)
 
+
+
     # Pannello espandibile: Livello del Girone (Attacco vs Difesa, Fattore Campo, Differenziale Quarti)
+
     with st.expander(f"📊 Livello del Girone & Analisi Tecnica — {girone}", expanded=False):
+
         if not rows or sum(r["p"] for r in rows) == 0:
+
             st.info("Dati insufficienti per elaborare l'analisi tecnica del girone.")
+
         else:
+
             df_lvl = pd.DataFrame(rows)
+
             tot_games = int(df_lvl["p"].sum() // 2)
+
             tot_home_w = int(df_lvl["home_w"].sum())
+
             tot_away_w = int(df_lvl["away_w"].sum())
+
             home_win_pct = round((tot_home_w / tot_games) * 100, 1) if tot_games > 0 else 0.0
+
             away_win_pct = round(100.0 - home_win_pct, 1) if tot_games > 0 else 0.0
+
             active_df = df_lvl[df_lvl["p"] > 0].copy()
+
             avg_league_pts = round(active_df["pf_g"].mean(), 1) if not active_df.empty else 0.0
 
+
+
             m1, m2, m3, m4 = st.columns(4)
+
             m1.metric("Media Punti / Squadra", f"{avg_league_pts:.1f} PT/G")
+
             m2.metric("Impatto Fattore Campo (Casa)", f"{home_win_pct}%", f"{tot_home_w}W su {tot_games} gare")
+
             m3.metric("Colpi Esterni (Trasferta)", f"{away_win_pct}%", f"{tot_away_w}W su {tot_games} gare")
+
             best_off = active_df.sort_values(by="pf_g", ascending=False).iloc[0]
+
             m4.metric("Miglior Attacco", f"{best_off['pf_g']:.1f} PF/G", str(best_off["squadra"]))
 
+
+
             st.markdown("#### ⚔️ Grafico Attacco vs Difesa (PF/G vs PS/G)")
+
             st.caption("In basso a destra: squadre con attacco prolifico e difesa solida.")
+
             chart_df = active_df[["squadra", "pf_g", "ps_g"]].rename(
+
                 columns={"squadra": "Squadra", "pf_g": "Attacco (PF/G)", "ps_g": "Difesa (PS/G)"}
+
             )
+
             st.scatter_chart(
+
                 chart_df,
+
                 x="Attacco (PF/G)",
+
                 y="Difesa (PS/G)",
+
                 color="Squadra",
+
                 use_container_width=True,
+
             )
+
+
 
             if games_df is not None:
+
                 st.markdown("#### ⏱️ Differenziale Medio per Quarto (da tabellini con parziali)")
+
                 q_map = _compute_quarter_differentials_by_team(girone, games_df)
+
                 q_rows = []
+
                 for r in rows:
+
                     sq = r["squadra"]
+
                     qd = q_map.get(sq, {})
+
                     n_q = qd.get("games_with_q", 0)
+
                     avgs = qd.get("q_diff_avg", [0.0, 0.0, 0.0, 0.0])
+
                     q_rows.append(
+
                         {
+
                             "Squadra": sq,
+
                             "Gare con Parziali": n_q,
+
                             "Q1 Diff/G": f"{avgs[0]:+.1f}" if n_q else "—",
+
                             "Q2 Diff/G": f"{avgs[1]:+.1f}" if n_q else "—",
+
                             "Q3 Diff/G": f"{avgs[2]:+.1f}" if n_q else "—",
+
                             "Q4 Diff/G": f"{avgs[3]:+.1f}" if n_q else "—",
+
                         }
+
                     )
+
                 st.dataframe(pd.DataFrame(q_rows), use_container_width=True, hide_index=True)
 
+
+
     if thirds_board:
+
         st.subheader("Mini-Classifica Terze Classificate (Migliore Terza ai Play-off)")
+
         t_html = [
+
             '<div class="board-box">',
+
             '<div class="board-head board-head-thirds">'
+
             '<div>#</div><div>LOGO</div><div class="left">TERZA CLASSIFICATA</div>'
+
             '<div>P</div><div>W</div><div>L</div><div>DIFF</div><div>STREAK</div><div>PTS</div>'
+
             '</div>',
+
         ]
+
         for idx, t in enumerate(thirds_board, start=1):
+
             qual = idx == 1
+
             r_cls = "row-qual" if qual else "row-out"
+
             badge = '<span class="badge-ok">PLAY-OFF</span>' if qual else '<span class="badge-no">FUORI</span>'
+
             diff_val = t["diff"]
+
             diff_str = f"+{diff_val}" if diff_val > 0 else str(diff_val)
+
             streak_html = _render_streak_html(t.get("streak_events", []))
+
             team_encoded = quote(str(t["squadra"]), safe="")
+
             logo_tag = logo_html_map.get(f"board::{t['squadra']}", '<div class="b-pos">🏀</div>')
 
+
+
             t_html.append(
+
                 f'<div class="board-row board-row-thirds {r_cls}">'
+
                 f'<div class="b-pos">{idx}</div>'
+
                 f'<div><a href="?team={team_encoded}" target="_self">{logo_tag}</a></div>'
+
                 f'<div>'
+
                 f'<a class="team-link" href="?team={team_encoded}" target="_self">{t["squadra"]}</a>'
+
                 f'<div class="b-sub">{t["girone"]}{badge}</div>'
+
                 f'</div>'
+
                 f'<div class="b-val">{t["p"]}</div>'
+
                 f'<div class="b-val">{t["w"]}</div>'
+
                 f'<div class="b-val">{t["l"]}</div>'
+
                 f'<div class="b-val">{diff_str}</div>'
+
                 f'<div style="text-align:center;">{streak_html}</div>'
+
                 f'<div class="b-pts">{t["pts"]}</div>'
+
                 '</div>'
+
             )
+
         t_html.append("</div>")
+
         st.markdown("".join(t_html), unsafe_allow_html=True)
 
 
+
+
+
 def render_teams_grid(girone: str, games_df: pd.DataFrame, logo_html_map: dict[str, str]) -> None:
+
     st.markdown(TEAMS_GRID_CSS, unsafe_allow_html=True)
+
     st.subheader(f"Squadre — {girone}")
+
     st.caption("Clicca su uno dei riquadri squadra per aprire la scheda completa con statistiche, calendario e tabellini.")
 
+
+
     board = compute_standings(girone, games_df)
+
     pos_map = {r["squadra"]: idx for idx, r in enumerate(board, start=1)}
+
     stats_map = {r["squadra"]: r for r in board}
 
+
+
     teams_list = sorted(GIRONI_TEAMS.get(girone, []), key=lambda x: x["squadra"])
+
     row_slices = [
+
         ("teams-row-4", teams_list[0:4]),
+
         ("teams-row-4", teams_list[4:8]),
+
         ("teams-row-3", teams_list[8:11]),
+
     ]
 
+
+
     for row_cls, chunk in row_slices:
+
         if not chunk:
+
             continue
+
         cards_html = [f'<div class="{row_cls}">']
+
         for item in chunk:
+
             sq = item["squadra"]
+
             sq_enc = quote(sq, safe="")
+
             st_row = stats_map.get(sq, {"pts": 0, "p": 0, "w": 0, "l": 0, "diff": 0, "streak_events": []})
+
             pos_val = pos_map.get(sq, "-")
+
             pts_val = int(st_row.get("pts", 0))
+
             p_val = int(st_row.get("p", 0))
+
             w_val = int(st_row.get("w", 0))
+
             l_val = int(st_row.get("l", 0))
+
             diff_val = int(st_row.get("diff", 0))
 
+
+
             if diff_val > 0:
+
                 diff_html = f'<span class="ts-diff-pos">+{diff_val}</span>'
+
             elif diff_val < 0:
+
                 diff_html = f'<span class="ts-diff-neg">{diff_val}</span>'
+
             else:
+
                 diff_html = '<span class="ts-diff-zero">0</span>'
 
+
+
             logo_src = logo_html_map.get(f"raw_src::{sq}", "")
+
             watermark_html = f'<img class="ts-watermark" src="{logo_src}" alt="" />' if logo_src else ""
+
             logo_inner = (
+
                 f'<img src="{logo_src}" alt="{sq}" loading="lazy" />'
+
                 if logo_src
+
                 else '<span style="font-size:48px;">🏀</span>'
+
             )
+
+
 
             events = st_row.get("streak_events", [])[-5:]
+
             if events:
+
                 pills = "".join(
+
                     f'<span class="{"ts-mini-w" if e["res"] == "W" else "ts-mini-l"}">{e["res"]}</span>'
+
                     for e in events
+
                 )
+
             else:
+
                 pills = '<span class="ts-mini-none">Nessuna gara giocata</span>'
 
+
+
             sq_pal = _get_team_palette(sq)
+
             sq_card_style = (
+
                 f'style="background:radial-gradient(circle at 50% 34%, {_rgba(sq_pal["rich_main"], 0.38)} 0%, rgba(13, 29, 52, 0.96) 58%, #091323 100%);'
+
                 f'border-color:{_rgba(sq_pal["visible_main"], 0.45)};"'
+
             )
+
             cards_html.append(
+
                 f'<a class="team-tile-link" href="?team={sq_enc}" target="_self">'
+
                 f'<div class="team-square-card" {sq_card_style}>'
+
                 f'{watermark_html}'
+
                 f'<div class="ts-top-row">'
+
                 f'<span class="ts-pos-pill">#{pos_val} CLASSIFICA</span>'
+
                 f'<span class="ts-pts-pill">{pts_val} PT</span>'
+
                 f'</div>'
+
                 f'<div class="ts-logo-stage">'
+
                 f'<div class="ts-logo-box">{logo_inner}</div>'
+
                 f'</div>'
+
                 f'<div class="ts-bottom-panel">'
+
                 f'<div class="ts-metrics-row">'
+
                 f'<span>{p_val}G • <span class="ts-rec-w">{w_val}V</span> - <span class="ts-rec-l">{l_val}P</span></span>'
+
                 f'<span>DIFF {diff_html}</span>'
+
                 f'</div>'
+
                 f'<div class="ts-streak-pills">{pills}</div>'
+
                 f'</div>'
+
                 f'</div>'
+
                 f'<div class="ts-caption-below">{sq}</div>'
+
                 f'</a>'
+
             )
+
         cards_html.append("</div>")
+
         st.markdown("".join(cards_html), unsafe_allow_html=True)
 
 
+
+
+
 def build_round_html(
+
     round_num: int,
+
     round_games: pd.DataFrame,
+
     logo_html_map: dict[str, str],
+
     is_ritorno: bool = False,
+
     girone_label: str = "DR2 Puglia",
+
 ) -> str:
+
     display_num = round_num - 11 if is_ritorno and round_num > 11 else round_num
+
     phase_label = "RITORNO" if is_ritorno else "ANDATA"
 
+
+
     parts = [
+
         '<div class="cal-board">',
+
         '<div class="cal-board-head">'
+
         '<div class="c-left">GIORNATA</div>'
+
         '<div class="c-right">SQUADRA DI CASA</div>'
+
         '<div class="c-center">RISULTATO</div>'
+
         '<div class="c-left">SQUADRA OSPITE</div>'
+
         "</div>",
+
     ]
 
+
+
     if round_games.empty:
+
         parts.append(
+
             '<div class="cal-row-card">'
+
             f'<div class="cal-round-col"><div class="cal-round-num">{display_num}ª Giornata • {phase_label}</div><div class="cal-round-date">—</div></div>'
+
             '<div class="cal-side-home"><span class="cal-side-name">Nessuna gara</span></div>'
+
             '<div class="cal-score-box"><div class="cal-score-line cal-pts-vs">-</div></div>'
+
             '<div class="cal-side-away"><span class="cal-side-name">corrispondente ai filtri</span></div>'
+
             "</div>"
+
         )
+
     else:
+
         for g in round_games.itertuples(index=False):
+
             gid_encoded = quote(str(g.ID_Partita), safe="")
+
             is_played = str(g.Stato).strip().lower() == "giocata"
+
             tokens = str(g.Data).strip().split()
+
             if len(tokens) >= 3:
+
                 date_str, time_str = tokens[1], tokens[2]
+
             elif len(tokens) == 2:
+
                 date_str, time_str = tokens[0], tokens[1]
+
             else:
+
                 date_str, time_str = str(g.Data).strip(), ""
 
+
+
             home_name = str(g.Casa)
+
             away_name = str(g.Trasferta)
+
             home_pts = int(g.Punti_Casa)
+
             away_pts = int(g.Punti_Trasferta)
 
+
+
             h_logo_src = logo_html_map.get(f"raw_src::{home_name}", "")
+
             a_logo_src = logo_html_map.get(f"raw_src::{away_name}", "")
+
             h_logo = f'<img class="cal-side-logo" src="{h_logo_src}" alt="" loading="lazy" />' if h_logo_src else "🏀"
+
             a_logo = f'<img class="cal-side-logo" src="{a_logo_src}" alt="" loading="lazy" />' if a_logo_src else "🏀"
 
+
+
             if is_played:
+
                 h_win = home_pts > away_pts
+
                 a_win = away_pts > home_pts
+
                 h_cls = "cal-pts-win" if h_win else "cal-pts-lose"
+
                 a_cls = "cal-pts-win" if a_win else "cal-pts-lose"
+
                 score_html = (
+
                     f'<div class="cal-score-line">'
+
                     f'<span class="{h_cls}">{home_pts}</span>'
+
                     f'<span style="color:#64748b;margin:0 3px;">-</span>'
+
                     f'<span class="{a_cls}">{away_pts}</span>'
+
                     f"</div>"
+
                     f'<div class="cal-state-sub done">CONCLUSA</div>'
+
                 )
+
             else:
+
                 h_win = False
+
                 a_win = False
+
                 sub_txt = time_str if time_str else "DA GIOCARE"
+
                 score_html = (
+
                     '<div class="cal-score-line cal-pts-vs">VS</div>'
+
                     f'<div class="cal-state-sub todo">{sub_txt}</div>'
+
                 )
+
+
 
             parts.append(
+
                 f'<a class="cal-row-link" href="?match={gid_encoded}" target="_self">'
+
                 '<div class="cal-row-card">'
+
                 '<div class="cal-round-col">'
+
                 f'<div class="cal-round-league">{girone_label}</div>'
+
                 f'<div class="cal-round-num">{display_num}ª Giornata • {phase_label}</div>'
+
                 f'<div class="cal-round-date">{date_str}</div>'
+
                 "</div>"
+
                 '<div class="cal-side-home">'
+
                 f'<span class="cal-side-name {"win" if h_win else ""}">{home_name}</span>'
+
                 f"{h_logo}"
+
                 "</div>"
+
                 f'<div class="cal-score-box">{score_html}</div>'
+
                 '<div class="cal-side-away">'
+
                 f"{a_logo}"
+
                 f'<span class="cal-side-name {"win" if a_win else ""}">{away_name}</span>'
+
                 "</div>"
+
                 "</div>"
+
                 "</a>"
+
             )
 
+
+
     parts.append("</div>")
+
     return "".join(parts)
+
+
+
 
 
 def _fmt_pct(made: int, att: int) -> str:
+
     if att <= 0:
+
         return "0"
+
     val = (made / att) * 100.0
+
     if abs(val - round(val)) < 1e-6:
+
         return str(int(round(val)))
+
     return f"{val:.1f}"
 
 
+
+
+
 def _parse_minutes_to_int(min_str: str) -> int:
+
     s = str(min_str or "").strip()
+
     if not s or s == "-":
+
         return 0
+
     if ":" in s:
+
         try:
+
             m_part, s_part = s.split(":", 1)
+
             return int(float(m_part)) + (1 if int(float(s_part)) >= 30 else 0)
+
         except Exception:
+
             return 0
+
     try:
+
         return int(float(s))
+
     except Exception:
+
         return 0
+
+
+
 
 
 def _extract_surname(full_name: str) -> str:
+
     cleaned = re.sub(r"\s*\(N\.E\.\)\s*$", "", str(full_name or ""), flags=re.IGNORECASE).strip()
+
     cleaned = re.sub(r"^\s*#?\d+\s*[-–.]?\s*", "", cleaned).strip()
+
     if not cleaned:
+
         return ""
+
     parts = cleaned.split()
+
     if len(parts) == 1:
+
         return parts[0]
+
     if len(parts[-1]) <= 2 and len(parts[0]) > 2:
+
         return parts[0]
+
     return parts[-1]
 
 
+
+
+
 def _normalize_player_rows(rows: list | None) -> list[dict]:
+
     if not isinstance(rows, list):
+
         return []
+
     out: list[dict] = []
+
     for item in rows:
+
         if not isinstance(item, dict):
+
             continue
+
         name = str(item.get("Giocatore", "")).strip()
+
         if not name:
+
             continue
+
         pts_val = item.get("PUN", item.get("PTS", 0))
+
         t2_r_val = item.get("2PT_R", item.get("2PT", 0))
+
         t2_t_val = item.get("2PT_T", max(int(pd.to_numeric(t2_r_val, errors="coerce") or 0), 0))
+
         t3_r_val = item.get("3PT_R", item.get("3PT", 0))
+
         t3_t_val = item.get("3PT_T", max(int(pd.to_numeric(t3_r_val, errors="coerce") or 0), 0))
+
         tl_r_val = item.get("TL_R", 0)
+
         tl_sbag_val = item.get("TL_SBAG", 0)
+
         tl_t_val = item.get(
+
             "TL_T",
+
             int(pd.to_numeric(tl_r_val, errors="coerce") or 0) + int(pd.to_numeric(tl_sbag_val, errors="coerce") or 0),
+
         )
+
         fc_val = item.get("F_C", item.get("FALLI", 0))
+
         sf_val = item.get("SF", item.get("QUINTETTO", False))
+
         num_val = _extract_jersey_number(name, item.get("NUM", None))
 
+
+
         out.append(
+
             {
+
                 "Giocatore": name,
+
                 "NUM": num_val,
+
                 "PUN": int(pd.to_numeric(pts_val, errors="coerce") or 0),
+
                 "MIN": str(item.get("MIN", "0") or "0").strip(),
+
                 "SF": bool(sf_val),
+
                 "F_C": int(pd.to_numeric(fc_val, errors="coerce") or 0),
+
                 "F_S": int(pd.to_numeric(item.get("F_S", 0), errors="coerce") or 0),
+
                 "2PT_R": int(pd.to_numeric(t2_r_val, errors="coerce") or 0),
+
                 "2PT_T": int(pd.to_numeric(t2_t_val, errors="coerce") or 0),
+
                 "SC": int(pd.to_numeric(item.get("SC", 0), errors="coerce") or 0),
+
                 "3PT_R": int(pd.to_numeric(t3_r_val, errors="coerce") or 0),
+
                 "3PT_T": int(pd.to_numeric(t3_t_val, errors="coerce") or 0),
+
                 "TL_R": int(pd.to_numeric(tl_r_val, errors="coerce") or 0),
+
                 "TL_T": int(pd.to_numeric(tl_t_val, errors="coerce") or 0),
+
                 "RIM_O": int(pd.to_numeric(item.get("RIM_O", 0), errors="coerce") or 0),
+
                 "RIM_D": int(pd.to_numeric(item.get("RIM_D", 0), errors="coerce") or 0),
+
                 "ST_D": int(pd.to_numeric(item.get("ST_D", 0), errors="coerce") or 0),
+
                 "ST_S": int(pd.to_numeric(item.get("ST_S", 0), errors="coerce") or 0),
+
                 "PAL_P": int(pd.to_numeric(item.get("PAL_P", 0), errors="coerce") or 0),
+
                 "PAL_R": int(pd.to_numeric(item.get("PAL_R", 0), errors="coerce") or 0),
+
                 "ASS": int(pd.to_numeric(item.get("ASS", 0), errors="coerce") or 0),
+
                 "VAL": int(pd.to_numeric(item.get("VAL", 0), errors="coerce") or 0),
+
                 "OER": float(pd.to_numeric(item.get("OER", 0.0), errors="coerce") or 0.0),
+
             }
+
         )
+
     return out
+
+
+
 
 
 def _get_match_detail(match_id: str) -> dict:
+
     store = st.session_state.setdefault("match_details_store", {})
+
     raw = store.get(match_id)
+
     if isinstance(raw, dict):
+
         qh = list(raw.get("quarters_home", [0, 0, 0, 0]))[:4]
+
         qa = list(raw.get("quarters_away", [0, 0, 0, 0]))[:4]
+
         while len(qh) < 4:
+
             qh.append(0)
+
         while len(qa) < 4:
+
             qa.append(0)
+
         return {
+
             "coach_home": str(raw.get("coach_home", "") or ""),
+
             "coach_away": str(raw.get("coach_away", "") or ""),
+
             "quarters_home": [int(x) for x in qh],
+
             "quarters_away": [int(x) for x in qa],
+
             "ot_home": int(raw.get("ot_home", 0) or 0),
+
             "ot_away": int(raw.get("ot_away", 0) or 0),
+
             "home_players": _normalize_player_rows(raw.get("home_players")),
+
             "away_players": _normalize_player_rows(raw.get("away_players")),
+
             "notes": str(raw.get("notes", "") or ""),
+
         }
+
     return {
+
         "coach_home": "",
+
         "coach_away": "",
+
         "quarters_home": [0, 0, 0, 0],
+
         "quarters_away": [0, 0, 0, 0],
+
         "ot_home": 0,
+
         "ot_away": 0,
+
         "home_players": [],
+
         "away_players": [],
+
         "notes": "",
+
     }
+
+
+
 
 
 def _players_to_editor_df(player_list: list[dict], full_stats: bool = True, min_rows: int = 8) -> pd.DataFrame:
+
     rows = _normalize_player_rows(player_list)
+
     while len(rows) < min_rows:
+
         rows.append(_p_row(""))
+
     df = pd.DataFrame(rows)
+
     if full_stats:
+
         front_cols = ["NUM", "Giocatore"]
+
         rest_cols = [c for c in df.columns if c not in front_cols and c not in ("SC", "ASS")]
+
         return df[front_cols + rest_cols]
+
     compact_cols = ["NUM", "Giocatore", "PUN", "MIN", "SF", "F_C", "2PT_R", "3PT_R", "TL_R", "TL_T"]
+
     return df[compact_cols]
 
 
+
+
+
 def _editor_df_to_players(df: pd.DataFrame, existing_players: list[dict] | None = None) -> list[dict]:
+
     if df is None or df.empty:
+
         return []
+
     existing_by_name = {
+
         str(p.get("Giocatore", "")).strip().lower(): p
+
         for p in _normalize_player_rows(existing_players)
+
     }
+
     out: list[dict] = []
+
     for r in df.itertuples(index=False):
+
         name = str(getattr(r, "Giocatore", "") or "").strip()
+
         if not name:
+
             continue
+
         prev = existing_by_name.get(name.lower(), {})
+
         r2_val = int(pd.to_numeric(getattr(r, "2PT_R", prev.get("2PT_R", 0)), errors="coerce") or 0)
+
         t2_val = int(pd.to_numeric(getattr(r, "2PT_T", prev.get("2PT_T", r2_val)), errors="coerce") or 0)
+
         if t2_val < r2_val:
+
             t2_val = r2_val
+
         r3_val = int(pd.to_numeric(getattr(r, "3PT_R", prev.get("3PT_R", 0)), errors="coerce") or 0)
+
         t3_val = int(pd.to_numeric(getattr(r, "3PT_T", prev.get("3PT_T", r3_val)), errors="coerce") or 0)
+
         if t3_val < r3_val:
+
             t3_val = r3_val
+
         tl_r_val = int(pd.to_numeric(getattr(r, "TL_R", prev.get("TL_R", 0)), errors="coerce") or 0)
+
         tl_t_val = int(pd.to_numeric(getattr(r, "TL_T", prev.get("TL_T", tl_r_val)), errors="coerce") or 0)
+
         if tl_t_val < tl_r_val:
+
             tl_t_val = tl_r_val
 
+
+
         raw_num = getattr(r, "NUM", None)
+
         if raw_num is None or (isinstance(raw_num, float) and pd.isna(raw_num)):
+
             raw_num = prev.get("NUM", None)
 
+
+
         out.append(
+
             _p_row(
+
                 giocatore=name,
+
                 numero=raw_num,
+
                 pts=int(pd.to_numeric(getattr(r, "PUN", prev.get("PUN", 0)), errors="coerce") or 0),
+
                 minuti=str(getattr(r, "MIN", prev.get("MIN", "0")) or "0").strip(),
+
                 sf=bool(getattr(r, "SF", prev.get("SF", False))),
+
                 falli_c=int(pd.to_numeric(getattr(r, "F_C", prev.get("F_C", 0)), errors="coerce") or 0),
+
                 falli_s=int(pd.to_numeric(getattr(r, "F_S", prev.get("F_S", 0)), errors="coerce") or 0),
+
                 t2_r=r2_val,
+
                 t2_t=t2_val,
+
                 sc=int(pd.to_numeric(getattr(r, "SC", prev.get("SC", 0)), errors="coerce") or 0),
+
                 t3_r=r3_val,
+
                 t3_t=t3_val,
+
                 tl_r=tl_r_val,
+
                 tl_t=tl_t_val,
+
                 rim_o=int(pd.to_numeric(getattr(r, "RIM_O", prev.get("RIM_O", 0)), errors="coerce") or 0),
+
                 rim_d=int(pd.to_numeric(getattr(r, "RIM_D", prev.get("RIM_D", 0)), errors="coerce") or 0),
+
                 st_d=int(pd.to_numeric(getattr(r, "ST_D", prev.get("ST_D", 0)), errors="coerce") or 0),
+
                 st_s=int(pd.to_numeric(getattr(r, "ST_S", prev.get("ST_S", 0)), errors="coerce") or 0),
+
                 pal_p=int(pd.to_numeric(getattr(r, "PAL_P", prev.get("PAL_P", 0)), errors="coerce") or 0),
+
                 pal_r=int(pd.to_numeric(getattr(r, "PAL_R", prev.get("PAL_R", 0)), errors="coerce") or 0),
+
                 ass=int(pd.to_numeric(getattr(r, "ASS", prev.get("ASS", 0)), errors="coerce") or 0),
+
                 val_lega=int(pd.to_numeric(getattr(r, "VAL", prev.get("VAL", 0)), errors="coerce") or 0),
+
                 oer=float(pd.to_numeric(getattr(r, "OER", prev.get("OER", 0.0)), errors="coerce") or 0.0),
+
             )
+
         )
+
     return out
 
 
+
+
+
 def render_lba_boxscore(
+
     team_name: str,
+
     coach_name: str,
+
     players: list[dict],
+
     logo_html_map: dict[str, str],
+
     full_stats: bool = True,
+
 ) -> None:
+
     norm_players = _normalize_player_rows(players)
+
     logo_tag = logo_html_map.get(
+
         f"lba::{team_name}",
+
         '<div class="lba-team-logo" style="display:flex;align-items:center;justify-content:center;font-size:22px;">🏀</div>',
+
     )
+
     allenatore_txt = coach_name.strip() if coach_name.strip() else "—"
+
     badge_txt = "STATISTICHE DETTAGLIATE" if full_stats else "TABELLINO ESSENZIALE"
+
     table_cls = "lba-box full-stats" if full_stats else "lba-box compact-stats"
 
+
+
     if full_stats:
+
         header_html = (
+
             "<tr>"
+
             '<th class="grp-empty" colspan="4"></th>'
+
             '<th class="grp-hdr" colspan="2">FALLI</th>'
+
             '<th class="grp-hdr" colspan="3">TIRI DA 2</th>'
+
             '<th class="grp-hdr" colspan="3">TIRI DA 3</th>'
+
             '<th class="grp-hdr" colspan="3">TIRI LIBERI</th>'
+
             '<th class="grp-hdr" colspan="3">RIMBALZI</th>'
+
             '<th class="grp-hdr" colspan="2">STOPPATE</th>'
+
             '<th class="grp-hdr" colspan="2">PALLE</th>'
+
             '<th class="grp-hdr" colspan="2">VALUTAZIONE</th>'
+
             "</tr>"
+
             "<tr>"
+
             '<th class="sub-hdr left-col">GIOCATORE</th>'
+
             '<th class="sub-hdr pts-col">PUN</th>'
+
             '<th class="sub-hdr">MIN</th>'
+
             '<th class="sub-hdr">SF</th>'
+
             '<th class="sub-hdr">C</th>'
+
             '<th class="sub-hdr">S</th>'
+
             '<th class="sub-hdr">R</th>'
+
             '<th class="sub-hdr">T</th>'
+
             '<th class="sub-hdr pts-col">%</th>'
+
             '<th class="sub-hdr">R</th>'
+
             '<th class="sub-hdr">T</th>'
+
             '<th class="sub-hdr pts-col">%</th>'
+
             '<th class="sub-hdr">R</th>'
+
             '<th class="sub-hdr">T</th>'
+
             '<th class="sub-hdr pts-col">%</th>'
+
             '<th class="sub-hdr">O</th>'
+
             '<th class="sub-hdr">D</th>'
+
             '<th class="sub-hdr">T</th>'
+
             '<th class="sub-hdr">D</th>'
+
             '<th class="sub-hdr">S</th>'
+
             '<th class="sub-hdr">P</th>'
+
             '<th class="sub-hdr">R</th>'
+
             '<th class="sub-hdr">LEGA</th>'
+
             '<th class="sub-hdr">OER</th>'
+
             "</tr>"
+
         )
+
     else:
+
         header_html = (
+
             "<tr>"
+
             '<th class="grp-empty" colspan="4"></th>'
+
             '<th class="grp-hdr" colspan="1">FALLI</th>'
+
             '<th class="grp-hdr" colspan="1">TIRI DA 2</th>'
+
             '<th class="grp-hdr" colspan="1">TIRI DA 3</th>'
+
             '<th class="grp-hdr" colspan="3">TIRI LIBERI</th>'
+
             "</tr>"
+
             "<tr>"
+
             '<th class="sub-hdr left-col">GIOCATORE</th>'
+
             '<th class="sub-hdr pts-col">PUN</th>'
+
             '<th class="sub-hdr">MIN</th>'
+
             '<th class="sub-hdr">SF</th>'
+
             '<th class="sub-hdr">C</th>'
+
             '<th class="sub-hdr">R</th>'
+
             '<th class="sub-hdr">R</th>'
+
             '<th class="sub-hdr">R</th>'
+
             '<th class="sub-hdr">T</th>'
+
             '<th class="sub-hdr pts-col">%</th>'
+
             "</tr>"
+
         )
+
+
 
     b_pal = _get_team_palette(team_name)
+
     banner_style = (
+
         f'style="background:linear-gradient(90deg, {_rgba(b_pal["rich_main"], 0.65)} 0%, #0f172a 78%);'
+
         f'border-bottom:2.5px solid {b_pal["visible_accent"]};"'
+
     )
+
     html = [
+
         '<div class="lba-box-card">',
+
         f'<div class="lba-team-banner" {banner_style}>',
+
         f'<div class="lba-banner-left">{logo_tag}<div>'
+
         f'<div class="lba-team-title">{team_name}</div>'
+
         f'<div class="lba-team-coach">Allenatore: {allenatore_txt}</div>'
+
         f"</div></div>",
+
         f'<div class="lba-tag-pill">{badge_txt}</div>',
+
         "</div>",
+
         f'<div class="lba-table-wrap"><table class="{table_cls}"><thead>',
+
         header_html,
+
         "</thead><tbody>",
+
     ]
 
+
+
     tot_pun = tot_min_num = 0
+
     tot_fc = tot_fs = 0
+
     tot_2r = tot_2t = 0
+
     tot_3r = tot_3t = 0
+
     tot_tlr = tot_tlt = 0
+
     tot_rimo = tot_rimd = tot_rimt = 0
+
     tot_std = tot_sts = 0
+
     tot_palp = tot_palr = 0
+
     tot_val = 0
 
+
+
     for p in norm_players:
+
         pun = int(p["PUN"])
+
         min_str = str(p["MIN"]) if str(p["MIN"]).strip() else "0"
+
         sf_mark = "✓" if p["SF"] else ""
+
         fc = int(p["F_C"])
+
         fs = int(p["F_S"])
+
         r2 = int(p["2PT_R"])
+
         t2 = int(p["2PT_T"])
+
         r3 = int(p["3PT_R"])
+
         t3 = int(p["3PT_T"])
+
         rtl = int(p["TL_R"])
+
         ttl = int(p["TL_T"])
+
         ro = int(p["RIM_O"])
+
         rd = int(p["RIM_D"])
+
         rt = ro + rd
+
         sd = int(p["ST_D"])
+
         ss = int(p["ST_S"])
+
         pp = int(p["PAL_P"])
+
         pr = int(p["PAL_R"])
+
         val_l = int(p["VAL"])
+
         oer_v = f"{float(p['OER']):.1f}" if float(p["OER"]) != 0 else "0"
+
         num_disp_val = _format_jersey_display(p.get("NUM"), empty_placeholder="")
+
         num_badge = f'<span class="num-badge">{num_disp_val}</span>' if num_disp_val != "" else ""
 
+
+
         tot_pun += pun
+
         tot_min_num += _parse_minutes_to_int(min_str)
+
         tot_fc += fc
+
         tot_fs += fs
+
         tot_2r += r2
+
         tot_2t += t2
+
         tot_3r += r3
+
         tot_3t += t3
+
         tot_tlr += rtl
+
         tot_tlt += ttl
+
         tot_rimo += ro
+
         tot_rimd += rd
+
         tot_rimt += rt
+
         tot_std += sd
+
         tot_sts += ss
+
         tot_palp += pp
+
         tot_palr += pr
+
         tot_val += val_l
 
+
+
         if full_stats:
+
             html.append(
+
                 "<tr>"
+
                 f'<td class="player-name">{num_badge}{p["Giocatore"]}</td>'
+
                 f'<td class="pts-val">{pun}</td>'
+
                 f"<td>{min_str}</td>"
+
                 f'<td class="sf-check">{sf_mark}</td>'
+
                 f"<td>{fc}</td>"
+
                 f"<td>{fs}</td>"
+
                 f"<td>{r2}</td>"
+
                 f"<td>{t2}</td>"
+
                 f'<td class="pct-val">{_fmt_pct(r2, t2)}</td>'
+
                 f"<td>{r3}</td>"
+
                 f"<td>{t3}</td>"
+
                 f'<td class="pct-val">{_fmt_pct(r3, t3)}</td>'
+
                 f"<td>{rtl}</td>"
+
                 f"<td>{ttl}</td>"
+
                 f'<td class="pct-val">{_fmt_pct(rtl, ttl)}</td>'
+
                 f"<td>{ro}</td>"
+
                 f"<td>{rd}</td>"
+
                 f"<td>{rt}</td>"
+
                 f"<td>{sd}</td>"
+
                 f"<td>{ss}</td>"
+
                 f"<td>{pp}</td>"
+
                 f"<td>{pr}</td>"
+
                 f"<td>{val_l}</td>"
+
                 f"<td>{oer_v}</td>"
+
                 "</tr>"
+
             )
+
         else:
+
             html.append(
+
                 "<tr>"
+
                 f'<td class="player-name">{num_badge}{p["Giocatore"]}</td>'
+
                 f'<td class="pts-val">{pun}</td>'
+
                 f"<td>{min_str}</td>"
+
                 f'<td class="sf-check">{sf_mark}</td>'
+
                 f"<td>{fc}</td>"
+
                 f"<td>{r2}</td>"
+
                 f"<td>{r3}</td>"
+
                 f"<td>{rtl}</td>"
+
                 f"<td>{ttl}</td>"
+
                 f'<td class="pct-val">{_fmt_pct(rtl, ttl)}</td>'
+
                 "</tr>"
+
             )
+
+
 
     if full_stats:
+
         tot_oer = f"{(tot_pun / max(tot_2t + tot_3t + tot_palp, 1)):.1f}" if (tot_2t + tot_3t + tot_palp) > 0 else "0"
+
         html.append(
+
             '<tr class="total-row">'
+
             '<td class="player-name">TOTALI</td>'
+
             f'<td class="pts-val">{tot_pun}</td>'
+
             f"<td>{tot_min_num}</td>"
+
             "<td>-</td>"
+
             f"<td>{tot_fc}</td><td>{tot_fs}</td>"
+
             f'<td>{tot_2r}</td><td>{tot_2t}</td><td class="pct-val">{_fmt_pct(tot_2r, tot_2t)}</td>'
+
             f'<td>{tot_3r}</td><td>{tot_3t}</td><td class="pct-val">{_fmt_pct(tot_3r, tot_3t)}</td>'
+
             f'<td>{tot_tlr}</td><td>{tot_tlt}</td><td class="pct-val">{_fmt_pct(tot_tlr, tot_tlt)}</td>'
+
             f"<td>{tot_rimo}</td><td>{tot_rimd}</td><td>{tot_rimt}</td>"
+
             f"<td>{tot_std}</td><td>{tot_sts}</td>"
+
             f"<td>{tot_palp}</td><td>{tot_palr}</td>"
+
             f"<td>{tot_val}</td>"
+
             f"<td>{tot_oer}</td>"
+
             "</tr>"
-        )
-    else:
-        html.append(
-            '<tr class="total-row">'
-            '<td class="player-name">TOTALI</td>'
-            f'<td class="pts-val">{tot_pun}</td>'
-            f"<td>{tot_min_num}</td>"
-            "<td>-</td>"
-            f"<td>{tot_fc}</td>"
-            f"<td>{tot_2r}</td>"
-            f"<td>{tot_3r}</td>"
-            f"<td>{tot_tlr}</td>"
-            f"<td>{tot_tlt}</td>"
-            f'<td class="pct-val">{_fmt_pct(tot_tlr, tot_tlt)}</td>'
-            "</tr>"
+
         )
 
+    else:
+
+        html.append(
+
+            '<tr class="total-row">'
+
+            '<td class="player-name">TOTALI</td>'
+
+            f'<td class="pts-val">{tot_pun}</td>'
+
+            f"<td>{tot_min_num}</td>"
+
+            "<td>-</td>"
+
+            f"<td>{tot_fc}</td>"
+
+            f"<td>{tot_2r}</td>"
+
+            f"<td>{tot_3r}</td>"
+
+            f"<td>{tot_tlr}</td>"
+
+            f"<td>{tot_tlt}</td>"
+
+            f'<td class="pct-val">{_fmt_pct(tot_tlr, tot_tlt)}</td>'
+
+            "</tr>"
+
+        )
+
+
+
     html.append("</tbody></table></div></div>")
+
     st.markdown("".join(html), unsafe_allow_html=True)
 
 
-def _render_court_formation(
-    home_name: str,
-    away_name: str,
-    home_players: list[dict],
-    away_players: list[dict],
-    logo_html_map: dict[str, str],
-) -> None:
-    def _prepare_roster(plist: list[dict]) -> tuple[list[dict], list[dict]]:
-        norm = sorted(
-            _normalize_player_rows(plist),
-            key=lambda x: (int(x.get("NUM", 999)), str(x.get("Giocatore", ""))),
-        )
-        starters = [p for p in norm if bool(p.get("SF"))]
-        starter_ids = {id(p) for p in starters}
-        if len(starters) < 5:
-            for p in norm:
-                if id(p) not in starter_ids:
-                    starters.append(p)
-                    starter_ids.add(id(p))
-                if len(starters) == 5:
-                    break
-        starters_five = sorted(
-            starters[:5],
-            key=lambda x: (int(x.get("NUM", 999)), str(x.get("Giocatore", ""))),
-        )
-        five_ids = {id(p) for p in starters_five}
-        bench = [p for p in norm if id(p) not in five_ids]
-        return starters_five, bench
 
-    h_starters, h_bench = _prepare_roster(home_players)
-    a_starters, a_bench = _prepare_roster(away_players)
 
-    def _roster_col_html(team_name: str, starters: list[dict], bench: list[dict], is_right: bool = False) -> str:
-        logo_src = logo_html_map.get(f"raw_src::{team_name}", "")
-        logo_img = f'<img src="{logo_src}" alt="" />' if logo_src else "🏀"
-        align_style = ' style="justify-content:flex-end;text-align:right;"' if is_right else ""
 
-        def _line(p: dict, is_st: bool) -> str:
-            num_txt = _format_jersey_display(p.get("NUM"), empty_placeholder="?")
-            cls_st = " starter" if is_st else ""
-            return (
-                f'<div class="roster-player-line{cls_st}">'
-                f'<span class="roster-num-pill">{num_txt}</span>'
-                f'<span>{p["Giocatore"]}</span>'
-                f"</div>"
-            )
+def _jersey_svg(number_label: str, fill_color: str, stroke_color: str, text_color: str) -> str:
 
-        st_html = "".join(_line(p, True) for p in starters) or '<div style="color:#94a3b8;font-size:11.5px;">Nessun quintetto</div>'
-        bn_html = "".join(_line(p, False) for p in bench) or '<div style="color:#94a3b8;font-size:11.5px;">Nessun altro atleta</div>'
+    return (
 
-        return (
-            '<div class="roster-side-card">'
-            f'<div class="roster-side-head"{align_style}>{logo_img}<span>{team_name}</span></div>'
-            '<div class="roster-group-lbl">Quintetto Base (Primi 5)</div>'
-            f"{st_html}"
-            '<hr class="roster-divider" />'
-            '<div class="roster-group-lbl">Altri Atleti</div>'
-            f"{bn_html}"
-            "</div>"
-        )
+        f'<svg viewBox="0 0 64 68" width="44" height="46" xmlns="http://www.w3.org/2000/svg">'
 
-    h_pal = _get_team_palette(home_name)
-    a_pal = _get_team_palette(away_name)
-    # Se entrambe hanno prima maglia bianca, la squadra ospite indossa la divisa secondaria (colorata)
-    away_use_alt = (
-        h_pal["primary"].lower() in ("#f8fafc", "#ffffff")
-        and a_pal["primary"].lower() in ("#f8fafc", "#ffffff")
-    )
-    a_jersey_fill = a_pal["secondary"] if away_use_alt else a_pal["primary"]
-    a_jersey_trim = a_pal["primary"] if away_use_alt else a_pal["secondary"]
-    a_jersey_num = "#ffffff" if away_use_alt else a_pal["text"]
+        f'<path d="M18 6 L24 6 C25.5 13 38.5 13 40 6 L46 6 L56 17 L48 25 L45 22 L45 61 C45 63.5 43 65 40.5 65 L23.5 65 C21 65 19 63.5 19 61 L19 22 L16 25 L8 17 Z" '
 
-    def _jersey_svg(num_txt: str, fill_c: str, trim_c: str, num_c: str) -> str:
-        safe_num = html_lib.escape(num_txt)
-        f_size = "15" if len(safe_num) <= 2 else "12"
-        return (
-            '<div class="jersey-svg-wrap">'
-            '<svg viewBox="0 0 64 68" width="44" height="46" xmlns="http://www.w3.org/2000/svg">'
-            f'<path d="M16 6 L23 6 C25 13, 39 13, 41 6 L48 6 L55 21 C51 24, 49 28, 50 34 L50 61 C50 63, 48 64, 46 64 L18 64 C16 64, 14 63, 14 61 L14 34 C15 28, 13 24, 9 21 Z" fill="{fill_c}" stroke="{trim_c}" stroke-width="2.6" stroke-linejoin="round"/>'
-            f'<path d="M23 6 C25 13, 39 13, 41 6" fill="none" stroke="{trim_c}" stroke-width="2.4"/>'
-            f'<line x1="15" y1="35" x2="15" y2="61" stroke="{trim_c}" stroke-width="2.2"/>'
-            f'<line x1="49" y1="35" x2="49" y2="61" stroke="{trim_c}" stroke-width="2.2"/>'
-            f'<text x="32" y="43" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="{f_size}" fill="{num_c}">{safe_num}</text>'
-            "</svg>"
-            "</div>"
-        )
+        f'fill="{fill_color}" stroke="{stroke_color}" stroke-width="3" stroke-linejoin="round" />'
 
-    def _jersey_html(p: dict, fill_c: str, trim_c: str, num_c: str) -> str:
-        num_txt = _format_jersey_display(p.get("NUM"), empty_placeholder="?").lstrip("#")
-        cognome = _extract_surname(str(p.get("Giocatore", ""))) or str(p.get("Giocatore", ""))
-        return (
-            '<div class="jersey-card">'
-            f"{_jersey_svg(num_txt, fill_c, trim_c, num_c)}"
-            f'<div class="jersey-name" style="border-color:{_rgba(trim_c, 0.55)};">{cognome}</div>'
-            "</div>"
-        )
+        f'<path d="M23 6 C25 14 39 14 41 6" fill="none" stroke="{stroke_color}" stroke-width="2.5" />'
 
-    def _half_court_col_html(starters: list[dict], fill_c: str, trim_c: str, num_c: str) -> str:
-        top_html = "".join(_jersey_html(p, fill_c, trim_c, num_c) for p in starters[:2])
-        mid_html = "".join(_jersey_html(p, fill_c, trim_c, num_c) for p in starters[2:3])
-        bot_html = "".join(_jersey_html(p, fill_c, trim_c, num_c) for p in starters[3:5])
-        return (
-            '<div class="half-court-col">'
-            f'<div class="half-row-top">{top_html}</div>'
-            f'<div class="half-row-mid">{mid_html}</div>'
-            f'<div class="half-row-bot">{bot_html}</div>'
-            "</div>"
-        )
+        f'<text x="32" y="45" text-anchor="middle" font-family="Arial, sans-serif" font-weight="900" font-size="18" fill="{text_color}">{number_label}</text>'
 
-    h_lane_fill = _rgba(h_pal["rich_main"], 0.22)
-    a_lane_fill = _rgba(a_pal["rich_main"], 0.22)
+        f'</svg>'
 
-    court_svg = (
-        '<svg class="court-svg-bg" viewBox="0 0 840 450" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">'
-        '<line x1="420" y1="8" x2="420" y2="442" stroke="rgba(255,255,255,0.28)" stroke-width="2.5"/>'
-        '<circle cx="420" cy="225" r="54" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.28)" stroke-width="2.5"/>'
-        '<circle cx="420" cy="225" r="6" fill="rgba(255,255,255,0.32)"/>'
-        # Lato Sinistro (Casa)
-        f'<rect x="8" y="152" width="176" height="146" fill="{h_lane_fill}" stroke="rgba(255,255,255,0.32)" stroke-width="2.5"/>'
-        '<path d="M 184 152 A 54 54 0 0 1 184 298" fill="none" stroke="rgba(255,255,255,0.32)" stroke-width="2.2"/>'
-        '<path d="M 184 152 A 54 54 0 0 0 184 298" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1.8" stroke-dasharray="6,6"/>'
-        '<path d="M 8 38 L 95 38 A 202 202 0 0 1 95 412 L 8 412" fill="none" stroke="rgba(255,255,255,0.34)" stroke-width="2.5"/>'
-        '<line x1="44" y1="198" x2="44" y2="252" stroke="#f8fafc" stroke-width="3"/>'
-        '<circle cx="56" cy="225" r="8" fill="none" stroke="#f59e0b" stroke-width="2.5"/>'
-        # Lato Destro (Ospiti)
-        f'<rect x="656" y="152" width="176" height="146" fill="{a_lane_fill}" stroke="rgba(255,255,255,0.32)" stroke-width="2.5"/>'
-        '<path d="M 656 152 A 54 54 0 0 0 656 298" fill="none" stroke="rgba(255,255,255,0.32)" stroke-width="2.2"/>'
-        '<path d="M 656 152 A 54 54 0 0 1 656 298" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1.8" stroke-dasharray="6,6"/>'
-        '<path d="M 832 38 L 745 38 A 202 202 0 0 0 745 412 L 832 412" fill="none" stroke="rgba(255,255,255,0.34)" stroke-width="2.5"/>'
-        '<line x1="796" y1="198" x2="796" y2="252" stroke="#f8fafc" stroke-width="3"/>'
-        '<circle cx="784" cy="225" r="8" fill="none" stroke="#f59e0b" stroke-width="2.5"/>'
-        "</svg>"
     )
 
-    center_court_html = (
-        '<div class="court-compact-wrap">'
-        '<div class="court-stage">'
-        f"{court_svg}"
-        '<div class="court-players-layer">'
-        f'{_half_court_col_html(h_starters, h_pal["primary"], h_pal["secondary"], h_pal["text"])}'
-        f'{_half_court_col_html(a_starters, a_jersey_fill, a_jersey_trim, a_jersey_num)}'
-        "</div>"
-        "</div>"
-        "</div>"
-    )
-
-    full_html = (
-        '<div class="formation-3col">'
-        f"{_roster_col_html(home_name, h_starters, h_bench, is_right=False)}"
-        f"{center_court_html}"
-        f"{_roster_col_html(away_name, a_starters, a_bench, is_right=True)}"
-        "</div>"
-    )
-    st.markdown(full_html, unsafe_allow_html=True)
 
 
-def _render_team_history_column(
-    team_name: str,
-    label_side: str,
-    current_match_id: str,
-    current_round: int,
-    games_df: pd.DataFrame,
-    logo_html_map: dict[str, str],
-) -> str:
+
+
+def _build_roster_side_html(team_name: str, players: list[dict], logo_html_map: dict[str, str]) -> str:
+
+    norm = _normalize_player_rows(players)
+
+    starters = [p for p in norm if p.get("SF")]
+
+    bench = [p for p in norm if not p.get("SF")]
+
     logo_src = logo_html_map.get(f"raw_src::{team_name}", "")
+
     logo_img = f'<img src="{logo_src}" alt="" />' if logo_src else "🏀"
 
-    prev_games = games_df[
-        (games_df["ID_Partita"] != current_match_id)
+
+
+    pal = _get_team_palette(team_name)
+
+    out = [
+
+        f'<div class="roster-side-card" style="border-top:3px solid {pal["visible_main"]};">',
+
+        f'<div class="roster-side-head">{logo_img}<span>{team_name}</span></div>',
+
+        f'<div style="font-size:10px;font-weight:800;color:{pal["visible_accent"]};margin-bottom:7px;">🎨 Colori sociali: {pal["label"]}</div>',
+
+    ]
+
+
+
+    if not norm:
+
+        out.append('<div style="color:#94a3b8;font-size:12px;">Roster non ancora inserito.</div></div>')
+
+        return "".join(out)
+
+
+
+    if starters:
+
+        out.append('<div class="roster-group-lbl">Quintetto Base (SF)</div>')
+
+        for p in starters:
+
+            num_txt = _format_jersey_display(p.get("NUM"), empty_placeholder="—")
+
+            out.append(
+
+                f'<div class="roster-player-line starter" style="border-left-color:{pal["visible_accent"]};">'
+
+                f'<span class="roster-num-pill">{num_txt}</span>'
+
+                f'<span>{p["Giocatore"]}</span>'
+
+                f'</div>'
+
+            )
+
+        if bench:
+
+            out.append('<hr class="roster-divider" />')
+
+
+
+    if bench:
+
+        out.append('<div class="roster-group-lbl">Panchina / Altri Convocati</div>')
+
+        for p in bench:
+
+            num_txt = _format_jersey_display(p.get("NUM"), empty_placeholder="—")
+
+            out.append(
+
+                f'<div class="roster-player-line">'
+
+                f'<span class="roster-num-pill">{num_txt}</span>'
+
+                f'<span>{p["Giocatore"]}</span>'
+
+                f'</div>'
+
+            )
+
+
+
+    out.append("</div>")
+
+    return "".join(out)
+
+
+
+
+
+def _render_half_court_side(players: list[dict], side: str, team_name: str = "") -> str:
+
+    pal = _get_team_palette(team_name)
+
+    fill_c = pal["primary"]
+
+    stroke_c = "#0f172a" if pal["secondary"].lower() in ("#f8fafc", "#ffffff") else pal["secondary"]
+
+    text_c = pal["text"]
+
+
+
+    slots: list[dict] = []
+
+    for idx in range(5):
+
+        if idx < len(players):
+
+            p = players[idx]
+
+            surname = _extract_surname(p["Giocatore"]) or p["Giocatore"]
+
+            num_val = p.get("NUM", 999)
+
+            num_lbl = str(num_val) if 0 <= int(num_val) <= 99 else "?"
+
+            slots.append({"label": surname, "num": num_lbl})
+
+        else:
+
+            slots.append({"label": "—", "num": "?"})
+
+
+
+    def _card(s: dict) -> str:
+
+        svg = _jersey_svg(s["num"], fill_c, stroke_c, text_c)
+
+        return f'<div class="jersey-card"><div class="jersey-svg-wrap">{svg}</div><div class="jersey-name">{s["label"]}</div></div>'
+
+
+
+    if side == "home":
+
+        row_top = f'<div class="half-row-top">{_card(slots[0])}{_card(slots[1])}</div>'
+
+        row_mid = f'<div class="half-row-mid">{_card(slots[2])}</div>'
+
+        row_bot = f'<div class="half-row-bot">{_card(slots[3])}{_card(slots[4])}</div>'
+
+    else:
+
+        row_top = f'<div class="half-row-top">{_card(slots[1])}{_card(slots[0])}</div>'
+
+        row_mid = f'<div class="half-row-mid">{_card(slots[2])}</div>'
+
+        row_bot = f'<div class="half-row-bot">{_card(slots[4])}{_card(slots[3])}</div>'
+
+
+
+    return f'<div class="half-court-col">{row_top}{row_mid}{row_bot}</div>'
+
+
+
+
+
+def render_starting_five_court(
+
+    home_team: str,
+
+    away_team: str,
+
+    home_players: list[dict],
+
+    away_players: list[dict],
+
+    logo_html_map: dict[str, str],
+
+) -> None:
+
+    norm_home = _normalize_player_rows(home_players)
+
+    norm_away = _normalize_player_rows(away_players)
+
+
+
+    home_sf = [p for p in norm_home if p.get("SF")][:5]
+
+    away_sf = [p for p in norm_away if p.get("SF")][:5]
+
+
+
+    home_side_html = _build_roster_side_html(home_team, norm_home, logo_html_map)
+
+    away_side_html = _build_roster_side_html(away_team, norm_away, logo_html_map)
+
+
+
+    court_svg = """
+
+    <svg class="court-svg-bg" viewBox="0 0 900 480" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+
+      <rect x="14" y="14" width="872" height="452" rx="10" fill="none" stroke="rgba(226,232,240,0.45)" stroke-width="3" />
+
+      <line x1="450" y1="14" x2="450" y2="466" stroke="rgba(226,232,240,0.45)" stroke-width="3" />
+
+      <circle cx="450" cy="240" r="56" fill="none" stroke="rgba(226,232,240,0.45)" stroke-width="3" />
+
+      <circle cx="450" cy="240" r="6" fill="rgba(251,191,36,0.65)" />
+
+      <rect x="14" y="168" width="165" height="144" fill="rgba(59,130,246,0.12)" stroke="rgba(226,232,240,0.45)" stroke-width="3" />
+
+      <circle cx="179" cy="240" r="52" fill="none" stroke="rgba(226,232,240,0.42)" stroke-width="2.5" />
+
+      <path d="M 14 48 L 105 48 A 208 208 0 0 1 105 432 L 14 432" fill="none" stroke="rgba(251,191,36,0.45)" stroke-width="3" />
+
+      <circle cx="52" cy="240" r="10" fill="none" stroke="#f97316" stroke-width="3" />
+
+      <line x1="36" y1="216" x2="36" y2="264" stroke="#ffffff" stroke-width="3.5" />
+
+      <rect x="721" y="168" width="165" height="144" fill="rgba(245,158,11,0.12)" stroke="rgba(226,232,240,0.45)" stroke-width="3" />
+
+      <circle cx="721" cy="240" r="52" fill="none" stroke="rgba(226,232,240,0.42)" stroke-width="2.5" />
+
+      <path d="M 886 48 L 795 48 A 208 208 0 0 0 795 432 L 886 432" fill="none" stroke="rgba(251,191,36,0.45)" stroke-width="3" />
+
+      <circle cx="848" cy="240" r="10" fill="none" stroke="#f97316" stroke-width="3" />
+
+      <line x1="864" y1="216" x2="864" y2="264" stroke="#ffffff" stroke-width="3.5" />
+
+    </svg>
+
+    """
+
+
+
+    home_court_col = _render_half_court_side(home_sf, "home", home_team)
+
+    away_court_col = _render_half_court_side(away_sf, "away", away_team)
+
+
+
+    st.markdown(
+
+        f'<div class="formation-3col">'
+
+        f'{home_side_html}'
+
+        f'<div class="court-compact-wrap">'
+
+        f'<div class="court-stage">{court_svg}<div class="court-players-layer">{home_court_col}{away_court_col}</div></div>'
+
+        f'</div>'
+
+        f'{away_side_html}'
+
+        f'</div>',
+
+        unsafe_allow_html=True,
+
+    )
+
+
+
+
+
+def _get_team_recent_games(team_name: str, games_df: pd.DataFrame, limit: int = 5) -> list[dict]:
+
+    played = games_df[
+
+        (games_df["Stato"].astype(str).str.strip().str.lower() == "giocata")
+
         & ((games_df["Casa"] == team_name) | (games_df["Trasferta"] == team_name))
+
+    ].sort_values(by=["Giornata", "ID_Partita"], ascending=False)
+
+
+
+    results = []
+
+    for g in played.head(limit).itertuples(index=False):
+
+        is_home = str(g.Casa) == team_name
+
+        my_pts = int(g.Punti_Casa) if is_home else int(g.Punti_Trasferta)
+
+        opp_pts = int(g.Punti_Trasferta) if is_home else int(g.Punti_Casa)
+
+        opp_name = str(g.Trasferta) if is_home else str(g.Casa)
+
+        won = my_pts > opp_pts
+
+        results.append(
+
+            {
+
+                "giornata": int(g.Giornata),
+
+                "data": str(g.Data),
+
+                "opp": opp_name,
+
+                "where": "Casa" if is_home else "Trasf.",
+
+                "score": f"{int(g.Punti_Casa)} - {int(g.Punti_Trasferta)}",
+
+                "won": won,
+
+                "gid": str(g.ID_Partita),
+
+            }
+
+        )
+
+    return results
+
+
+
+
+
+def _compute_team_season_player_stats(
+
+    team_name: str,
+
+    girone: str,
+
+    games_df: pd.DataFrame,
+
+) -> tuple[list[dict], int]:
+
+    """Aggrega tutte le statistiche stagionali dei giocatori di una squadra dai tabellini registrati."""
+
+    played_df = games_df[
+
+        (games_df["Girone"] == girone)
+
         & (games_df["Stato"].astype(str).str.strip().str.lower() == "giocata")
-        & (games_df["Giornata"].astype(int) <= int(current_round))
+
+        & ((games_df["Casa"] == team_name) | (games_df["Trasferta"] == team_name))
+
     ].sort_values(by=["Giornata", "ID_Partita"])
 
-    items_html = []
-    for g in prev_games.itertuples(index=False):
-        is_home = str(g.Casa) == team_name
-        opp = str(g.Trasferta) if is_home else str(g.Casa)
-        t_pts = int(g.Punti_Casa) if is_home else int(g.Punti_Trasferta)
-        o_pts = int(g.Punti_Trasferta) if is_home else int(g.Punti_Casa)
-        won = t_pts > o_pts
-        badge_cls = "hist-badge-w" if won else "hist-badge-l"
-        badge_txt = "V" if won else "P"
-        place_tag = "Casa" if is_home else "Trasf."
-        items_html.append(
-            '<div class="hist-item">'
-            f'<div class="{badge_cls}">{badge_txt} • G{int(g.Giornata)}</div>'
-            f"<div><strong>{place_tag}</strong> vs {opp}</div>"
-            f'<div class="hist-score">{int(g.Punti_Casa)} - {int(g.Punti_Trasferta)}</div>'
-            "</div>"
-        )
-
-    body_html = (
-        "".join(items_html)
-        if items_html
-        else '<div style="color:#94a3b8;font-size:12.5px;">Nessuna partita disputata in precedenza.</div>'
-    )
-    return (
-        '<div class="hist-col">'
-        f'<div class="hist-col-head">{logo_img}<div>{label_side}: {team_name}</div></div>'
-        f"{body_html}"
-        "</div>"
-    )
 
 
-def compute_team_player_stats(team_name: str, games_df: pd.DataFrame) -> pd.DataFrame:
-    played_ids = set(
-        games_df[
-            ((games_df["Casa"] == team_name) | (games_df["Trasferta"] == team_name))
-            & (games_df["Stato"].astype(str).str.strip().str.lower() == "giocata")
-        ]["ID_Partita"].astype(str)
-    )
     agg: dict[str, dict] = {}
-    for g in games_df[(games_df["Casa"] == team_name) | (games_df["Trasferta"] == team_name)].itertuples(index=False):
+
+    games_with_box = 0
+
+
+
+    for g in played_df.itertuples(index=False):
+
         gid = str(g.ID_Partita)
-        if gid not in played_ids:
-            continue
-        det = _get_match_detail(gid)
-        plist = det["home_players"] if str(g.Casa) == team_name else det["away_players"]
-        for p in plist:
-            raw_name = str(p.get("Giocatore", "")).strip()
-            if not raw_name:
-                continue
-            key = raw_name.lower()
-            num_val = _extract_jersey_number(raw_name, p.get("NUM", None))
-            if key not in agg:
-                agg[key] = {
-                    "NUM": num_val,
-                    "Giocatore": raw_name,
-                    "G": 0,
-                    "PUN": 0,
-                    "2PT_R": 0,
-                    "2PT_T": 0,
-                    "3PT_R": 0,
-                    "3PT_T": 0,
-                    "TL_R": 0,
-                    "TL_T": 0,
-                    "RIM": 0,
-                    "ASS": 0,
-                    "F_C": 0,
-                    "VAL": 0,
-                }
-            else:
-                if p.get("NUM") is not None and str(p.get("NUM")).strip() != "":
-                    parsed_n = pd.to_numeric(p.get("NUM"), errors="coerce")
-                    if pd.notna(parsed_n) and 0 <= int(parsed_n) <= 99:
-                        agg[key]["NUM"] = int(parsed_n)
-                elif agg[key]["NUM"] == 999 and num_val < 999:
-                    agg[key]["NUM"] = num_val
 
-            agg[key]["G"] += 1
-            agg[key]["PUN"] += int(p.get("PUN", 0))
-            agg[key]["2PT_R"] += int(p.get("2PT_R", 0))
-            agg[key]["2PT_T"] += int(p.get("2PT_T", 0))
-            agg[key]["3PT_R"] += int(p.get("3PT_R", 0))
-            agg[key]["3PT_T"] += int(p.get("3PT_T", 0))
-            agg[key]["TL_R"] += int(p.get("TL_R", 0))
-            agg[key]["TL_T"] += int(p.get("TL_T", 0))
-            agg[key]["RIM"] += int(p.get("RIM_O", 0)) + int(p.get("RIM_D", 0))
-            agg[key]["ASS"] += int(p.get("ASS", 0))
-            agg[key]["F_C"] += int(p.get("F_C", 0))
-            agg[key]["VAL"] += int(p.get("VAL", 0))
-
-    if not agg:
-        return pd.DataFrame(
-            columns=["NUM", "Giocatore", "G", "PUN", "PPG", "2PT_R", "2PT_T", "3PT_R", "3PT_T", "TL_R", "TL_T", "RIM", "ASS", "F_C", "VAL"]
-        )
-
-    rows = []
-    for item in agg.values():
-        g_cnt = max(int(item["G"]), 1)
-        rows.append(
-            {
-                "NUM": int(item["NUM"]),
-                "Giocatore": item["Giocatore"],
-                "G": item["G"],
-                "PUN": item["PUN"],
-                "PPG": round(item["PUN"] / g_cnt, 1),
-                "2PT_R": item["2PT_R"],
-                "2PT_T": item["2PT_T"],
-                "3PT_R": item["3PT_R"],
-                "3PT_T": item["3PT_T"],
-                "TL_R": item["TL_R"],
-                "TL_T": item["TL_T"],
-                "RIM": item["RIM"],
-                "ASS": item["ASS"],
-                "F_C": item["F_C"],
-                "VAL": item["VAL"],
-            }
-        )
-    return pd.DataFrame(rows).sort_values(by=["PUN", "Giocatore"], ascending=[False, True]).reset_index(drop=True)
-
-
-def _render_team_player_stats_html(team_name: str, p_df: pd.DataFrame) -> str:
-    team_enc = quote(str(team_name), safe="")
-    pal = _get_team_palette(team_name)
-    head_style = (
-        f'style="background:linear-gradient(90deg, {_rgba(pal["rich_main"], 0.65)} 0%, #0f172a 75%);'
-        f'border-bottom:2.5px solid {pal["visible_accent"]};"'
-    )
-    html = [
-        '<div class="tp-stats-card">',
-        f'<div class="tp-stats-head" {head_style}>'
-        f"<span>STATISTICHE GIOCATORI — {html_lib.escape(str(team_name))}</span>"
-        f'<span style="color:{pal["visible_accent"]};font-size:11px;">CLICCA SUL NOME PER PROFILO • ORDINATO PER PUNTI</span>'
-        "</div>",
-        '<div class="tp-table-wrap"><table class="tp-stats-table"><thead><tr>'
-        "<th>#</th>"
-        '<th class="left-col">GIOCATORE</th>'
-        "<th>G</th>"
-        '<th class="hi-col">PUN</th>'
-        '<th class="hi-col">PPG</th>'
-        "<th>2PT R</th>"
-        "<th>2PT T</th>"
-        "<th>3PT R</th>"
-        "<th>3PT T</th>"
-        "<th>TL R</th>"
-        "<th>TL T</th>"
-        "<th>RIM</th>"
-        "<th>FALLI</th>"
-        "<th>VAL</th>"
-        "</tr></thead><tbody>",
-    ]
-    for row in p_df.to_dict("records"):
-        num_disp = _format_jersey_display(row.get("NUM"), empty_placeholder="—")
-        raw_p_name = str(row.get("Giocatore", ""))
-        p_enc = quote(raw_p_name, safe="")
-        safe_p_name = html_lib.escape(raw_p_name)
-        html.append(
-            "<tr>"
-            f'<td class="num-col">{num_disp}</td>'
-            f'<td class="name-col"><a class="tp-player-link" href="?team={team_enc}&player={p_enc}" target="_self">{safe_p_name}</a></td>'
-            f"<td>{int(row.get('G', 0))}</td>"
-            f'<td class="pts-col">{int(row.get("PUN", 0))}</td>'
-            f'<td class="pts-col">{float(row.get("PPG", 0.0)):.1f}</td>'
-            f"<td>{int(row.get('2PT_R', 0))}</td>"
-            f"<td>{int(row.get('2PT_T', 0))}</td>"
-            f"<td>{int(row.get('3PT_R', 0))}</td>"
-            f"<td>{int(row.get('3PT_T', 0))}</td>"
-            f"<td>{int(row.get('TL_R', 0))}</td>"
-            f"<td>{int(row.get('TL_T', 0))}</td>"
-            f"<td>{int(row.get('RIM', 0))}</td>"
-            f"<td>{int(row.get('F_C', 0))}</td>"
-            f"<td>{int(row.get('VAL', 0))}</td>"
-            "</tr>"
-        )
-    html.append("</tbody></table></div></div>")
-    return "".join(html)
-
-
-def compute_player_profile_data(team_name: str, player_name: str, games_df: pd.DataFrame) -> dict:
-    target_key = str(player_name or "").strip().lower()
-    team_games = games_df[
-        ((games_df["Casa"] == team_name) | (games_df["Trasferta"] == team_name))
-        & (games_df["Stato"].astype(str).str.strip().str.lower() == "giocata")
-    ].sort_values(by=["Giornata", "ID_Partita"], ascending=[False, False])
-
-    history: list[dict] = []
-    tot_pts = 0
-    tot_min_sec = 0
-    tot_2r = tot_2t = 0
-    tot_3r = tot_3t = 0
-    tot_tlr = tot_tlt = 0
-    tot_rim_o = tot_rim_d = 0
-    tot_fc = tot_fs = 0
-    tot_pal_p = tot_pal_r = 0
-    tot_st_d = tot_st_s = 0
-    tot_val = 0
-    resolved_num = 999
-    display_name = str(player_name).strip()
-
-    for g in team_games.itertuples(index=False):
-        gid = str(g.ID_Partita)
-        det = _get_match_detail(gid)
         is_home = str(g.Casa) == team_name
-        plist = det["home_players"] if is_home else det["away_players"]
-        matched = next((p for p in plist if str(p.get("Giocatore", "")).strip().lower() == target_key), None)
-        if not matched:
+
+        det = _get_match_detail(gid)
+
+        plist = det.get("home_players" if is_home else "away_players", [])
+
+        if not plist:
+
             continue
 
-        display_name = str(matched.get("Giocatore", display_name)).strip() or display_name
-        cand_num = _extract_jersey_number(display_name, matched.get("NUM", None))
-        if cand_num < 999:
-            resolved_num = cand_num
-
-        pts = int(matched.get("PUN", 0))
-        r2 = int(matched.get("2PT_R", 0))
-        t2 = int(matched.get("2PT_T", 0))
-        r3 = int(matched.get("3PT_R", 0))
-        t3 = int(matched.get("3PT_T", 0))
-        tlr = int(matched.get("TL_R", 0))
-        tlt = int(matched.get("TL_T", 0))
-        ro = int(matched.get("RIM_O", 0))
-        rd = int(matched.get("RIM_D", 0))
-        fc = int(matched.get("F_C", 0))
-        fs = int(matched.get("F_S", 0))
-        pp = int(matched.get("PAL_P", 0))
-        pr = int(matched.get("PAL_R", 0))
-        sd = int(matched.get("ST_D", 0))
-        ss = int(matched.get("ST_S", 0))
-        val = int(matched.get("VAL", 0))
-        min_str = str(matched.get("MIN", "0") or "0").strip()
-
-        if ":" in min_str:
-            try:
-                mm, ss_p = min_str.split(":", 1)
-                tot_min_sec += int(float(mm)) * 60 + int(float(ss_p))
-            except Exception:
-                pass
-        else:
-            try:
-                tot_min_sec += int(float(min_str)) * 60
-            except Exception:
-                pass
-
-        tot_pts += pts
-        tot_2r += r2
-        tot_2t += t2
-        tot_3r += r3
-        tot_3t += t3
-        tot_tlr += tlr
-        tot_tlt += tlt
-        tot_rim_o += ro
-        tot_rim_d += rd
-        tot_fc += fc
-        tot_fs += fs
-        tot_pal_p += pp
-        tot_pal_r += pr
-        tot_st_d += sd
-        tot_st_s += ss
-        tot_val += val
-
-        home_name = str(g.Casa)
-        away_name = str(g.Trasferta)
-        home_pts = int(g.Punti_Casa)
-        away_pts = int(g.Punti_Trasferta)
-        team_won = (home_pts > away_pts) if is_home else (away_pts > home_pts)
-
-        history.append(
-            {
-                "gid": gid,
-                "girone": str(g.Girone),
-                "giornata": int(g.Giornata),
-                "data": str(g.Data),
-                "home_name": home_name,
-                "away_name": away_name,
-                "home_pts": home_pts,
-                "away_pts": away_pts,
-                "is_home": is_home,
-                "won": team_won,
-                "pts": pts,
-                "min": min_str,
-                "sf": bool(matched.get("SF", False)),
-                "r2": r2,
-                "t2": t2,
-                "r3": r3,
-                "t3": t3,
-                "tlr": tlr,
-                "tlt": tlt,
-                "rim": ro + rd,
-                "fc": fc,
-                "val": val,
-            }
-        )
-
-    g_count = len(history)
-    ppg = round(tot_pts / g_count, 1) if g_count > 0 else 0.0
-    rpg = round((tot_rim_o + tot_rim_d) / g_count, 1) if g_count > 0 else 0.0
-    mpg = round((tot_min_sec / 60.0) / g_count, 1) if g_count > 0 else 0.0
-    vpg = round(tot_val / g_count, 1) if g_count > 0 else 0.0
-
-    return {
-        "name": display_name,
-        "num": resolved_num,
-        "games": g_count,
-        "tot_pts": tot_pts,
-        "ppg": ppg,
-        "rpg": rpg,
-        "mpg": mpg,
-        "vpg": vpg,
-        "tot_2r": tot_2r,
-        "tot_2t": tot_2t,
-        "tot_3r": tot_3r,
-        "tot_3t": tot_3t,
-        "tot_tlr": tot_tlr,
-        "tot_tlt": tot_tlt,
-        "tot_rim": tot_rim_o + tot_rim_d,
-        "tot_fc": tot_fc,
-        "tot_fs": tot_fs,
-        "tot_pal_p": tot_pal_p,
-        "tot_pal_r": tot_pal_r,
-        "tot_st_d": tot_st_d,
-        "tot_st_s": tot_st_s,
-        "tot_val": tot_val,
-        "history": history,
-    }
+        games_with_box += 1
 
 
-def _build_player_avatar_html(num_disp: str, team_name: str = "") -> str:
-    pal = _get_team_palette(team_name)
-    j_fill = pal["primary"]
-    j_trim = pal["secondary"]
-    j_txt = pal["text"]
-    bg_main = pal["rich_main"]
-    border_col = pal["visible_accent"]
-    badge = html_lib.escape(num_disp if num_disp != "—" else "🏀")
-    chest_num = html_lib.escape(num_disp.lstrip("#") if num_disp != "—" else "")
-    svg_parts = [
-        f'<div style="width:76px;height:76px;border-radius:16px;background:linear-gradient(145deg,{_rgba(bg_main, 0.42)} 0%,#0b1320 100%);border:2px solid {_rgba(border_col, 0.78)};display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;overflow:hidden;box-shadow:0 6px 16px rgba(0,0,0,0.45);">',
-        '<svg viewBox="0 0 80 80" width="76" height="76" xmlns="http://www.w3.org/2000/svg">',
-        '<circle cx="40" cy="23" r="12.5" fill="#e2e8f0" opacity="0.95"/>',
-        # Canotta da basket con spalline e bordi nei colori sociali
-        f'<path d="M16 76 L19 52 C20 46, 24 42, 29 41 L32 41 C34 47, 46 47, 48 41 L51 41 C56 42, 60 46, 61 52 L64 76 Z" fill="{j_fill}" stroke="{j_trim}" stroke-width="2.4" stroke-linejoin="round"/>',
-        f'<path d="M31 41 C34 48, 46 48, 49 41" fill="none" stroke="{j_trim}" stroke-width="2.6"/>',
-        f'<path d="M24 43 C25 50, 23 55, 19 58" fill="none" stroke="{j_trim}" stroke-width="2.2"/>',
-        f'<path d="M56 43 C55 50, 57 55, 61 58" fill="none" stroke="{j_trim}" stroke-width="2.2"/>',
-        f'<text x="40" y="65" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="900" font-size="14" fill="{j_txt}">{chest_num}</text>' if chest_num else "",
-        "</svg>",
-        f'<span style="position:absolute;bottom:4px;right:5px;background:{j_trim};color:{"#0f172a" if j_trim.lower() in ("#f8fafc", "#facc15", "#f97316") else "#ffffff"};border:1px solid {_rgba(j_fill, 0.7)};font-size:10px;font-weight:900;padding:1px 5px;border-radius:5px;line-height:1.15;">{badge}</span>',
-        "</div>",
-    ]
-    return "".join(svg_parts)
 
-
-@st.dialog("Scheda Giocatore", width="large")
-def show_player_profile_dialog(team_name: str, player_name: str, games_df: pd.DataFrame, logo_html_map: dict[str, str]) -> None:
-    st.markdown(TEAM_PAGE_CSS, unsafe_allow_html=True)
-    st.markdown(CALENDAR_CSS, unsafe_allow_html=True)
-    pdata = compute_player_profile_data(team_name, player_name, games_df)
-
-    num_disp = _format_jersey_display(pdata["num"], empty_placeholder="—")
-    num_prefix = f'<span class="pm-jersey-tag">{html_lib.escape(num_disp)}</span>' if num_disp != "—" else ""
-    safe_pname = html_lib.escape(pdata["name"])
-    safe_team = html_lib.escape(team_name)
-    team_logo_src = logo_html_map.get(f"raw_src::{team_name}", "")
-    team_logo_tag = f'<img src="{team_logo_src}" alt="" />' if team_logo_src else "<span>🏀</span>"
-    t_pal = _get_team_palette(team_name)
-    avatar_html = _build_player_avatar_html(num_disp, team_name)
-    pm_hero_style = (
-        f'style="background:linear-gradient(135deg, {_rgba(t_pal["rich_main"], 0.42)} 0%, #091322 65%, {_rgba(t_pal["rich_accent"], 0.22)} 100%);'
-        f'border:1.5px solid {_rgba(t_pal["visible_accent"], 0.55)};"'
-    )
-
-    hero_html = "".join(
-        [
-            f'<div class="pm-hero-card" {pm_hero_style}>',
-            "<div>",
-            f'<div class="pm-name-title">{num_prefix}{safe_pname}</div>',
-            f'<div class="pm-team-sub" style="color:{t_pal["visible_accent"]};">{team_logo_tag}<span>{safe_team}</span></div>',
-            "</div>",
-            avatar_html,
-            "</div>",
-        ]
-    )
-    st.markdown(hero_html, unsafe_allow_html=True)
-
-    kpi_html = "".join(
-        [
-            '<div class="pm-kpi-grid">',
-            f'<div class="pm-kpi-box"><div class="pm-kpi-lbl">Partite (G)</div><div class="pm-kpi-val">{pdata["games"]}</div></div>',
-            f'<div class="pm-kpi-box"><div class="pm-kpi-lbl">Punti Totali</div><div class="pm-kpi-val gold">{pdata["tot_pts"]}</div></div>',
-            f'<div class="pm-kpi-box"><div class="pm-kpi-lbl">Media Punti (PPG)</div><div class="pm-kpi-val gold">{pdata["ppg"]:.1f}</div></div>',
-            f'<div class="pm-kpi-box"><div class="pm-kpi-lbl">Media Minuti</div><div class="pm-kpi-val">{pdata["mpg"]:.1f}</div></div>',
-            "</div>",
-        ]
-    )
-    st.markdown(kpi_html, unsafe_allow_html=True)
-
-    pct2 = _fmt_pct(pdata["tot_2r"], pdata["tot_2t"])
-    pct3 = _fmt_pct(pdata["tot_3r"], pdata["tot_3t"])
-    pct_tl = _fmt_pct(pdata["tot_tlr"], pdata["tot_tlt"])
-    extra_html = (
-        '<div class="pm-extra-bar">'
-        f'<strong>Tiri 2PT:</strong> {pdata["tot_2r"]}/{pdata["tot_2t"]} ({pct2}%) &nbsp;•&nbsp; '
-        f'<strong>Tiri 3PT:</strong> {pdata["tot_3r"]}/{pdata["tot_3t"]} ({pct3}%) &nbsp;•&nbsp; '
-        f'<strong>Tiri Liberi:</strong> {pdata["tot_tlr"]}/{pdata["tot_tlt"]} ({pct_tl}%) &nbsp;•&nbsp; '
-        f'<strong>Rimbalzi:</strong> {pdata["tot_rim"]} ({pdata["rpg"]:.1f}/g) &nbsp;•&nbsp; '
-        f'<strong>Falli:</strong> {pdata["tot_fc"]} &nbsp;•&nbsp; '
-        f'<strong>Valutazione:</strong> {pdata["tot_val"]} ({pdata["vpg"]:.1f}/g)'
-        "</div>"
-    )
-    st.markdown(extra_html, unsafe_allow_html=True)
-
-    st.markdown('<div class="pm-hist-section-title">Storico Partite Disputate</div>', unsafe_allow_html=True)
-    hist_list = pdata["history"]
-    if not hist_list:
-        st.info("Nessuna partita registrata a tabellino per questo giocatore.")
-    else:
-        cards_parts: list[str] = []
-        for h in hist_list:
-            r_num = int(h["giornata"])
-            phase_txt = "Ritorno" if r_num > 11 else "Andata"
-            disp_r = r_num - 11 if r_num > 11 else r_num
-            tokens = str(h["data"]).strip().split()
-            date_str = tokens[1] if len(tokens) >= 3 else (tokens[0] if len(tokens) >= 1 else str(h["data"]).strip())
-
-            h_name = str(h["home_name"])
-            a_name = str(h["away_name"])
-            h_pts = int(h["home_pts"])
-            a_pts = int(h["away_pts"])
-            h_win = h_pts > a_pts
-            a_win = a_pts > h_pts
-            h_cls = "cal-pts-win" if h_win else "cal-pts-lose"
-            a_cls = "cal-pts-win" if a_win else "cal-pts-lose"
-
-            h_logo_src = logo_html_map.get(f"raw_src::{h_name}", "")
-            a_logo_src = logo_html_map.get(f"raw_src::{a_name}", "")
-            h_logo = f'<img class="cal-side-logo" src="{h_logo_src}" alt="" loading="lazy" />' if h_logo_src else "🏀"
-            a_logo = f'<img class="cal-side-logo" src="{a_logo_src}" alt="" loading="lazy" />' if a_logo_src else "🏀"
-
-            esito_color = "#4ade80" if h["won"] else "#f87171"
-            esito_label = "VITTORIA" if h["won"] else "SCONFITTA"
-
-            chips: list[str] = [f'<span class="pm-stat-chip pts">{int(h["pts"])} PTS</span>']
-            if str(h["min"]).strip() not in ("", "0"):
-                chips.append(f'<span class="pm-stat-chip">MIN {html_lib.escape(str(h["min"]))}</span>')
-            if h["sf"]:
-                chips.append('<span class="pm-stat-chip" style="color:#4ade80;">QUINTETTO</span>')
-            if int(h["r2"]) > 0 or int(h["t2"]) > 0:
-                chips.append(f'<span class="pm-stat-chip">2PT {int(h["r2"])}/{int(h["t2"])}</span>')
-            if int(h["r3"]) > 0 or int(h["t3"]) > 0:
-                chips.append(f'<span class="pm-stat-chip">3PT {int(h["r3"])}/{int(h["t3"])}</span>')
-            if int(h["tlr"]) > 0 or int(h["tlt"]) > 0:
-                chips.append(f'<span class="pm-stat-chip">TL {int(h["tlr"])}/{int(h["tlt"])}</span>')
-            if int(h["rim"]) > 0:
-                chips.append(f'<span class="pm-stat-chip">RIM {int(h["rim"])}</span>')
-            if int(h["fc"]) > 0:
-                chips.append(f'<span class="pm-stat-chip">FALLI {int(h["fc"])}</span>')
-            if int(h["val"]) != 0:
-                chips.append(f'<span class="pm-stat-chip">VAL {int(h["val"])}</span>')
-
-            cards_parts.append(
-                "".join(
-                    [
-                        '<div class="pm-game-card">',
-                        '<div class="pm-game-row">',
-                        '<div class="cal-round-col">',
-                        f'<div class="cal-round-league">{html_lib.escape(str(h["girone"]))}</div>',
-                        f'<div class="cal-round-num">{disp_r}ª Giornata • {phase_txt}</div>',
-                        f'<div class="cal-round-date">{html_lib.escape(date_str)}</div>',
-                        "</div>",
-                        '<div class="cal-side-home">',
-                        f'<span class="cal-side-name {"win" if h_win else ""}">{html_lib.escape(h_name)}</span>',
-                        h_logo,
-                        "</div>",
-                        '<div class="cal-score-box">',
-                        '<div class="cal-score-line">',
-                        f'<span class="{h_cls}">{h_pts}</span>',
-                        '<span style="color:#64748b;margin:0 3px;">-</span>',
-                        f'<span class="{a_cls}">{a_pts}</span>',
-                        "</div>",
-                        f'<div class="cal-state-sub" style="color:{esito_color};">{esito_label}</div>',
-                        "</div>",
-                        '<div class="cal-side-away">',
-                        a_logo,
-                        f'<span class="cal-side-name {"win" if a_win else ""}">{html_lib.escape(a_name)}</span>',
-                        "</div>",
-                        "</div>",
-                        '<div class="pm-game-footer">',
-                        '<span style="font-weight:800;color:#94a3b8;text-transform:uppercase;font-size:10.5px;">Prestazione individuale</span>',
-                        f'<div class="pm-stat-pills">{"".join(chips)}</div>',
-                        "</div>",
-                        "</div>",
-                    ]
-                )
-            )
-        st.markdown("".join(cards_parts), unsafe_allow_html=True)
-
-    if st.button("Chiudi scheda giocatore", use_container_width=True, key="close_player_modal_btn"):
-        st.session_state["selected_player_name"] = None
-        if "player" in st.query_params:
-            del st.query_params["player"]
-        st.rerun()
-
-
-def _render_team_games_interactive_html(team_name: str, games_df: pd.DataFrame, logo_html_map: dict[str, str]) -> str:
-    team_games = games_df[(games_df["Casa"] == team_name) | (games_df["Trasferta"] == team_name)].sort_values(
-        by=["Giornata", "ID_Partita"]
-    )
-    parts = [
-        '<div class="cal-board">',
-        '<div class="cal-board-head">'
-        '<div class="c-left">GIORNATA</div>'
-        '<div class="c-right">SQUADRA DI CASA</div>'
-        '<div class="c-center">RISULTATO</div>'
-        '<div class="c-left">SQUADRA OSPITE</div>'
-        "</div>",
-    ]
-    for g in team_games.itertuples(index=False):
-        gid_encoded = quote(str(g.ID_Partita), safe="")
-        is_played = str(g.Stato).strip().lower() == "giocata"
-        r_num = int(g.Giornata)
-        phase_txt = "Ritorno" if r_num > 11 else "Andata"
-        disp_r = r_num - 11 if r_num > 11 else r_num
         tokens = str(g.Data).strip().split()
-        if len(tokens) >= 3:
-            date_str, time_str = tokens[1], tokens[2]
-        elif len(tokens) == 2:
-            date_str, time_str = tokens[0], tokens[1]
-        else:
-            date_str, time_str = str(g.Data).strip(), ""
 
-        home_name = str(g.Casa)
-        away_name = str(g.Trasferta)
-        home_pts = int(g.Punti_Casa)
-        away_pts = int(g.Punti_Trasferta)
+        date_only = tokens[1] if len(tokens) >= 3 else (tokens[0] if tokens else "")
 
-        h_logo_src = logo_html_map.get(f"raw_src::{home_name}", "")
-        a_logo_src = logo_html_map.get(f"raw_src::{away_name}", "")
-        h_logo = f'<img class="cal-side-logo" src="{h_logo_src}" alt="" loading="lazy" />' if h_logo_src else "🏀"
-        a_logo = f'<img class="cal-side-logo" src="{a_logo_src}" alt="" loading="lazy" />' if a_logo_src else "🏀"
+        opp_name = str(g.Trasferta) if is_home else str(g.Casa)
 
-        if is_played:
-            h_win = home_pts > away_pts
-            a_win = away_pts > home_pts
-            h_cls = "cal-pts-win" if h_win else "cal-pts-lose"
-            a_cls = "cal-pts-win" if a_win else "cal-pts-lose"
-            score_html = (
-                f'<div class="cal-score-line">'
-                f'<span class="{h_cls}">{home_pts}</span>'
-                f'<span style="color:#64748b;margin:0 3px;">-</span>'
-                f'<span class="{a_cls}">{away_pts}</span>'
-                f"</div>"
-                f'<div class="cal-state-sub done">CONCLUSA</div>'
+        my_pts = int(g.Punti_Casa) if is_home else int(g.Punti_Trasferta)
+
+        opp_pts = int(g.Punti_Trasferta) if is_home else int(g.Punti_Casa)
+
+
+
+        for p in plist:
+
+            raw_name = str(p.get("Giocatore", "")).strip()
+
+            if not raw_name:
+
+                continue
+
+            is_dnp = bool(re.search(r"\(N\.E\.\)", raw_name, flags=re.IGNORECASE))
+
+            clean_key = re.sub(r"\s*\(N\.E\.\)\s*$", "", raw_name, flags=re.IGNORECASE).strip().lower()
+
+            clean_disp = re.sub(r"\s*\(N\.E\.\)\s*$", "", raw_name, flags=re.IGNORECASE).strip()
+
+
+
+            if clean_key not in agg:
+
+                agg[clean_key] = {
+
+                    "key": clean_key,
+
+                    "name": clean_disp,
+
+                    "num": 999,
+
+                    "gp": 0,
+
+                    "gs": 0,
+
+                    "min_sec": 0,
+
+                    "has_min": False,
+
+                    "pts": 0,
+
+                    "max_pts": 0,
+
+                    "t2_r": 0,
+
+                    "t2_t": 0,
+
+                    "t3_r": 0,
+
+                    "t3_t": 0,
+
+                    "tl_r": 0,
+
+                    "tl_t": 0,
+
+                    "rim_o": 0,
+
+                    "rim_d": 0,
+
+                    "ass": 0,
+
+                    "pal_r": 0,
+
+                    "pal_p": 0,
+
+                    "st_d": 0,
+
+                    "st_s": 0,
+
+                    "fc": 0,
+
+                    "fs": 0,
+
+                    "val": 0,
+
+                    "games": [],
+
+                }
+
+
+
+            rec = agg[clean_key]
+
+            p_num = _extract_jersey_number(raw_name, p.get("NUM", 999))
+
+            if 0 <= p_num <= 99:
+
+                rec["num"] = p_num
+
+
+
+            min_raw = str(p.get("MIN", "0") or "0").strip()
+
+            sec_played = 0
+
+            if ":" in min_raw:
+
+                try:
+
+                    mm, ss = min_raw.split(":", 1)
+
+                    sec_played = int(float(mm)) * 60 + int(float(ss))
+
+                except Exception:
+
+                    sec_played = 0
+
+            else:
+
+                try:
+
+                    sec_played = int(float(min_raw)) * 60
+
+                except Exception:
+
+                    sec_played = 0
+
+
+
+            pts_g = int(p.get("PUN", 0) or 0)
+
+            sf_g = bool(p.get("SF", False))
+
+            r2 = int(p.get("2PT_R", 0) or 0)
+
+            t2 = int(p.get("2PT_T", r2) or 0)
+
+            r3 = int(p.get("3PT_R", 0) or 0)
+
+            t3 = int(p.get("3PT_T", r3) or 0)
+
+            rtl = int(p.get("TL_R", 0) or 0)
+
+            ttl = int(p.get("TL_T", rtl) or 0)
+
+            ro = int(p.get("RIM_O", 0) or 0)
+
+            rd = int(p.get("RIM_D", 0) or 0)
+
+            ass_g = int(p.get("ASS", 0) or 0)
+
+            pr = int(p.get("PAL_R", 0) or 0)
+
+            pp = int(p.get("PAL_P", 0) or 0)
+
+            sd = int(p.get("ST_D", 0) or 0)
+
+            ss_blk = int(p.get("ST_S", 0) or 0)
+
+            fc_g = int(p.get("F_C", 0) or 0)
+
+            fs_g = int(p.get("F_S", 0) or 0)
+
+            val_g = int(p.get("VAL", 0) or 0)
+
+
+
+            played_this_game = not is_dnp
+
+            if played_this_game:
+
+                rec["gp"] += 1
+
+                if sf_g:
+
+                    rec["gs"] += 1
+
+                if sec_played > 0:
+
+                    rec["min_sec"] += sec_played
+
+                    rec["has_min"] = True
+
+                rec["pts"] += pts_g
+
+                if pts_g > rec["max_pts"]:
+
+                    rec["max_pts"] = pts_g
+
+                rec["t2_r"] += r2
+
+                rec["t2_t"] += t2
+
+                rec["t3_r"] += r3
+
+                rec["t3_t"] += t3
+
+                rec["tl_r"] += rtl
+
+                rec["tl_t"] += ttl
+
+                rec["rim_o"] += ro
+
+                rec["rim_d"] += rd
+
+                rec["ass"] += ass_g
+
+                rec["pal_r"] += pr
+
+                rec["pal_p"] += pp
+
+                rec["st_d"] += sd
+
+                rec["st_s"] += ss_blk
+
+                rec["fc"] += fc_g
+
+                rec["fs"] += fs_g
+
+                rec["val"] += val_g
+
+
+
+            rec["games"].append(
+
+                {
+
+                    "gid": gid,
+
+                    "giornata": int(g.Giornata),
+
+                    "date": date_only,
+
+                    "casa": str(g.Casa),
+
+                    "trasferta": str(g.Trasferta),
+
+                    "p_casa": int(g.Punti_Casa),
+
+                    "p_trasferta": int(g.Punti_Trasferta),
+
+                    "opp": opp_name,
+
+                    "where": "Casa" if is_home else "Trasferta",
+
+                    "won": my_pts > opp_pts,
+
+                    "dnp": is_dnp,
+
+                    "sf": sf_g,
+
+                    "min": min_raw if min_raw not in ("", "0") else "—",
+
+                    "pts": pts_g,
+
+                    "t2_r": r2,
+
+                    "t2_t": t2,
+
+                    "t3_r": r3,
+
+                    "t3_t": t3,
+
+                    "tl_r": rtl,
+
+                    "tl_t": ttl,
+
+                    "reb": ro + rd,
+
+                    "ass": ass_g,
+
+                    "fc": fc_g,
+
+                    "val": val_g,
+
+                }
+
             )
+
+
+
+    out_list: list[dict] = []
+
+    for rec in agg.values():
+
+        gp = rec["gp"]
+
+        rec["ppg"] = round(rec["pts"] / gp, 1) if gp > 0 else 0.0
+
+        rec["rpg"] = round((rec["rim_o"] + rec["rim_d"]) / gp, 1) if gp > 0 else 0.0
+
+        rec["apg"] = round(rec["ass"] / gp, 1) if gp > 0 else 0.0
+
+        rec["val_pg"] = round(rec["val"] / gp, 1) if gp > 0 else 0.0
+
+        if rec["has_min"] and gp > 0:
+
+            avg_sec = int(round(rec["min_sec"] / gp))
+
+            rec["mpg"] = f"{avg_sec // 60}:{avg_sec % 60:02d}"
+
         else:
-            h_win = False
-            a_win = False
-            sub_txt = time_str if time_str else "DA GIOCARE"
-            score_html = (
-                '<div class="cal-score-line cal-pts-vs">VS</div>'
-                f'<div class="cal-state-sub todo">{sub_txt}</div>'
-            )
 
-        parts.append(
-            f'<a class="cal-row-link" href="?match={gid_encoded}" target="_self">'
-            '<div class="cal-row-card">'
-            '<div class="cal-round-col">'
-            f'<div class="cal-round-league">{g.Girone}</div>'
-            f'<div class="cal-round-num">{disp_r}ª Giornata • {phase_txt}</div>'
-            f'<div class="cal-round-date">{date_str}</div>'
-            "</div>"
-            '<div class="cal-side-home">'
-            f'<span class="cal-side-name {"win" if h_win else ""}">{home_name}</span>'
-            f"{h_logo}"
-            "</div>"
-            f'<div class="cal-score-box">{score_html}</div>'
-            '<div class="cal-side-away">'
-            f"{a_logo}"
-            f'<span class="cal-side-name {"win" if a_win else ""}">{away_name}</span>'
-            "</div>"
-            "</div>"
-            "</a>"
-        )
-    parts.append("</div>")
-    return "".join(parts)
+            rec["mpg"] = "—"
+
+        out_list.append(rec)
 
 
-def render_team_page(team_name: str, games_df: pd.DataFrame, logo_html_map: dict[str, str]) -> None:
-    st.markdown(MATCH_DETAIL_CSS, unsafe_allow_html=True)
-    st.markdown(STANDINGS_CSS, unsafe_allow_html=True)
-    st.markdown(CALENDAR_CSS, unsafe_allow_html=True)
-    st.markdown(TEAM_PAGE_CSS, unsafe_allow_html=True)
 
-    if st.button("← Torna indietro"):
-        st.session_state["selected_team_name"] = None
-        st.session_state["selected_player_name"] = None
-        if "team" in st.query_params:
-            del st.query_params["team"]
-        if "player" in st.query_params:
-            del st.query_params["player"]
-        st.rerun()
+    out_list.sort(key=lambda x: (-x["pts"], -x["ppg"], x["num"], x["name"]))
 
-    girone = _find_team_girone(team_name)
-    if not girone:
-        st.warning(f"Squadra `{team_name}` non trovata.")
-        return
+    return out_list, games_with_box
 
-    board = compute_standings(girone, games_df)
-    pos = next((idx for idx, r in enumerate(board, start=1) if r["squadra"] == team_name), 0)
-    t_row = next((r for r in board if r["squadra"] == team_name), None)
-    hero_logo = logo_html_map.get(f"hero::{team_name}", '<div class="md-logo-box">🏀</div>')
-    diff_val = int(t_row["diff"]) if t_row else 0
-    diff_str = f"+{diff_val}" if diff_val > 0 else str(diff_val)
+
+
+
+
+def _render_player_profile_modal(
+
+    player_rec: dict,
+
+    team_name: str,
+
+    girone: str,
+
+    logo_html_map: dict[str, str],
+
+) -> None:
+
+    """Mostra una finestra pop-up (st.dialog) con scheda tecnica e storico gare del giocatore selezionato."""
+
+    logo_src = logo_html_map.get(f"raw_src::{team_name}", "")
 
     pal = _get_team_palette(team_name)
-    hero_style = (
-        f'style="background:linear-gradient(135deg, {_rgba(pal["rich_main"], 0.48)} 0%, #091322 60%, {_rgba(pal["rich_accent"], 0.26)} 100%);'
-        f'border:1.5px solid {_rgba(pal["visible_accent"], 0.55)};border-top:5px solid {pal["visible_main"]};"'
-    )
-    badge_sociali = (
-        f'<span style="display:inline-flex;align-items:center;gap:6px;margin-top:7px;padding:3px 10px;'
-        f'border-radius:999px;background:rgba(9,15,27,0.75);border:1px solid {_rgba(pal["visible_accent"], 0.5)};'
-        f'font-size:11.5px;font-weight:800;color:#f8fafc;">'
-        f'<span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:{pal["primary"]};border:1.5px solid #94a3b8;"></span>'
-        f'<span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:{pal["secondary"]};border:1.5px solid #94a3b8;"></span>'
-        f'Colori sociali: {html_lib.escape(pal["label"])}'
-        f"</span>"
-    )
 
-    st.markdown(
-        f'<div class="team-hero" {hero_style}>'
-        f"{hero_logo}"
-        "<div>"
-        f'<div class="team-hero-title">{team_name}</div>'
-        f'<div class="team-hero-sub" style="color:{pal["visible_accent"]};">{girone} • Posizione attuale: #{pos}</div>'
-        f"{badge_sociali}"
-        "</div>"
-        "</div>",
-        unsafe_allow_html=True,
-    )
+    num_badge = _format_jersey_display(player_rec.get("num"), empty_placeholder="")
 
-    if t_row:
-        kpi_card_style = (
-            f'style="background:linear-gradient(180deg, {_rgba(pal["rich_main"], 0.22)} 0%, #0b1320 100%);'
-            f'border:1px solid {_rgba(pal["visible_main"], 0.42)};border-top:3px solid {pal["visible_main"]};"'
-        )
-        kpi_val_style = f'style="color:{pal["visible_accent"]};"'
+    num_span = f'<span class="pm-jersey-tag">{html_lib.escape(num_badge)}</span>' if num_badge else ""
+
+    logo_tag = f'<img src="{logo_src}" alt="" />' if logo_src else "🏀"
+
+
+
+    t2_pct = _fmt_pct(player_rec["t2_r"], player_rec["t2_t"]) if player_rec["t2_t"] > 0 else "—"
+
+    t3_pct = _fmt_pct(player_rec["t3_r"], player_rec["t3_t"]) if player_rec["t3_t"] > 0 else "—"
+
+    tl_pct = _fmt_pct(player_rec["tl_r"], player_rec["tl_t"]) if player_rec["tl_t"] > 0 else "—"
+
+
+
+    safe_player_name = html_lib.escape(str(player_rec["name"]))
+
+    safe_team_name = html_lib.escape(str(team_name))
+
+    safe_girone = html_lib.escape(str(girone))
+
+
+
+    @st.dialog(f"Scheda Giocatore — {player_rec['name']}", width="large")
+
+    def _player_dialog() -> None:
+
+        st.markdown(TEAM_PAGE_CSS, unsafe_allow_html=True)
+
         st.markdown(
-            '<div class="kpi-grid">'
-            f'<div class="kpi-card" {kpi_card_style}><div class="kpi-label">Punti</div><div class="kpi-val" {kpi_val_style}>{t_row["pts"]}</div></div>'
-            f'<div class="kpi-card" {kpi_card_style}><div class="kpi-label">Giocate</div><div class="kpi-val" {kpi_val_style}>{t_row["p"]}</div></div>'
-            f'<div class="kpi-card" {kpi_card_style}><div class="kpi-label">Vittorie</div><div class="kpi-val" {kpi_val_style}>{t_row["w"]}</div></div>'
-            f'<div class="kpi-card" {kpi_card_style}><div class="kpi-label">Sconfitte</div><div class="kpi-val" {kpi_val_style}>{t_row["l"]}</div></div>'
-            f'<div class="kpi-card" {kpi_card_style}><div class="kpi-label">PF / PS</div><div class="kpi-val" {kpi_val_style}>{t_row["pf"]}/{t_row["ps"]}</div></div>'
-            f'<div class="kpi-card" {kpi_card_style}><div class="kpi-label">Diff</div><div class="kpi-val" {kpi_val_style}>{diff_str}</div></div>'
-            "</div>",
+
+            f'<div class="pm-hero-card" style="border-left:5px solid {pal["visible_main"]};">'
+
+            f'<div>'
+
+            f'<div class="pm-name-title">{num_span}{safe_player_name}</div>'
+
+            f'<div class="pm-team-sub">{logo_tag}<span>{safe_team_name} • {safe_girone}</span></div>'
+
+            f'</div>'
+
+            f'<div style="text-align:right;">'
+
+            f'<div style="font-size:10.5px;font-weight:800;color:#94a3b8;text-transform:uppercase;">Punti Totali</div>'
+
+            f'<div style="font-size:28px;font-weight:900;color:#fbbf24;line-height:1.05;">{player_rec["pts"]}</div>'
+
+            f'</div>'
+
+            f'</div>'
+
+            f'<div class="pm-kpi-grid">'
+
+            f'<div class="pm-kpi-box"><div class="pm-kpi-lbl">Presenze (PG / Quint.)</div><div class="pm-kpi-val">{player_rec["gp"]} <span style="font-size:13px;color:#94a3b8;">({player_rec["gs"]} SF)</span></div></div>'
+
+            f'<div class="pm-kpi-box"><div class="pm-kpi-lbl">Media Punti (PPG)</div><div class="pm-kpi-val gold">{player_rec["ppg"]:.1f}</div></div>'
+
+            f'<div class="pm-kpi-box"><div class="pm-kpi-lbl">High Stagionale</div><div class="pm-kpi-val">{player_rec["max_pts"]} PT</div></div>'
+
+            f'<div class="pm-kpi-box"><div class="pm-kpi-lbl">Minuti / Gara</div><div class="pm-kpi-val">{html_lib.escape(str(player_rec["mpg"]))}</div></div>'
+
+            f'</div>'
+
+            f'<div class="pm-extra-bar">'
+
+            f'🎯 <b>Tiri dal campo e liberi:</b> '
+
+            f'2PT: <b>{player_rec["t2_r"]}/{player_rec["t2_t"]}</b> ({t2_pct}%) &nbsp;•&nbsp; '
+
+            f'3PT: <b>{player_rec["t3_r"]}/{player_rec["t3_t"]}</b> ({t3_pct}%) &nbsp;•&nbsp; '
+
+            f'TL: <b>{player_rec["tl_r"]}/{player_rec["tl_t"]}</b> ({tl_pct}%) &nbsp;•&nbsp; '
+
+            f'Falli commessi: <b>{player_rec["fc"]}</b>'
+
+            f'</div>'
+
+            f'<div class="pm-hist-section-title">📋 Storico Partite Giocate ({len(player_rec["games"])})</div>',
+
             unsafe_allow_html=True,
-        )
-        st.markdown("**Forma recente (Streak):**")
-        st.markdown(_render_streak_html(t_row.get("streak_events", [])), unsafe_allow_html=True)
 
-    if "team_flash_msg" in st.session_state:
-        f_kind, f_txt = st.session_state.pop("team_flash_msg")
-        if f_kind == "success":
-            st.success(f_txt)
+        )
+
+
+
+        if not player_rec["games"]:
+
+            st.info("Nessuna partita registrata a tabellino per questo giocatore.")
+
         else:
-            st.warning(f_txt)
 
-    st.subheader("Statistiche Giocatori (da tabellini partita)")
-    st.caption("Clicca sul nome di un giocatore nella tabella per aprire il riepilogo completo con medie e storico partite.")
-    p_df = compute_team_player_stats(team_name, games_df)
-    if p_df.empty:
-        st.info("Nessun tabellino inserito ancora per questa squadra.")
-    else:
-        st.markdown(_render_team_player_stats_html(team_name, p_df), unsafe_allow_html=True)
+            cards_parts: list[str] = []
 
-    selected_player = st.session_state.get("selected_player_name")
-    if selected_player:
-        show_player_profile_dialog(team_name, selected_player, games_df, logo_html_map)
+            for gm in player_rec["games"]:
 
-    with st.expander("✏️ Modifica Numero di Maglia e Nome Cognome atleti", expanded=False):
-        roster_edit_df = pd.DataFrame(
-            [
-                {
-                    "_orig_key": str(r["Giocatore"]).strip().lower(),
-                    "NUM": int(r["NUM"]) if 0 <= int(r["NUM"]) <= 99 else 0,
-                    "Giocatore": str(r["Giocatore"]),
-                }
-                for r in p_df.to_dict("records")
-            ]
-        )
-        if roster_edit_df.empty:
-            roster_edit_df = pd.DataFrame([{"_orig_key": "", "NUM": 0, "Giocatore": ""}])
+                gid_enc = quote(str(gm["gid"]), safe="")
 
-        edited_roster = st.data_editor(
-            roster_edit_df[["NUM", "Giocatore"]],
-            num_rows="dynamic",
-            use_container_width=True,
-            column_config={
-                "NUM": st.column_config.NumberColumn("# Maglia", min_value=0, max_value=99, step=1),
-                "Giocatore": st.column_config.TextColumn("Nome Cognome"),
-            },
-            key=f"edit_roster_{team_name}",
-        )
-        if st.button("💾 Salva Nome e Numero su GitHub", key=f"save_roster_{team_name}"):
-            orig_rows = roster_edit_df.to_dict("records")
-            new_rows = edited_roster.to_dict("records")
-            rename_map: dict[str, tuple[str, int]] = {}
-            for idx_r, nr in enumerate(new_rows):
-                new_name = str(nr.get("Giocatore", "") or "").strip()
-                parsed_n = pd.to_numeric(nr.get("NUM", None), errors="coerce")
-                new_num = int(parsed_n) if pd.notna(parsed_n) and 0 <= int(parsed_n) <= 99 else 0
-                if not new_name:
-                    continue
-                if idx_r < len(orig_rows) and orig_rows[idx_r].get("_orig_key"):
-                    rename_map[str(orig_rows[idx_r]["_orig_key"])] = (new_name, new_num)
-                rename_map[new_name.lower()] = (new_name, new_num)
+                h_name = str(gm["casa"])
 
-            store = st.session_state.get("match_details_store", {})
-            team_gids = set(
-                games_df[(games_df["Casa"] == team_name) | (games_df["Trasferta"] == team_name)]["ID_Partita"].astype(str)
-            )
-            last_ok = True
-            last_msg = "Aggiornamento completato."
-            for g in games_df[games_df["ID_Partita"].astype(str).isin(team_gids)].itertuples(index=False):
-                gid = str(g.ID_Partita)
-                if gid not in store or not isinstance(store[gid], dict):
-                    continue
-                side_key = "home_players" if str(g.Casa) == team_name else "away_players"
-                plist = _normalize_player_rows(store[gid].get(side_key))
-                if not plist:
-                    continue
-                changed = False
-                for p in plist:
-                    pkey = str(p.get("Giocatore", "")).strip().lower()
-                    if pkey in rename_map:
-                        upd_name, upd_num = rename_map[pkey]
-                        p["Giocatore"] = upd_name
-                        p["NUM"] = upd_num
-                        changed = True
-                if changed:
-                    updated_det = dict(store[gid])
-                    updated_det[side_key] = plist
-                    ok_s, msg_s, store = save_match_detail_persistent(gid, updated_det)
-                    last_ok = last_ok and ok_s
-                    last_msg = msg_s
+                a_name = str(gm["trasferta"])
 
-            st.session_state["match_details_store"] = store
-            st.session_state["team_flash_msg"] = ("success" if last_ok else "warning", last_msg)
+                h_pts = int(gm["p_casa"])
+
+                a_pts = int(gm["p_trasferta"])
+
+                h_win = h_pts > a_pts
+
+                a_win = a_pts > h_pts
+
+                h_src = logo_html_map.get(f"raw_src::{h_name}", "")
+
+                a_src = logo_html_map.get(f"raw_src::{a_name}", "")
+
+                h_logo = f'<img class="cal-side-logo" src="{h_src}" alt="" />' if h_src else "🏀"
+
+                a_logo = f'<img class="cal-side-logo" src="{a_src}" alt="" />' if a_src else "🏀"
+
+
+
+                phase_lbl = "RITORNO" if gm["giornata"] > 11 else "ANDATA"
+
+                disp_g = gm["giornata"] - 11 if gm["giornata"] > 11 else gm["giornata"]
+
+                esito_badge = (
+
+                    '<span class="hist-badge-w">VITTORIA</span>'
+
+                    if gm["won"]
+
+                    else '<span class="hist-badge-l">SCONFITTA</span>'
+
+                )
+
+
+
+                if gm["dnp"]:
+
+                    chips = '<span class="pm-stat-chip">N.E. (Non entrato)</span>'
+
+                else:
+
+                    chips_list = [f'<span class="pm-stat-chip pts">{gm["pts"]} PT</span>']
+
+                    if gm["sf"]:
+
+                        chips_list.append('<span class="pm-stat-chip" style="color:#4ade80;">Quintetto</span>')
+
+                    if gm["min"] != "—":
+
+                        chips_list.append(f'<span class="pm-stat-chip">MIN {html_lib.escape(str(gm["min"]))}</span>')
+
+                    if gm["t2_r"] > 0 or gm["t2_t"] > 0:
+
+                        t2_s = f"{gm['t2_r']}/{gm['t2_t']}" if gm["t2_t"] > gm["t2_r"] else f"{gm['t2_r']} real."
+
+                        chips_list.append(f'<span class="pm-stat-chip">2PT: {t2_s}</span>')
+
+                    if gm["t3_r"] > 0 or gm["t3_t"] > 0:
+
+                        t3_s = f"{gm['t3_r']}/{gm['t3_t']}" if gm["t3_t"] > gm["t3_r"] else f"{gm['t3_r']} real."
+
+                        chips_list.append(f'<span class="pm-stat-chip">3PT: {t3_s}</span>')
+
+                    if gm["tl_r"] > 0 or gm["tl_t"] > 0:
+
+                        chips_list.append(f'<span class="pm-stat-chip">TL: {gm["tl_r"]}/{gm["tl_t"]}</span>')
+
+                    if gm["reb"] > 0:
+
+                        chips_list.append(f'<span class="pm-stat-chip">RIM: {gm["reb"]}</span>')
+
+                    if gm["ass"] > 0:
+
+                        chips_list.append(f'<span class="pm-stat-chip">ASS: {gm["ass"]}</span>')
+
+                    if gm["fc"] > 0:
+
+                        chips_list.append(f'<span class="pm-stat-chip">Falli: {gm["fc"]}</span>')
+
+                    chips = "".join(chips_list)
+
+
+
+                cards_parts.append(
+
+                    f'<a class="cal-row-link" href="?match={gid_enc}" target="_self">'
+
+                    f'<div class="pm-game-card">'
+
+                    f'<div class="pm-game-row">'
+
+                    f'<div class="cal-round-col">'
+
+                    f'<div class="cal-round-num">{disp_g}ª {phase_lbl}</div>'
+
+                    f'<div class="cal-round-date">{html_lib.escape(str(gm["date"]))}</div>'
+
+                    f'</div>'
+
+                    f'<div class="cal-side-home">'
+
+                    f'<span class="cal-side-name {"win" if h_win else ""}">{html_lib.escape(h_name)}</span>'
+
+                    f'{h_logo}'
+
+                    f'</div>'
+
+                    f'<div class="cal-score-box">'
+
+                    f'<div class="cal-score-line">'
+
+                    f'<span class="{"cal-pts-win" if h_win else "cal-pts-lose"}">{h_pts}</span>'
+
+                    f'<span style="color:#64748b;margin:0 3px;">-</span>'
+
+                    f'<span class="{"cal-pts-win" if a_win else "cal-pts-lose"}">{a_pts}</span>'
+
+                    f'</div>'
+
+                    f'</div>'
+
+                    f'<div class="cal-side-away">'
+
+                    f'{a_logo}'
+
+                    f'<span class="cal-side-name {"win" if a_win else ""}">{html_lib.escape(a_name)}</span>'
+
+                    f'</div>'
+
+                    f'</div>'
+
+                    f'<div class="pm-game-footer">'
+
+                    f'<div class="pm-stat-pills">{chips}</div>'
+
+                    f'<div>{esito_badge}</div>'
+
+                    f'</div>'
+
+                    f'</div>'
+
+                    f'</a>'
+
+                )
+
+
+
+            st.markdown("".join(cards_parts), unsafe_allow_html=True)
+
+
+
+        if st.button("✖ Chiudi scheda giocatore", key=f"close_dlg_{player_rec['key']}", use_container_width=True):
+
+            st.query_params.pop("player", None)
+
             st.rerun()
 
-    st.subheader("Calendario e Risultati Squadra")
-    st.caption("Clicca su una partita per aprire direttamente tabellino, parziali e dettagli gara.")
-    st.markdown(_render_team_games_interactive_html(team_name, games_df, logo_html_map), unsafe_allow_html=True)
 
 
-def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: dict[str, str]) -> None:
-    st.markdown(MATCH_DETAIL_CSS, unsafe_allow_html=True)
+    _player_dialog()
 
-    if st.button("← Torna indietro"):
-        st.session_state["selected_match_id"] = None
-        if "match" in st.query_params:
-            del st.query_params["match"]
-        st.rerun()
 
-    rows = games_df[games_df["ID_Partita"] == match_id]
-    if rows.empty:
-        st.warning(f"Partita `{match_id}` non trovata.")
+
+
+
+def _render_team_season_roster_table(
+
+    team_name: str,
+
+    girone: str,
+
+    player_stats: list[dict],
+
+    games_with_box: int,
+
+) -> None:
+
+    st.markdown(TEAM_PAGE_CSS, unsafe_allow_html=True)
+
+    if not player_stats:
+
+        st.info("Nessun tabellino giocatori ancora registrato per questa squadra.")
+
         return
 
-    g = rows.iloc[0]
-    home_name = str(g["Casa"])
-    away_name = str(g["Trasferta"])
-    home_pts = int(g["Punti_Casa"])
-    away_pts = int(g["Punti_Trasferta"])
-    round_num = int(g["Giornata"])
-    is_played = str(g["Stato"]).strip().lower() == "giocata"
-    status_label = "FINALE" if is_played else str(g["Stato"]).upper()
-    is_our_game = OUR_TEAM in (home_name.strip(), away_name.strip())
 
-    h_hero_logo = logo_html_map.get(f"hero::{home_name}", '<div class="md-logo-box">🏀</div>')
-    a_hero_logo = logo_html_map.get(f"hero::{away_name}", '<div class="md-logo-box">🏀</div>')
-    score_text = f"{home_pts} - {away_pts}" if is_played else "VS"
 
-    st.markdown(
-        '<div class="md-hero">'
-        '<div class="md-grid">'
-        f'<div class="md-team-block">{h_hero_logo}<div class="md-team-name">{home_name}</div></div>'
-        '<div class="md-center">'
-        f'<div class="md-date">{g["Data"]} • {g["Girone"]} (Giornata {round_num})</div>'
-        f'<div class="md-score">{score_text}</div>'
-        f'<div class="md-status">{status_label}</div>'
-        "</div>"
-        f'<div class="md-team-block">{a_hero_logo}<div class="md-team-name">{away_name}</div></div>'
-        "</div>"
-        "</div>",
-        unsafe_allow_html=True,
+    team_enc = quote(team_name, safe="")
+
+    pal = _get_team_palette(team_name)
+
+    head_style = (
+
+        f'style="background:linear-gradient(90deg, {_rgba(pal["rich_main"], 0.65)} 0%, #0f172a 78%);'
+
+        f'border-bottom:2.5px solid {pal["visible_accent"]};"'
+
     )
 
-    with st.expander("✏️ Modifica data, ora e risultato partita (salvataggio permanente)", expanded=False):
-        with st.form(f"edit_game_form_{match_id}"):
-            c1, c2 = st.columns([2, 1])
-            new_date = c1.text_input(
-                "Data e Ora (es. Dom 29/11/2026 18:00)",
-                value=str(g["Data"]),
-            )
-            stati_opts = ("Da giocare", "Giocata")
-            curr_stato = str(g["Stato"]).strip()
-            stato_idx = stati_opts.index(curr_stato) if curr_stato in stati_opts else 0
-            new_stato = c2.selectbox("Stato gara", stati_opts, index=stato_idx)
 
-            c3, c4 = st.columns(2)
-            new_pts_h = c3.number_input(
-                f"Punti {home_name}",
-                min_value=0,
-                max_value=250,
-                value=home_pts,
-                step=1,
-            )
-            new_pts_a = c4.number_input(
-                f"Punti {away_name}",
-                min_value=0,
-                max_value=250,
-                value=away_pts,
-                step=1,
-            )
 
-            if st.form_submit_button("💾 Salva modifiche per sempre"):
-                if new_stato == "Giocata" and int(new_pts_h) == int(new_pts_a):
-                    st.error("Nel basket una partita 'Giocata' non può terminare in parità.")
-                else:
-                    payload = {
-                        "Data": new_date.strip(),
-                        "Stato": new_stato,
-                        "Punti_Casa": int(new_pts_h),
-                        "Punti_Trasferta": int(new_pts_a),
-                    }
-                    with st.spinner("Salvataggio su GitHub in corso..."):
-                        ok, msg, updated_overrides = save_game_override_persistent(match_id, payload)
-                    st.session_state["game_overrides"] = updated_overrides
-                    st.session_state["games_df"] = apply_overrides_to_df(
-                        build_games_df(DATA_VERSION).copy(), updated_overrides
-                    )
-                    if ok:
-                        st.session_state["flash_msg"] = ("success", msg)
-                    else:
-                        st.session_state["flash_msg"] = ("warning", msg)
-                    st.rerun()
+    html = [
 
-    if "flash_msg" in st.session_state:
-        kind, text = st.session_state.pop("flash_msg")
-        if kind == "success":
-            st.success(text)
-        else:
-            st.warning(text)
+        '<div class="tp-stats-card">',
+
+        f'<div class="tp-stats-head" {head_style}>'
+
+        f'<span>🏀 Statistiche Stagionali Giocatori ({games_with_box} gare a tabellino)</span>'
+
+        f'<span style="font-size:11px;color:#fbbf24;">Clicca su un giocatore per lo storico gare</span>'
+
+        f'</div>',
+
+        '<div class="tp-table-wrap"><table class="tp-stats-table"><thead><tr>'
+
+        '<th>N°</th>'
+
+        '<th class="left-col">GIOCATORE</th>'
+
+        '<th>PG</th>'
+
+        '<th>QUINT.</th>'
+
+        '<th>MIN/G</th>'
+
+        '<th class="hi-col">PTS TOT</th>'
+
+        '<th class="hi-col">PTS/G</th>'
+
+        '<th>MAX</th>'
+
+        '<th>2PT R/T</th>'
+
+        '<th>3PT R/T</th>'
+
+        '<th>TL R/T</th>'
+
+        '<th>TL %</th>'
+
+        '<th>FALLI</th>'
+
+        '</tr></thead><tbody>',
+
+    ]
+
+
+
+    for p in player_stats:
+
+        num_disp = _format_jersey_display(p.get("num"), empty_placeholder="—")
+
+        p_enc = quote(p["key"], safe="")
+
+        t2_str = f"{p['t2_r']}/{p['t2_t']}" if p["t2_t"] > 0 else "0/0"
+
+        t3_str = f"{p['t3_r']}/{p['t3_t']}" if p["t3_t"] > 0 else "0/0"
+
+        tl_str = f"{p['tl_r']}/{p['tl_t']}" if p["tl_t"] > 0 else "0/0"
+
+        tl_pct = f"{_fmt_pct(p['tl_r'], p['tl_t'])}%" if p["tl_t"] > 0 else "—"
+
+
+
+        html.append(
+
+            "<tr>"
+
+            f'<td class="num-col">{num_disp}</td>'
+
+            f'<td class="name-col"><a class="tp-player-link" href="?team={team_enc}&player={p_enc}" target="_self">{p["name"]}</a></td>'
+
+            f'<td>{p["gp"]}</td>'
+
+            f'<td>{p["gs"]}</td>'
+
+            f'<td>{p["mpg"]}</td>'
+
+            f'<td class="pts-col">{p["pts"]}</td>'
+
+            f'<td class="pts-col">{p["ppg"]:.1f}</td>'
+
+            f'<td>{p["max_pts"]}</td>'
+
+            f'<td>{t2_str}</td>'
+
+            f'<td>{t3_str}</td>'
+
+            f'<td>{tl_str}</td>'
+
+            f'<td>{tl_pct}</td>'
+
+            f'<td>{p["fc"]}</td>'
+
+            "</tr>"
+
+        )
+
+
+
+    html.append("</tbody></table></div></div>")
+
+    st.markdown("".join(html), unsafe_allow_html=True)
+
+
+
+
+
+def render_match_detail_view(
+
+    match_id: str,
+
+    games_df: pd.DataFrame,
+
+    logo_html_map: dict[str, str],
+
+    is_admin: bool,
+
+) -> None:
+
+    st.markdown(MATCH_DETAIL_CSS, unsafe_allow_html=True)
+
+    match_rows = games_df[games_df["ID_Partita"].astype(str) == str(match_id)]
+
+
+
+    if match_rows.empty:
+
+        st.error("Partita non trovata.")
+
+        if st.button("← Torna alle Classifiche e Calendario"):
+
+            st.query_params.clear()
+
+            st.rerun()
+
+        return
+
+
+
+    m = match_rows.iloc[0]
+
+    girone = str(m["Girone"])
+
+    giornata = int(m["Giornata"])
+
+    data_str = str(m["Data"])
+
+    home_team = str(m["Casa"])
+
+    away_team = str(m["Trasferta"])
+
+    p_home = int(m["Punti_Casa"])
+
+    p_away = int(m["Punti_Trasferta"])
+
+    stato = str(m["Stato"])
+
+    is_played = stato.strip().lower() == "giocata"
+
+
+
+    if st.button("← Torna a Classifiche e Calendario", key="back_from_match"):
+
+        st.query_params.clear()
+
+        st.rerun()
+
+
 
     detail = _get_match_detail(match_id)
 
-    sezioni_gara = st.radio(
-        "Sezione partita",
-        ("RIASSUNTO", "STATS GIOCATORE", "FORMAZIONI", "STORICO"),
-        horizontal=True,
-        label_visibility="collapsed",
-        key=f"md_tab_{match_id}",
+    h_logo = logo_html_map.get(f"hero::{home_team}", '<div class="md-logo-box">🏀</div>')
+
+    a_logo = logo_html_map.get(f"hero::{away_team}", '<div class="md-logo-box">🏀</div>')
+
+    home_enc = quote(home_team, safe="")
+
+    away_enc = quote(away_team, safe="")
+
+    score_txt = f"{p_home} - {p_away}" if is_played else "VS"
+
+    status_txt = "FINALE" if is_played else "DA GIOCARE"
+
+
+
+    h_pal = _get_team_palette(home_team)
+
+    a_pal = _get_team_palette(away_team)
+
+    hero_bg = (
+
+        f"background: linear-gradient(125deg, {_rgba(h_pal['rich_main'], 0.52)} 0%, "
+
+        f"#0c1b30 50%, {_rgba(a_pal['rich_main'], 0.52)} 100%);"
+
     )
 
-    if sezioni_gara == "RIASSUNTO":
-        q_h = detail["quarters_home"]
-        q_a = detail["quarters_away"]
-        ot_h = int(detail.get("ot_home", 0))
-        ot_a = int(detail.get("ot_away", 0))
-        has_ot = (ot_h > 0 or ot_a > 0)
-        ot_th = "<th>OT</th>" if has_ot else ""
-        ot_td_h = f"<td>{ot_h}</td>" if has_ot else ""
-        ot_td_a = f"<td>{ot_a}</td>" if has_ot else ""
+
+
+    st.markdown(
+
+        f'<div class="md-hero" style="{hero_bg}">'
+
+        f'<div class="md-grid">'
+
+        f'<div class="md-team-block">'
+
+        f'<a href="?team={home_enc}" target="_self" style="text-decoration:none;">{h_logo}</a>'
+
+        f'<a href="?team={home_enc}" target="_self" style="text-decoration:none;"><div class="md-team-name">{home_team}</div></a>'
+
+        f'<div style="font-size:10.5px;font-weight:800;color:{h_pal["visible_accent"]};background:rgba(15,23,42,0.75);padding:2px 9px;border-radius:999px;border:1px solid {_rgba(h_pal["visible_accent"], 0.45)};">🎨 {h_pal["label"]}</div>'
+
+        f'</div>'
+
+        f'<div class="md-center">'
+
+        f'<div class="md-date">{girone} • {giornata}ª Giornata • {data_str}</div>'
+
+        f'<div class="md-score">{score_txt}</div>'
+
+        f'<div class="md-status">{status_txt}</div>'
+
+        f'</div>'
+
+        f'<div class="md-team-block">'
+
+        f'<a href="?team={away_enc}" target="_self" style="text-decoration:none;">{a_logo}</a>'
+
+        f'<a href="?team={away_enc}" target="_self" style="text-decoration:none;"><div class="md-team-name">{away_team}</div></a>'
+
+        f'<div style="font-size:10.5px;font-weight:800;color:{a_pal["visible_accent"]};background:rgba(15,23,42,0.75);padding:2px 9px;border-radius:999px;border:1px solid {_rgba(a_pal["visible_accent"], 0.45)};">🎨 {a_pal["label"]}</div>'
+
+        f'</div>'
+
+        f'</div></div>',
+
+        unsafe_allow_html=True,
+
+    )
+
+
+
+    qh = detail["quarters_home"]
+
+    qa = detail["quarters_away"]
+
+    has_quarters = any(x > 0 for x in qh) or any(x > 0 for x in qa)
+
+    has_ot = detail["ot_home"] > 0 or detail["ot_away"] > 0
+
+
+
+    q_headers = "<th>1° Quarto</th><th>2° Quarto</th><th>3° Quarto</th><th>4° Quarto</th>"
+
+    if has_ot:
+
+        q_headers += "<th>OT</th>"
+
+    q_headers += "<th>Totale</th>"
+
+
+
+    def _q_cells(vals: list[int], ot_val: int, tot: int) -> str:
+
+        cells = "".join(f"<td>{v if has_quarters else '-'}</td>" for v in vals)
+
+        if has_ot:
+
+            cells += f"<td>{ot_val}</td>"
+
+        cells += f'<td class="tot-col">{tot if is_played else "-"}</td>'
+
+        return cells
+
+
+
+    st.markdown(
+
+        '<div class="md-sec-card">'
+
+        '<div class="md-sec-title"><span>📊 Risultato e Parziali</span></div>'
+
+        f'<table class="md-res-table"><thead><tr><th class="team-col">Squadra</th>{q_headers}</tr></thead>'
+
+        f'<tbody>'
+
+        f'<tr><td class="team-col">{home_team}</td>{_q_cells(qh, detail["ot_home"], p_home)}</tr>'
+
+        f'<tr><td class="team-col">{away_team}</td>{_q_cells(qa, detail["ot_away"], p_away)}</tr>'
+
+        f'</tbody></table></div>',
+
+        unsafe_allow_html=True,
+
+    )
+
+
+
+    is_full_stats_match = str(match_id) == "A03_1880"
+
+
+
+    tab_box, tab_form, tab_hist = st.tabs(["📋 Tabellino", "🏀 Formazione", "📈 Storico"])
+
+
+
+    with tab_box:
+
+        has_home_p = len(detail["home_players"]) > 0
+
+        has_away_p = len(detail["away_players"]) > 0
+
+        if not has_home_p and not has_away_p:
+
+            st.info("Tabellino giocatori non ancora inserito per questa partita.")
+
+        else:
+
+            render_lba_boxscore(
+
+                team_name=home_team,
+
+                coach_name=detail["coach_home"],
+
+                players=detail["home_players"],
+
+                logo_html_map=logo_html_map,
+
+                full_stats=is_full_stats_match,
+
+            )
+
+            render_lba_boxscore(
+
+                team_name=away_team,
+
+                coach_name=detail["coach_away"],
+
+                players=detail["away_players"],
+
+                logo_html_map=logo_html_map,
+
+                full_stats=is_full_stats_match,
+
+            )
+
+
+
+    with tab_form:
+
+        st.markdown('<div class="md-sec-card"><div class="md-sec-title"><span>🏀 Quintetti Base & Roster Convocati</span></div>', unsafe_allow_html=True)
+
+        render_starting_five_court(
+
+            home_team=home_team,
+
+            away_team=away_team,
+
+            home_players=detail["home_players"],
+
+            away_players=detail["away_players"],
+
+            logo_html_map=logo_html_map,
+
+        )
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+
+
+    with tab_hist:
+
+        home_hist = _get_team_recent_games(home_team, games_df, limit=5)
+
+        away_hist = _get_team_recent_games(away_team, games_df, limit=5)
+
+
+
+        def _render_hist_col(t_name: str, items: list[dict]) -> str:
+
+            l_src = logo_html_map.get(f"raw_src::{t_name}", "")
+
+            l_img = f'<img src="{l_src}" alt="" />' if l_src else "🏀"
+
+            out = [f'<div class="hist-col"><div class="hist-col-head">{l_img}<span>Ultime 5 gare • {t_name}</span></div>']
+
+            if not items:
+
+                out.append('<div style="color:#94a3b8;font-size:12.5px;">Nessuna partita disputata finora.</div></div>')
+
+                return "".join(out)
+
+            for it in items:
+
+                badge = '<span class="hist-badge-w">VITTORIA</span>' if it["won"] else '<span class="hist-badge-l">SCONFITTA</span>'
+
+                g_enc = quote(it["gid"], safe="")
+
+                out.append(
+
+                    f'<a href="?match={g_enc}" target="_self" style="text-decoration:none;color:inherit;">'
+
+                    f'<div class="hist-item">'
+
+                    f'{badge}'
+
+                    f'<div><b>{it["giornata"]}ª Giornata</b> • vs {it["opp"]} ({it["where"]})</div>'
+
+                    f'<div class="hist-score">{it["score"]}</div>'
+
+                    f'</div></a>'
+
+                )
+
+            out.append("</div>")
+
+            return "".join(out)
+
+
 
         st.markdown(
-            '<div class="md-sec-card">'
-            '<div class="md-sec-title">RISULTATO PARZIALE QUARTI</div>'
-            '<table class="md-res-table">'
-            f'<thead><tr><th class="team-col">SQUADRA</th><th>TOT</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th>{ot_th}</tr></thead>'
-            "<tbody>"
-            f'<tr><td class="team-col">{home_name}</td><td class="tot-col">{home_pts}</td><td>{q_h[0]}</td><td>{q_h[1]}</td><td>{q_h[2]}</td><td>{q_h[3]}</td>{ot_td_h}</tr>'
-            f'<tr><td class="team-col">{away_name}</td><td class="tot-col">{away_pts}</td><td>{q_a[0]}</td><td>{q_a[1]}</td><td>{q_a[2]}</td><td>{q_a[3]}</td>{ot_td_a}</tr>'
-            "</tbody></table></div>",
+
+            f'<div class="md-sec-card"><div class="md-sec-title"><span>📈 Ultime Partite delle Due Squadre</span></div>'
+
+            f'<div class="hist-grid">{_render_hist_col(home_team, home_hist)}{_render_hist_col(away_team, away_hist)}</div></div>',
+
             unsafe_allow_html=True,
+
         )
 
-        with st.expander("✏️ Modifica parziali quarti"):
-            qc = st.columns(5)
-            nh = [qc[i].number_input(f"{home_name[:10]} Q{i+1}", min_value=0, max_value=80, value=int(q_h[i]), key=f"qh_{match_id}_{i}") for i in range(4)]
-            not_h = qc[4].number_input("OT Casa", min_value=0, max_value=40, value=ot_h, key=f"oth_{match_id}")
-            qc2 = st.columns(5)
-            na = [qc2[i].number_input(f"{away_name[:10]} Q{i+1}", min_value=0, max_value=80, value=int(q_a[i]), key=f"qa_{match_id}_{i}") for i in range(4)]
-            not_a = qc2[4].number_input("OT Trasf", min_value=0, max_value=40, value=ot_a, key=f"ota_{match_id}")
-            if st.button("💾 Salva parziali su GitHub", key=f"save_q_{match_id}"):
-                new_detail = dict(detail)
-                new_detail["quarters_home"] = [int(x) for x in nh]
-                new_detail["quarters_away"] = [int(x) for x in na]
-                new_detail["ot_home"] = int(not_h)
-                new_detail["ot_away"] = int(not_a)
-                with st.spinner("Salvataggio parziali su GitHub..."):
-                    ok, msg, store = save_match_detail_persistent(match_id, new_detail)
-                st.session_state["match_details_store"] = store
-                st.session_state["flash_msg"] = ("success" if ok else "warning", msg)
+
+
+    if is_admin:
+
+        with st.expander("✏️ Modifica Dati Partita e Tabellino (Staff)", expanded=False):
+
+            st.caption("Le modifiche vengono salvate direttamente su GitHub e sono subito visibili a tutti gli utenti.")
+
+            c1, c2 = st.columns(2)
+
+            new_date = c1.text_input("Data e Ora", value=data_str, key=f"md_date_{match_id}")
+
+            new_status = c2.selectbox(
+
+                "Stato",
+
+                ["Giocata", "Da giocare"],
+
+                index=0 if is_played else 1,
+
+                key=f"md_stato_{match_id}",
+
+            )
+
+
+
+            s1, s2 = st.columns(2)
+
+            new_ph = s1.number_input(f"Punti Totali {home_team}", min_value=0, max_value=250, value=p_home, step=1, key=f"md_ph_{match_id}")
+
+            new_pa = s2.number_input(f"Punti Totali {away_team}", min_value=0, max_value=250, value=p_away, step=1, key=f"md_pa_{match_id}")
+
+
+
+            st.markdown("**Parziali per Quarto**")
+
+            qc1, qc2, qc3, qc4, qc5 = st.columns(5)
+
+            qh1 = qc1.number_input(f"1°Q {home_team[:12]}", min_value=0, max_value=80, value=qh[0], key=f"qh1_{match_id}")
+
+            qh2 = qc2.number_input(f"2°Q {home_team[:12]}", min_value=0, max_value=80, value=qh[1], key=f"qh2_{match_id}")
+
+            qh3 = qc3.number_input(f"3°Q {home_team[:12]}", min_value=0, max_value=80, value=qh[2], key=f"qh3_{match_id}")
+
+            qh4 = qc4.number_input(f"4°Q {home_team[:12]}", min_value=0, max_value=80, value=qh[3], key=f"qh4_{match_id}")
+
+            qhot = qc5.number_input(f"OT {home_team[:12]}", min_value=0, max_value=60, value=detail["ot_home"], key=f"qhot_{match_id}")
+
+
+
+            qa1, qa2, qa3, qa4, qa5 = st.columns(5)
+
+            q_a1 = qa1.number_input(f"1°Q {away_team[:12]}", min_value=0, max_value=80, value=qa[0], key=f"qa1_{match_id}")
+
+            q_a2 = qa2.number_input(f"2°Q {away_team[:12]}", min_value=0, max_value=80, value=qa[1], key=f"qa2_{match_id}")
+
+            q_a3 = qa3.number_input(f"3°Q {away_team[:12]}", min_value=0, max_value=80, value=qa[2], key=f"qa3_{match_id}")
+
+            q_a4 = qa4.number_input(f"4°Q {away_team[:12]}", min_value=0, max_value=80, value=qa[3], key=f"qa4_{match_id}")
+
+            qaot = qa5.number_input(f"OT {away_team[:12]}", min_value=0, max_value=60, value=detail["ot_away"], key=f"qaot_{match_id}")
+
+
+
+            ca1, ca2 = st.columns(2)
+
+            coach_h = ca1.text_input(f"Allenatore {home_team}", value=detail["coach_home"], key=f"coach_h_{match_id}")
+
+            coach_a = ca2.text_input(f"Allenatore {away_team}", value=detail["coach_away"], key=f"coach_a_{match_id}")
+
+
+
+            st.markdown(f"**Tabellino {home_team}**")
+
+            ed_home = st.data_editor(
+
+                _players_to_editor_df(detail["home_players"], full_stats=is_full_stats_match),
+
+                num_rows="dynamic",
+
+                use_container_width=True,
+
+                key=f"ed_hp_{match_id}",
+
+            )
+
+            st.markdown(f"**Tabellino {away_team}**")
+
+            ed_away = st.data_editor(
+
+                _players_to_editor_df(detail["away_players"], full_stats=is_full_stats_match),
+
+                num_rows="dynamic",
+
+                use_container_width=True,
+
+                key=f"ed_ap_{match_id}",
+
+            )
+
+
+
+            if st.button("💾 Salva Partita e Tabellino", type="primary", key=f"save_md_{match_id}"):
+
+                final_ph = int(new_ph) if new_status == "Giocata" else 0
+
+                final_pa = int(new_pa) if new_status == "Giocata" else 0
+
+                ok1, msg1, new_ov = save_game_override_persistent(
+
+                    match_id,
+
+                    {
+
+                        "Data": new_date.strip(),
+
+                        "Stato": new_status,
+
+                        "Punti_Casa": final_ph,
+
+                        "Punti_Trasferta": final_pa,
+
+                    },
+
+                )
+
+                detail_payload = {
+
+                    "coach_home": coach_h.strip(),
+
+                    "coach_away": coach_a.strip(),
+
+                    "quarters_home": [int(qh1), int(qh2), int(qh3), int(qh4)],
+
+                    "quarters_away": [int(q_a1), int(q_a2), int(q_a3), int(q_a4)],
+
+                    "ot_home": int(qhot),
+
+                    "ot_away": int(qaot),
+
+                    "home_players": _editor_df_to_players(ed_home, detail["home_players"]),
+
+                    "away_players": _editor_df_to_players(ed_away, detail["away_players"]),
+
+                }
+
+                ok2, msg2, new_det_store = save_match_detail_persistent(match_id, detail_payload)
+
+                st.session_state["game_overrides"] = new_ov
+
+                st.session_state["match_details_store"] = new_det_store
+
+                if ok1 and ok2:
+
+                    st.success("✅ Partita e tabellino salvati su GitHub!")
+
+                else:
+
+                    st.warning(f"{msg1} | {msg2}")
+
                 st.rerun()
 
-        hp = _normalize_player_rows(detail["home_players"])
-        ap = _normalize_player_rows(detail["away_players"])
-
-        pts_tab_h = sum(int(p["PUN"]) for p in hp)
-        pts_tab_a = sum(int(p["PUN"]) for p in ap)
-        disp_pts_h = pts_tab_h if (is_our_game and hp) else home_pts
-        disp_pts_a = pts_tab_a if (is_our_game and ap) else away_pts
-
-        tl_r_h = sum(int(p["TL_R"]) for p in hp)
-        tl_r_a = sum(int(p["TL_R"]) for p in ap)
-        tl_t_h = sum(int(p["TL_T"]) for p in hp)
-        tl_t_a = sum(int(p["TL_T"]) for p in ap)
-        tl_sbag_h = max(tl_t_h - tl_r_h, 0)
-        tl_sbag_a = max(tl_t_a - tl_r_a, 0)
-
-        t2_r_h = sum(int(p["2PT_R"]) for p in hp)
-        t2_r_a = sum(int(p["2PT_R"]) for p in ap)
-        t3_r_h = sum(int(p["3PT_R"]) for p in hp)
-        t3_r_a = sum(int(p["3PT_R"]) for p in ap)
-        fc_h = sum(int(p["F_C"]) for p in hp)
-        fc_a = sum(int(p["F_C"]) for p in ap)
-
-        stat_rows = [
-            {"Statistica": "Punti", home_name: disp_pts_h, away_name: disp_pts_a},
-            {"Statistica": "Tiri liberi segnati", home_name: tl_r_h, away_name: tl_r_a},
-            {"Statistica": "Tiri liberi sbagliati", home_name: tl_sbag_h, away_name: tl_sbag_a},
-            {"Statistica": "2PT segnati", home_name: t2_r_h, away_name: t2_r_a},
-            {"Statistica": "3PT segnati", home_name: t3_r_h, away_name: t3_r_a},
-            {"Statistica": "Falli fatti", home_name: fc_h, away_name: fc_a},
-        ]
-        if is_our_game:
-            rim_h = sum(int(p["RIM_O"]) + int(p["RIM_D"]) for p in hp)
-            rim_a = sum(int(p["RIM_O"]) + int(p["RIM_D"]) for p in ap)
-            stat_rows.append(
-                {"Statistica": "Rimbalzi totali", home_name: rim_h, away_name: rim_a}
-            )
-
-        st.markdown('<div class="md-sec-card"><div class="md-sec-title">STATISTICHE DI SQUADRA</div>', unsafe_allow_html=True)
-        st.table(pd.DataFrame(stat_rows))
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    elif sezioni_gara == "STATS GIOCATORE":
-        if not is_our_game:
-            st.caption(
-                f"Tabellino essenziale per le gare senza {OUR_TEAM} (mantenuta solo la % dei tiri liberi; "
-                "nascoste falli subiti, tentativi 2PT/3PT, % da 2, rimbalzi, stoppate, palle perse/recuperate e valutazione)."
-            )
-        render_lba_boxscore(home_name, detail["coach_home"], detail["home_players"], logo_html_map, full_stats=is_our_game)
-        render_lba_boxscore(away_name, detail["coach_away"], detail["away_players"], logo_html_map, full_stats=is_our_game)
-
-        with st.expander("✏️ Modifica tabellini giocatori e allenatori (salvataggio permanente)", expanded=False):
-            c_ch, c_ca = st.columns(2)
-            new_coach_h = c_ch.text_input(f"Allenatore {home_name}", value=detail["coach_home"], key=f"coach_h_{match_id}")
-            new_coach_a = c_ca.text_input(f"Allenatore {away_name}", value=detail["coach_away"], key=f"coach_a_{match_id}")
-
-            tab_h, tab_a = st.tabs([home_name, away_name])
-            with tab_h:
-                edited_h = st.data_editor(
-                    _players_to_editor_df(detail["home_players"], full_stats=is_our_game),
-                    num_rows="dynamic",
-                    use_container_width=True,
-                    key=f"editor_h_{match_id}",
-                )
-            with tab_a:
-                edited_a = st.data_editor(
-                    _players_to_editor_df(detail["away_players"], full_stats=is_our_game),
-                    num_rows="dynamic",
-                    use_container_width=True,
-                    key=f"editor_a_{match_id}",
-                )
-
-            if st.button("💾 Salva tabellini su GitHub", key=f"save_box_{match_id}"):
-                new_detail = dict(detail)
-                new_detail["coach_home"] = new_coach_h.strip()
-                new_detail["coach_away"] = new_coach_a.strip()
-                new_detail["home_players"] = _editor_df_to_players(edited_h, existing_players=detail["home_players"])
-                new_detail["away_players"] = _editor_df_to_players(edited_a, existing_players=detail["away_players"])
-                with st.spinner("Salvataggio tabellini su GitHub in corso..."):
-                    ok, msg, store = save_match_detail_persistent(match_id, new_detail)
-                st.session_state["match_details_store"] = store
-                st.session_state["flash_msg"] = ("success" if ok else "warning", msg)
-                st.rerun()
-
-    elif sezioni_gara == "FORMAZIONI":
-        st.markdown('<div class="md-sec-card"><div class="md-sec-title">FORMAZIONI IN CAMPO</div>', unsafe_allow_html=True)
-        _render_court_formation(
-            home_name=home_name,
-            away_name=away_name,
-            home_players=detail["home_players"],
-            away_players=detail["away_players"],
-            logo_html_map=logo_html_map,
-        )
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    elif sezioni_gara == "STORICO":
-        st.markdown('<div class="md-sec-card"><div class="md-sec-title">ULTIME PARTITE DISPUTATE</div>', unsafe_allow_html=True)
-        col_left_html = _render_team_history_column(
-            team_name=home_name,
-            label_side="Casa",
-            current_match_id=match_id,
-            current_round=round_num,
-            games_df=games_df,
-            logo_html_map=logo_html_map,
-        )
-        col_right_html = _render_team_history_column(
-            team_name=away_name,
-            label_side="Trasferta",
-            current_match_id=match_id,
-            current_round=round_num,
-            games_df=games_df,
-            logo_html_map=logo_html_map,
-        )
-        st.markdown(f'<div class="hist-grid">{col_left_html}{col_right_html}</div></div>', unsafe_allow_html=True)
 
 
-# ==========================================
-# TOP MARCATORI & SCOUTING PRE-GARA
-# ==========================================
-def _classify_tactical_profile(
-    ppg: float,
-    t3_pg: float,
-    f_pg: float,
-    t2_r: int,
-    t3_r: int,
-    tl_t: int,
-    games: int,
-) -> str:
-    g = max(games, 1)
-    pts_from_3 = (t3_r * 3) / g
-    pts_from_2 = (t2_r * 2) / g
-    tl_pg = tl_t / g
-    if t3_pg >= 1.8 or (ppg > 0 and (pts_from_3 / ppg) >= 0.42):
-        return "Tiratore 3PT"
-    if tl_pg >= 3.5 or f_pg >= 3.2:
-        return "Penetratore / Falli"
-    if ppg >= 14.0 and t3_pg >= 1.0 and pts_from_2 >= 6.0:
-        return "Realizzatore Completo"
-    return "Finalizzatore Area"
 
 
-def compute_girone_players_leaderboard(girone: str, games_df: pd.DataFrame) -> pd.DataFrame:
-    played_g = games_df[
-        (games_df["Girone"] == girone)
-        & (games_df["Stato"].astype(str).str.strip().str.lower() == "giocata")
-    ].sort_values(by=["Giornata", "ID_Partita"])
+def render_team_detail_view(
 
-    team_tot_pts: dict[str, int] = {}
-    for g in played_g.itertuples(index=False):
-        h, a = str(g.Casa), str(g.Trasferta)
-        team_tot_pts[h] = team_tot_pts.get(h, 0) + int(g.Punti_Casa)
-        team_tot_pts[a] = team_tot_pts.get(a, 0) + int(g.Punti_Trasferta)
+    team_name: str,
 
-    players_agg: dict[tuple[str, str], dict] = {}
-    for g in played_g.itertuples(index=False):
-        gid = str(g.ID_Partita)
-        det = _get_match_detail(gid)
-        for side_team, plist in ((str(g.Casa), det["home_players"]), (str(g.Trasferta), det["away_players"])):
-            for p in plist:
-                pname = str(p.get("Giocatore", "")).strip()
-                if not pname or "(N.E.)" in pname.upper():
-                    continue
-                key = (side_team, pname.lower())
-                pts = int(p.get("PUN", 0))
-                if key not in players_agg:
-                    players_agg[key] = {
-                        "Squadra": side_team,
-                        "Giocatore": pname,
-                        "NUM": _extract_jersey_number(pname, p.get("NUM")),
-                        "G": 0,
-                        "PUN": 0,
-                        "HIGH": 0,
-                        "G15": 0,
-                        "2PT_R": 0,
-                        "3PT_R": 0,
-                        "TL_R": 0,
-                        "TL_T": 0,
-                        "F_C": 0,
-                    }
-                rec = players_agg[key]
-                rec["G"] += 1
-                rec["PUN"] += pts
-                rec["HIGH"] = max(rec["HIGH"], pts)
-                if pts >= 15:
-                    rec["G15"] += 1
-                rec["2PT_R"] += int(p.get("2PT_R", 0))
-                rec["3PT_R"] += int(p.get("3PT_R", 0))
-                rec["TL_R"] += int(p.get("TL_R", 0))
-                rec["TL_T"] += int(p.get("TL_T", 0))
-                rec["F_C"] += int(p.get("F_C", 0))
+    games_df: pd.DataFrame,
 
-    if not players_agg:
-        return pd.DataFrame()
+    logo_html_map: dict[str, str],
 
-    rows = []
-    for rec in players_agg.values():
-        g_cnt = max(rec["G"], 1)
-        ppg = round(rec["PUN"] / g_cnt, 1)
-        t3_pg = round(rec["3PT_R"] / g_cnt, 2)
-        f_pg = round(rec["F_C"] / g_cnt, 1)
-        sq_pts = max(team_tot_pts.get(rec["Squadra"], 0), 1)
-        incidenza = round((rec["PUN"] / sq_pts) * 100, 1)
-        tl_pct = f"{round((rec['TL_R'] / rec['TL_T']) * 100)}%" if rec["TL_T"] > 0 else "—"
-        profilo = _classify_tactical_profile(
-            ppg=ppg,
-            t3_pg=t3_pg,
-            f_pg=f_pg,
-            t2_r=rec["2PT_R"],
-            t3_r=rec["3PT_R"],
-            tl_t=rec["TL_T"],
-            games=g_cnt,
-        )
-        rows.append(
-            {
-                "Giocatore": rec["Giocatore"],
-                "Squadra": rec["Squadra"],
-                "G": rec["G"],
-                "PUN": rec["PUN"],
-                "PPG": ppg,
-                "% PT Sq.": round(incidenza, 1),
-                "High": rec["HIGH"],
-                "3PG": t3_pg,
-                "TL%": tl_pct,
-                "G ≥15": rec["G15"],
-                "FPG": f_pg,
-                "Profilo Tattico": profilo,
-            }
-        )
+) -> None:
 
-    return pd.DataFrame(rows).sort_values(by=["PPG", "PUN"], ascending=[False, False]).reset_index(drop=True)
+    st.markdown(MATCH_DETAIL_CSS, unsafe_allow_html=True)
 
+    st.markdown(CALENDAR_CSS, unsafe_allow_html=True)
 
-def view_giocatori_pericolosi(girone: str, games_df: pd.DataFrame) -> None:
     st.markdown(TEAM_PAGE_CSS, unsafe_allow_html=True)
-    st.subheader(f"🔥 Top Marcatori & Minacce — {girone}")
-    st.caption(
-        "Classifica individuale del girone con incidenza sui punti squadra (% PT Sq.), High stagionale, "
-        "triple/gara (3PG), % ai liberi, gare da ≥15 punti, falli/gara (FPG) e profilo tattico automatico."
-    )
-    df_p = compute_girone_players_leaderboard(girone, games_df)
-    if df_p.empty:
-        st.info("Nessun tabellino individuale disponibile per questo girone.")
+
+
+
+    girone = _find_team_girone(team_name)
+
+    if girone is None:
+
+        st.error(f"Squadra non trovata: {team_name}")
+
+        if st.button("← Torna alle Classifiche"):
+
+            st.query_params.clear()
+
+            st.rerun()
+
         return
 
-    c1, c2, c3, c4, c5 = st.columns([1.8, 1.4, 0.9, 1.2, 1.1])
-    sq_opts = ["Tutte le squadre"] + sorted(df_p["Squadra"].unique().tolist())
-    sel_sq = c1.selectbox("Squadra", sq_opts, key="threat_sq_filter")
-    prof_opts = ["Tutti i profili"] + sorted(df_p["Profilo Tattico"].unique().tolist())
-    sel_prof = c2.selectbox("Profilo Tattico", prof_opts, key="threat_prof_filter")
-    min_g = c3.number_input("Min. partite (G)", min_value=1, max_value=22, value=1, step=1, key="threat_min_g")
-    sort_opts = ["PPG", "PUN", "G", "% PT Sq.", "High", "3PG", "TL%", "G ≥15", "FPG", "Giocatore", "Squadra"]
-    sel_sort_col = c4.selectbox("Ordina per", sort_opts, index=0, key="threat_sort_col")
-    sel_sort_dir = c5.radio(
-        "Ordine",
-        ["Decrescente ↓", "Crescente ↑"],
-        index=0,
-        horizontal=True,
-        key="threat_sort_dir",
-    )
-
-    filtered = df_p[df_p["G"] >= min_g].copy()
-    if sel_sq != "Tutte le squadre":
-        filtered = filtered[filtered["Squadra"] == sel_sq]
-    if sel_prof != "Tutti i profili":
-        filtered = filtered[filtered["Profilo Tattico"] == sel_prof]
-
-    asc = sel_sort_dir == "Crescente ↑"
-    if not filtered.empty:
-        if sel_sort_col == "TL%":
-            filtered["_tl_num"] = (
-                filtered["TL%"]
-                .astype(str)
-                .str.replace("%", "", regex=False)
-                .replace("—", "-1")
-                .astype(float)
-            )
-            filtered = filtered.sort_values(
-                by=["_tl_num", "PPG"],
-                ascending=[asc, False],
-                kind="mergesort",
-            ).drop(columns=["_tl_num"])
-        elif sel_sort_col in ("Giocatore", "Squadra"):
-            filtered = filtered.sort_values(
-                by=[sel_sort_col, "PPG"],
-                ascending=[asc, False],
-                kind="mergesort",
-            )
-        else:
-            secondary_col = "PUN" if sel_sort_col != "PUN" else "PPG"
-            filtered = filtered.sort_values(
-                by=[sel_sort_col, secondary_col],
-                ascending=[asc, False],
-                kind="mergesort",
-            )
-
-    # Top 3 highlight cards del filtro corrente
-    if not filtered.empty:
-        top_cards = filtered.head(3)
-        cols_top = st.columns(len(top_cards))
-        for idx_t, (_, r_t) in enumerate(top_cards.iterrows()):
-            with cols_top[idx_t]:
-                st.markdown(
-                    f'<div style="background:linear-gradient(135deg,#0f2440 0%,#0b1320 100%);'
-                    f'border:1px solid rgba(251,191,36,0.4);border-left:4px solid #fbbf24;'
-                    f'border-radius:12px;padding:12px 14px;margin-bottom:12px;">'
-                    f'<div style="font-size:11px;font-weight:800;color:#fbbf24;">#{idx_t + 1} • {html_lib.escape(str(r_t["Profilo Tattico"]))}</div>'
-                    f'<div style="font-size:16px;font-weight:900;color:#ffffff;margin-top:2px;">{html_lib.escape(str(r_t["Giocatore"]))}</div>'
-                    f'<div style="font-size:11.5px;color:#93c5fd;margin-bottom:6px;">{html_lib.escape(str(r_t["Squadra"]))}</div>'
-                    f'<div style="font-size:20px;font-weight:900;color:#4ade80;">{float(r_t["PPG"]):.1f} PPG '
-                    f'<span style="font-size:12px;color:#cbd5e1;">({float(r_t["% PT Sq."]):.1f}% PT Sq. • High {int(r_t["High"])})</span></div>'
-                    f'</div>',
-                    unsafe_allow_html=True,
-                )
-
-    if filtered.empty:
-        st.info("Nessun giocatore corrisponde ai filtri selezionati.")
-        return
-
-    rows_html = []
-    for rank_idx, (_, r) in enumerate(filtered.iterrows(), start=1):
-        giocatore_esc = html_lib.escape(str(r["Giocatore"]))
-        squadra_esc = html_lib.escape(str(r["Squadra"]))
-        profilo_txt = str(r["Profilo Tattico"])
-        profilo_esc = html_lib.escape(profilo_txt)
-
-        if "3PT" in profilo_txt or "Tiratore" in profilo_txt:
-            badge_bg, badge_fg, badge_bd = "#fef3c7", "#92400e", "#f59e0b"
-        elif "Penetratore" in profilo_txt or "Falli" in profilo_txt:
-            badge_bg, badge_fg, badge_bd = "#dbeafe", "#1e40af", "#3b82f6"
-        elif "Area" in profilo_txt or "Finalizzatore" in profilo_txt:
-            badge_bg, badge_fg, badge_bd = "#dcfce7", "#166534", "#22c55e"
-        else:
-            badge_bg, badge_fg, badge_bd = "#f3e8ff", "#6b21a8", "#a855f7"
-
-        rank_style = (
-            "background:#fef3c7;color:#92400e;font-weight:900;"
-            if rank_idx <= 3
-            else ""
-        )
-        rows_html.append(
-            "<tr>"
-            f'<td class="num-col" style="{rank_style}">{rank_idx}</td>'
-            f'<td class="name-col">{giocatore_esc}</td>'
-            f'<td style="text-align:left;padding-left:10px;color:#334155;font-weight:700;">{squadra_esc}</td>'
-            f"<td>{int(r['G'])}</td>"
-            f"<td>{int(r['PUN'])}</td>"
-            f'<td class="pts-col">{float(r["PPG"]):.1f}</td>'
-            f'<td style="font-weight:800;color:#0f172a;">{float(r["% PT Sq."]):.1f}%</td>'
-            f'<td style="font-weight:800;color:#1d4ed8;">{int(r["High"])}</td>'
-            f"<td>{float(r['3PG']):.2f}</td>"
-            f"<td>{html_lib.escape(str(r['TL%']))}</td>"
-            f"<td>{int(r['G ≥15'])}</td>"
-            f"<td>{float(r['FPG']):.1f}</td>"
-            f'<td><span style="display:inline-block;padding:3px 9px;border-radius:999px;'
-            f"background:{badge_bg};color:{badge_fg};border:1px solid {badge_bd};"
-            f'font-size:10.5px;font-weight:800;white-space:nowrap;">{profilo_esc}</span></td>'
-            "</tr>"
-        )
-
-    table_html = (
-        '<div class="tp-stats-card">'
-        '<div class="tp-stats-head">'
-        f"<span>CLASSIFICA MINACCE & MARCATORI — {html_lib.escape(str(girone))}</span>"
-        f'<span style="color:#fbbf24;font-size:11px;">{len(filtered)} GIOCATORI • ORDINATO PER {html_lib.escape(sel_sort_col.upper())} ({ "CRESC." if asc else "DECR." })</span>'
-        "</div>"
-        '<div class="tp-table-wrap"><table class="tp-stats-table" style="min-width:960px;"><thead><tr>'
-        "<th>#</th>"
-        '<th class="left-col">GIOCATORE</th>'
-        '<th class="left-col">SQUADRA</th>'
-        "<th>G</th>"
-        "<th>PUN</th>"
-        '<th class="hi-col">PPG</th>'
-        '<th class="hi-col">% PT SQ.</th>'
-        "<th>HIGH</th>"
-        "<th>3PG</th>"
-        "<th>TL%</th>"
-        "<th>G ≥15</th>"
-        "<th>FPG</th>"
-        "<th>PROFILO TATTICO</th>"
-        "</tr></thead><tbody>"
-        + "".join(rows_html)
-        + "</tbody></table></div></div>"
-    )
-    st.markdown(table_html, unsafe_allow_html=True)
 
 
-def view_scouting_pre_gara(girone: str, games_df: pd.DataFrame, logo_html_map: dict[str, str]) -> None:
-    st.markdown(TEAM_PAGE_CSS, unsafe_allow_html=True)
-    st.subheader("🎯 Scouting Pre-Gara")
-    squadre_girone = sorted([t["squadra"] for t in GIRONI_TEAMS.get(girone, [])])
-    default_idx = squadre_girone.index(HIGHLIGHT_TEAM) if HIGHLIGHT_TEAM in squadre_girone else 0
+    if st.button("← Torna a Classifiche e Calendario", key="back_from_team"):
 
-    col_sel1, col_sel2 = st.columns([2, 2])
-    my_team = col_sel1.selectbox("Squadra di riferimento", squadre_girone, index=default_idx, key="scout_my_team")
+        st.query_params.clear()
 
-    upcoming = games_df[
-        (games_df["Girone"] == girone)
-        & ((games_df["Casa"] == my_team) | (games_df["Trasferta"] == my_team))
-        & (games_df["Stato"].astype(str).str.strip().str.lower() != "giocata")
-    ].sort_values(by=["Giornata", "ID_Partita"])
+        st.rerun()
 
-    auto_opp = None
-    next_badge = "Nessuna gara futura in calendario"
-    if not upcoming.empty:
-        nxt = upcoming.iloc[0]
-        is_home = str(nxt["Casa"]) == my_team
-        auto_opp = str(nxt["Trasferta"]) if is_home else str(nxt["Casa"])
-        dove_txt = "🏠 IN CASA" if is_home else "✈️ IN TRASFERTA"
-        next_badge = f"Giornata {int(nxt['Giornata'])} • {nxt['Data']} • {dove_txt}"
 
-    opp_candidates = [s for s in squadre_girone if s != my_team]
-    opp_default_idx = opp_candidates.index(auto_opp) if auto_opp in opp_candidates else 0
-    opp_team = col_sel2.selectbox(
-        "Avversaria (rilevata in automatico dal calendario)",
-        opp_candidates,
-        index=opp_default_idx,
-        key="scout_opp_team",
-    )
-
-    def _scout_logo_badge(team_name: str) -> str:
-        src = logo_html_map.get(f"raw_src::{team_name}", "")
-        inner = (
-            f'<img src="{src}" alt="{html_lib.escape(team_name)}" '
-            f'style="max-width:100%;max-height:100%;object-fit:contain;" loading="lazy" />'
-            if src
-            else '<span style="font-size:20px;line-height:1;">🏀</span>'
-        )
-        return (
-            '<div style="width:46px;height:46px;background:#ffffff;border-radius:11px;'
-            "padding:5px;display:flex;align-items:center;justify-content:center;"
-            'box-shadow:0 4px 12px rgba(0,0,0,0.3);flex-shrink:0;">'
-            f"{inner}</div>"
-        )
-
-    my_logo = _scout_logo_badge(my_team)
-    opp_logo = _scout_logo_badge(opp_team)
-    st.markdown(
-        f'<div style="background:linear-gradient(120deg,#0d2240 0%,#132746 100%);'
-        f'border:1px solid rgba(251,191,36,0.45);border-radius:14px;padding:14px 18px;margin-bottom:16px;'
-        f'display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">'
-        f'<div style="display:flex;align-items:center;gap:12px;">{my_logo}'
-        f'<div><div style="font-size:11px;font-weight:800;color:#93c5fd;">NOSTRA SQUADRA</div>'
-        f'<div style="font-size:15.5px;font-weight:900;color:#ffffff;">{html_lib.escape(my_team)}</div></div></div>'
-        f'<div style="text-align:center;">'
-        f'<div style="font-size:11.5px;font-weight:900;color:#fbbf24;text-transform:uppercase;">Prossimo Impegno</div>'
-        f'<div style="font-size:13px;font-weight:800;color:#f8fafc;margin-top:3px;">{html_lib.escape(next_badge)}</div>'
-        f'</div>'
-        f'<div style="display:flex;align-items:center;gap:12px;">'
-        f'<div style="text-align:right;"><div style="font-size:11px;font-weight:800;color:#fca5a5;">AVVERSARIA</div>'
-        f'<div style="font-size:15.5px;font-weight:900;color:#ffffff;">{html_lib.escape(opp_team)}</div></div>'
-        f'{opp_logo}</div>'
-        f'</div>',
-        unsafe_allow_html=True,
-    )
 
     board = compute_standings(girone, games_df)
-    st_my = next((r for r in board if r["squadra"] == my_team), None)
-    st_opp = next((r for r in board if r["squadra"] == opp_team), None)
 
-    if st_my and st_opp:
-        st.markdown("### ⚖️ Confronto Statistico Diretto")
+    pos = next((idx for idx, r in enumerate(board, start=1) if r["squadra"] == team_name), "-")
 
-        def _comp_bar(label: str, v_my: float, v_opp: float, higher_is_better: bool = True) -> str:
-            tot = max(abs(v_my) + abs(v_opp), 0.1)
-            w_my = min(max((abs(v_my) / tot) * 100, 12), 88)
-            w_opp = 100 - w_my
-            my_better = (v_my >= v_opp) if higher_is_better else (v_my <= v_opp)
-            my_col = "#22c55e" if my_better else "#3b82f6"
-            opp_col = "#ef4444" if my_better else "#f59e0b"
-            return (
-                f'<div style="margin-bottom:10px;background:#0f1c30;padding:10px 14px;border-radius:10px;'
-                f'border:1px solid rgba(255,255,255,0.1);">'
-                f'<div style="display:flex;justify-content:space-between;font-weight:800;font-size:13px;margin-bottom:6px;">'
-                f'<span style="color:#93c5fd;">{html_lib.escape(my_team)}: {v_my}</span>'
-                f'<span style="color:#fbbf24;">{html_lib.escape(label)}</span>'
-                f'<span style="color:#fca5a5;">{html_lib.escape(opp_team)}: {v_opp}</span>'
-                f'</div>'
-                f'<div style="display:flex;height:10px;border-radius:6px;overflow:hidden;background:#1e293b;">'
-                f'<div style="width:{w_my:.1f}%;background:{my_col};"></div>'
-                f'<div style="width:{w_opp:.1f}%;background:{opp_col};"></div>'
-                f'</div></div>'
+    team_stat = next(
+
+        (r for r in board if r["squadra"] == team_name),
+
+        {"p": 0, "w": 0, "l": 0, "pf": 0, "ps": 0, "diff": 0, "pts": 0, "streak_events": []},
+
+    )
+
+
+
+    logo_tag = logo_html_map.get(f"hero::{team_name}", '<div class="md-logo-box">🏀</div>')
+
+    diff_val = team_stat["diff"]
+
+    diff_str = f"+{diff_val}" if diff_val > 0 else str(diff_val)
+
+    ppg = round(team_stat["pf"] / team_stat["p"], 1) if team_stat["p"] > 0 else 0.0
+
+    papg = round(team_stat["ps"] / team_stat["p"], 1) if team_stat["p"] > 0 else 0.0
+
+    streak_html = _render_streak_html(team_stat.get("streak_events", []))
+
+
+
+    t_pal = _get_team_palette(team_name)
+
+    hero_style = (
+
+        f'style="background:linear-gradient(135deg, {_rgba(t_pal["rich_main"], 0.56)} 0%, #09182b 75%);'
+
+        f'border-left:5px solid {t_pal["visible_accent"]};"'
+
+    )
+
+    st.markdown(
+
+        f'<div class="team-hero" {hero_style}>'
+
+        f'{logo_tag}'
+
+        f'<div>'
+
+        f'<div class="team-hero-title">{team_name}</div>'
+
+        f'<div class="team-hero-sub">{girone} • {pos}° in Classifica • {team_stat["pts"]} Punti</div>'
+
+        f'<div style="margin-top:6px;display:inline-block;font-size:11px;font-weight:800;color:{t_pal["visible_accent"]};background:rgba(15,23,42,0.75);padding:3px 10px;border-radius:999px;border:1px solid {_rgba(t_pal["visible_accent"], 0.45)};">🎨 Colori sociali: {t_pal["label"]}</div>'
+
+        f'<div style="margin-top:8px;">{streak_html}</div>'
+
+        f'</div></div>',
+
+        unsafe_allow_html=True,
+
+    )
+
+
+
+    st.markdown(
+
+        f'<div class="kpi-grid">'
+
+        f'<div class="kpi-card"><div class="kpi-label">Giocate</div><div class="kpi-val">{team_stat["p"]}</div></div>'
+
+        f'<div class="kpi-card"><div class="kpi-label">Vittorie</div><div class="kpi-val">{team_stat["w"]}</div></div>'
+
+        f'<div class="kpi-card"><div class="kpi-label">Sconfitte</div><div class="kpi-val">{team_stat["l"]}</div></div>'
+
+        f'<div class="kpi-card"><div class="kpi-label">Punti Fatti</div><div class="kpi-val">{team_stat["pf"]}</div></div>'
+
+        f'<div class="kpi-card"><div class="kpi-label">Punti Subiti</div><div class="kpi-val">{team_stat["ps"]}</div></div>'
+
+        f'<div class="kpi-card"><div class="kpi-label">Diff. Canestri</div><div class="kpi-val">{diff_str}</div></div>'
+
+        f'<div class="kpi-card"><div class="kpi-label">Media Fatti</div><div class="kpi-val">{ppg}</div></div>'
+
+        f'<div class="kpi-card"><div class="kpi-label">Media Subiti</div><div class="kpi-val">{papg}</div></div>'
+
+        f'</div>',
+
+        unsafe_allow_html=True,
+
+    )
+
+
+
+    player_stats, games_with_box = _compute_team_season_player_stats(team_name, girone, games_df)
+
+    selected_player_key = str(st.query_params.get("player", "") or "").strip().lower()
+
+    if selected_player_key:
+
+        found_p = next((p for p in player_stats if p["key"] == selected_player_key), None)
+
+        if found_p is not None:
+
+            _render_player_profile_modal(
+
+                player_rec=found_p,
+
+                team_name=team_name,
+
+                girone=girone,
+
+                logo_html_map=logo_html_map,
+
             )
 
-        diff_my = round(st_my["diff"] / max(st_my["p"], 1), 1)
-        diff_opp = round(st_opp["diff"] / max(st_opp["p"], 1), 1)
-        bars_html = (
-            _comp_bar("Attacco Medio (PF/G)", st_my["pf_g"], st_opp["pf_g"], True)
-            + _comp_bar("Difesa Media (PS/G)", st_my["ps_g"], st_opp["ps_g"], False)
-            + _comp_bar("Differenza Canestri Media", diff_my, diff_opp, True)
-        )
-        st.markdown(bars_html, unsafe_allow_html=True)
 
-        c_r1, c_r2 = st.columns(2)
-        with c_r1:
-            st.markdown(
-                f'<div style="background:#0b1320;border:1px solid rgba(147,197,253,0.3);border-radius:10px;padding:10px 14px;">'
-                f'<div style="font-weight:900;color:#93c5fd;margin-bottom:4px;">{html_lib.escape(my_team)}</div>'
-                f'<div style="font-size:13px;color:#e2e8f0;">Record: <b>{st_my["w"]}-{st_my["l"]}</b> • '
-                f'Casa: <b>{st_my["home_w"]}-{st_my["home_l"]}</b> • '
-                f'Trasferta: <b>{st_my["away_w"]}-{st_my["away_l"]}</b> • '
-                f'vs ≥50%: <b>{st_my["vs50_w"]}-{st_my["vs50_l"]}</b></div></div>',
-                unsafe_allow_html=True,
-            )
-        with c_r2:
-            st.markdown(
-                f'<div style="background:#0b1320;border:1px solid rgba(252,165,165,0.3);border-radius:10px;padding:10px 14px;">'
-                f'<div style="font-weight:900;color:#fca5a5;margin-bottom:4px;">{html_lib.escape(opp_team)}</div>'
-                f'<div style="font-size:13px;color:#e2e8f0;">Record: <b>{st_opp["w"]}-{st_opp["l"]}</b> • '
-                f'Casa: <b>{st_opp["home_w"]}-{st_opp["home_l"]}</b> • '
-                f'Trasferta: <b>{st_opp["away_w"]}-{st_opp["away_l"]}</b> • '
-                f'vs ≥50%: <b>{st_opp["vs50_w"]}-{st_opp["vs50_l"]}</b></div></div>',
-                unsafe_allow_html=True,
-            )
 
-    st.markdown(f"### ⏱️ Analisi Quarti & Trend Gara per Gara — {opp_team}")
-    q_map = _compute_quarter_differentials_by_team(girone, games_df)
-    opp_q = q_map.get(opp_team, {})
-    if opp_q.get("games_with_q", 0) > 0:
-        avgs = opp_q["q_diff_avg"]
-        best_q = int(pd.Series(avgs).idxmax()) + 1
-        worst_q = int(pd.Series(avgs).idxmin()) + 1
-        q_cols = st.columns(4)
-        for i in range(4):
-            q_num = i + 1
-            badge_q = ""
-            if q_num == best_q:
-                badge_q = " 🟢 PIÙ FORTE"
-            elif q_num == worst_q:
-                badge_q = " 🔴 PIÙ DEBOLE"
-            q_cols[i].metric(
-                f"Quarto {q_num}{badge_q}",
-                f"{avgs[i]:+.1f} diff/g",
-                f"PF {opp_q['q_pf'][i]} / PS {opp_q['q_ps'][i]}",
-            )
-    else:
-        st.caption("Nessun parziale per quarto ancora registrato nei tabellini di questa avversaria.")
+    tab_cal, tab_roster = st.tabs(["📅 Calendario Completo", "🏀 Roster & Statistiche Stagionali"])
 
-    opp_played = games_df[
-        ((games_df["Casa"] == opp_team) | (games_df["Trasferta"] == opp_team))
-        & (games_df["Stato"].astype(str).str.strip().str.lower() == "giocata")
-    ].sort_values(by=["Giornata", "ID_Partita"])
 
-    if not opp_played.empty:
-        trend_rows_html = []
-        for g in opp_played.itertuples(index=False):
-            is_h = str(g.Casa) == opp_team
-            pf = int(g.Punti_Casa) if is_h else int(g.Punti_Trasferta)
-            ps = int(g.Punti_Trasferta) if is_h else int(g.Punti_Casa)
-            avv = str(g.Trasferta) if is_h else str(g.Casa)
-            det = _get_match_detail(str(g.ID_Partita))
-            qh = det.get("quarters_home", [0, 0, 0, 0])
-            qa = det.get("quarters_away", [0, 0, 0, 0])
-            if sum(qh) > 0 or sum(qa) > 0:
-                my_q = qh if is_h else qa
-                opp_q_g = qa if is_h else qh
-                parz_str = " | ".join(f"{my_q[idx]}-{opp_q_g[idx]}" for idx in range(4))
+
+    with tab_cal:
+
+        st.caption("Clicca su qualsiasi partita per aprire la schermata con tabellini, parziali e quintetto.")
+
+        team_games = games_df[
+
+            (games_df["Girone"] == girone)
+
+            & ((games_df["Casa"] == team_name) | (games_df["Trasferta"] == team_name))
+
+        ].sort_values(by=["Giornata", "ID_Partita"])
+
+
+
+        parts = [
+
+            '<div class="cal-board">',
+
+            '<div class="cal-board-head">'
+
+            '<div class="c-left">GIORNATA</div>'
+
+            '<div class="c-right">SQUADRA DI CASA</div>'
+
+            '<div class="c-center">RISULTATO</div>'
+
+            '<div class="c-left">SQUADRA OSPITE</div>'
+
+            "</div>",
+
+        ]
+
+        for g in team_games.itertuples(index=False):
+
+            gid_encoded = quote(str(g.ID_Partita), safe="")
+
+            is_played = str(g.Stato).strip().lower() == "giocata"
+
+            tokens = str(g.Data).strip().split()
+
+            if len(tokens) >= 3:
+
+                date_str, time_str = tokens[1], tokens[2]
+
+            elif len(tokens) == 2:
+
+                date_str, time_str = tokens[0], tokens[1]
+
             else:
-                parz_str = "—"
 
-            diff_val = pf - ps
-            is_win = pf > ps
-            esito_badge = (
-                '<span style="display:inline-block;padding:2px 8px;border-radius:999px;'
-                'background:#dcfce7;color:#166534;border:1px solid #22c55e;font-weight:900;font-size:10.5px;">W</span>'
-                if is_win
-                else '<span style="display:inline-block;padding:2px 8px;border-radius:999px;'
-                'background:#fee2e2;color:#991b1b;border:1px solid #ef4444;font-weight:900;font-size:10.5px;">L</span>'
+                date_str, time_str = str(g.Data).strip(), ""
+
+
+
+            home_name = str(g.Casa)
+
+            away_name = str(g.Trasferta)
+
+            home_pts = int(g.Punti_Casa)
+
+            away_pts = int(g.Punti_Trasferta)
+
+
+
+            h_src = logo_html_map.get(f"raw_src::{home_name}", "")
+
+            a_src = logo_html_map.get(f"raw_src::{away_name}", "")
+
+            h_logo = f'<img class="cal-side-logo" src="{h_src}" alt="" loading="lazy" />' if h_src else "🏀"
+
+            a_logo = f'<img class="cal-side-logo" src="{a_src}" alt="" loading="lazy" />' if a_src else "🏀"
+
+
+
+            r_num = int(g.Giornata)
+
+            phase_lbl = "RITORNO" if r_num > 11 else "ANDATA"
+
+            disp_r = r_num - 11 if r_num > 11 else r_num
+
+
+
+            if is_played:
+
+                h_win = home_pts > away_pts
+
+                a_win = away_pts > home_pts
+
+                h_cls = "cal-pts-win" if h_win else "cal-pts-lose"
+
+                a_cls = "cal-pts-win" if a_win else "cal-pts-lose"
+
+                score_html = (
+
+                    f'<div class="cal-score-line">'
+
+                    f'<span class="{h_cls}">{home_pts}</span>'
+
+                    f'<span style="color:#64748b;margin:0 3px;">-</span>'
+
+                    f'<span class="{a_cls}">{away_pts}</span>'
+
+                    f"</div>"
+
+                    f'<div class="cal-state-sub done">CONCLUSA</div>'
+
+                )
+
+            else:
+
+                h_win = False
+
+                a_win = False
+
+                sub_txt = time_str if time_str else "DA GIOCARE"
+
+                score_html = (
+
+                    '<div class="cal-score-line cal-pts-vs">VS</div>'
+
+                    f'<div class="cal-state-sub todo">{sub_txt}</div>'
+
+                )
+
+
+
+            parts.append(
+
+                f'<a class="cal-row-link" href="?match={gid_encoded}" target="_self">'
+
+                '<div class="cal-row-card">'
+
+                '<div class="cal-round-col">'
+
+                f'<div class="cal-round-league">{girone}</div>'
+
+                f'<div class="cal-round-num">{disp_r}ª Giornata • {phase_lbl}</div>'
+
+                f'<div class="cal-round-date">{date_str}</div>'
+
+                "</div>"
+
+                '<div class="cal-side-home">'
+
+                f'<span class="cal-side-name {"win" if h_win else ""}">{home_name}</span>'
+
+                f"{h_logo}"
+
+                "</div>"
+
+                f'<div class="cal-score-box">{score_html}</div>'
+
+                '<div class="cal-side-away">'
+
+                f"{a_logo}"
+
+                f'<span class="cal-side-name {"win" if a_win else ""}">{away_name}</span>'
+
+                "</div>"
+
+                "</div>"
+
+                "</a>"
+
             )
-            sede_txt = "🏠 Casa" if is_h else "✈️ Trasferta"
-            diff_color = "#15803d" if diff_val > 0 else ("#b91c1c" if diff_val < 0 else "#475569")
 
-            trend_rows_html.append(
-                "<tr>"
-                f'<td class="num-col">G{int(g.Giornata)}</td>'
-                f'<td style="font-weight:700;color:#334155;">{sede_txt}</td>'
-                f'<td class="name-col">{html_lib.escape(avv)}</td>'
-                f"<td>{esito_badge}</td>"
-                f'<td style="font-weight:800;color:#0f172a;">{pf}</td>'
-                f'<td style="font-weight:700;color:#475569;">{ps}</td>'
-                f'<td style="font-weight:900;color:{diff_color};">{diff_val:+d}</td>'
-                f'<td style="font-family:monospace;font-size:11.5px;font-weight:700;color:#0f172a;">{html_lib.escape(parz_str)}</td>'
-                "</tr>"
-            )
+        parts.append("</div>")
 
-        trend_table_html = (
-            '<div class="tp-stats-card" style="margin-top:10px;">'
-            '<div class="tp-stats-head">'
-            f"<span>TREND GARA PER GARA & PARZIALI QUARTI — {html_lib.escape(str(opp_team))}</span>"
-            f'<span style="color:#fbbf24;font-size:11px;">{len(opp_played)} GARE GIOCATE</span>'
-            "</div>"
-            '<div class="tp-table-wrap"><table class="tp-stats-table" style="min-width:780px;"><thead><tr>'
-            "<th>GIORN.</th>"
-            "<th>SEDE</th>"
-            '<th class="left-col">AVVERSARIA</th>'
-            "<th>ESITO</th>"
-            '<th class="hi-col">PF</th>'
-            "<th>PS</th>"
-            "<th>DIFF</th>"
-            "<th>PARZIALI QUARTI (Q1 | Q2 | Q3 | Q4)</th>"
-            "</tr></thead><tbody>"
-            + "".join(trend_rows_html)
-            + "</tbody></table></div></div>"
+        st.markdown("".join(parts), unsafe_allow_html=True)
+
+
+
+    with tab_roster:
+
+        _render_team_season_roster_table(
+
+            team_name=team_name,
+
+            girone=girone,
+
+            player_stats=player_stats,
+
+            games_with_box=games_with_box,
+
         )
-        st.markdown(trend_table_html, unsafe_allow_html=True)
-
-    st.markdown(f"### 🔥 Principali Minacce Offensive (Top 3) — {opp_team}")
-    opp_players_df = compute_team_player_stats(opp_team, games_df)
-    if opp_players_df.empty:
-        st.info("Nessun tabellino giocatori ancora inserito per l'avversaria.")
-    else:
-        top3 = opp_players_df.sort_values(by=["PPG", "PUN"], ascending=[False, False]).head(3)
-        cols_t3 = st.columns(len(top3))
-        for idx_c, (_, prow) in enumerate(top3.iterrows()):
-            with cols_t3[idx_c]:
-                num_d = _format_jersey_display(prow.get("NUM"), "—")
-                tl_pct = _fmt_pct(int(prow["TL_R"]), int(prow["TL_T"]))
-                g_cnt = max(int(prow["G"]), 1)
-                t3_pg = round(int(prow["3PT_R"]) / g_cnt, 2)
-                f_pg = round(int(prow["F_C"]) / g_cnt, 1)
-                prof_lbl = _classify_tactical_profile(
-                    ppg=float(prow["PPG"]),
-                    t3_pg=t3_pg,
-                    f_pg=f_pg,
-                    t2_r=int(prow["2PT_R"]),
-                    t3_r=int(prow["3PT_R"]),
-                    tl_t=int(prow["TL_T"]),
-                    games=g_cnt,
-                )
-                st.markdown(
-                    f'<div style="background:linear-gradient(180deg,#132746 0%,#0b1320 100%);'
-                    f'border:1px solid rgba(251,191,36,0.48);border-top:4px solid #fbbf24;'
-                    f'border-radius:12px;padding:14px;">'
-                    f'<div style="display:flex;justify-content:space-between;align-items:center;">'
-                    f'<span style="font-size:11px;font-weight:800;color:#fbbf24;">MINACCIA #{idx_c + 1} • {num_d}</span>'
-                    f'<span style="font-size:10.5px;font-weight:800;background:rgba(251,191,36,0.16);color:#fde68a;padding:2px 7px;border-radius:6px;">{html_lib.escape(prof_lbl)}</span>'
-                    f'</div>'
-                    f'<div style="font-size:17px;font-weight:900;color:#ffffff;margin:6px 0 4px 0;">{html_lib.escape(str(prow["Giocatore"]))}</div>'
-                    f'<div style="font-size:22px;font-weight:900;color:#4ade80;">{float(prow["PPG"]):.1f} '
-                    f'<span style="font-size:12px;color:#cbd5e1;">PPG ({int(prow["PUN"])} PT in {int(prow["G"])}G)</span></div>'
-                    f'<div style="font-size:12px;color:#94a3b8;margin-top:8px;line-height:1.5;">'
-                    f'2PT: <b style="color:#f8fafc;">{int(prow["2PT_R"])}/{int(prow["2PT_T"])}</b> • '
-                    f'3PT: <b style="color:#f8fafc;">{int(prow["3PT_R"])}/{int(prow["3PT_T"])}</b> ({t3_pg}/g)<br>'
-                    f'TL: <b style="color:#f8fafc;">{int(prow["TL_R"])}/{int(prow["TL_T"])}</b> ({tl_pct}%) • '
-                    f'Falli: <b style="color:#f8fafc;">{int(prow["F_C"])}</b> ({f_pg}/g)'
-                    f'</div>'
-                    f'</div>',
-                    unsafe_allow_html=True,
-                )
-
-        st.markdown(f"#### 📋 Tabellino Completo Giocatori — {opp_team}")
-        st.markdown(_render_team_player_stats_html(opp_team, opp_players_df), unsafe_allow_html=True)
 
 
-# ==========================================
-# INIZIALIZZAZIONE STATO
-# ==========================================
-if "match_details_store" not in st.session_state:
-    st.session_state["match_details_store"] = load_match_details_store()
-
-if "games_df" not in st.session_state:
-    st.session_state["games_df"] = load_full_games_df()
-
-if "selected_match_id" not in st.session_state:
-    st.session_state["selected_match_id"] = None
-
-if "selected_team_name" not in st.session_state:
-    st.session_state["selected_team_name"] = None
-
-if "selected_player_name" not in st.session_state:
-    st.session_state["selected_player_name"] = None
-
-if "staff_authenticated" not in st.session_state:
-    st.session_state["staff_authenticated"] = False
-
-query_match = st.query_params.get("match")
-if query_match:
-    st.session_state["selected_match_id"] = str(query_match)
-    st.session_state["selected_team_name"] = None
-    st.session_state["selected_player_name"] = None
-else:
-    query_team = st.query_params.get("team")
-    if query_team:
-        st.session_state["selected_team_name"] = str(query_team)
-        st.session_state["selected_match_id"] = None
-        query_player = st.query_params.get("player")
-        st.session_state["selected_player_name"] = str(query_player) if query_player else None
-
-st.markdown(GLOBAL_UI_CSS, unsafe_allow_html=True)
-gh_cfg = _get_github_config()
-logo_html_map = build_team_logo_html_map(GITHUB_RAW_BASE)
 
 
-# ==========================================
-# SIDEBAR
-# ==========================================
-with st.sidebar:
-    st.title("🏀 DR2 Puglia")
-    st.caption("Divisione Regionale 2 — Puglia")
-    st.markdown("---")
-    sezione = st.radio(
-        "Sezione",
-        ("Classifiche", "🎯 Scouting Pre-Gara", "🔥 Top Marcatori & Minacce", "Calendario", "Squadre"),
-        index=0,
+
+def _compute_girone_player_leaders(girone: str, games_df: pd.DataFrame) -> pd.DataFrame:
+
+    """Calcola la classifica marcatori e statistiche giocatori dell'intero girone."""
+
+    rows: list[dict] = []
+
+    for item in GIRONI_TEAMS.get(girone, []):
+
+        sq = item["squadra"]
+
+        p_stats, _ = _compute_team_season_player_stats(sq, girone, games_df)
+
+        for p in p_stats:
+
+            if p["gp"] <= 0:
+
+                continue
+
+            rows.append(
+
+                {
+
+                    "Giocatore": p["name"],
+
+                    "Squadra": sq,
+
+                    "PG": p["gp"],
+
+                    "PTS Tot": p["pts"],
+
+                    "PTS/G": p["ppg"],
+
+                    "High": p["max_pts"],
+
+                    "3PT Real.": p["t3_r"],
+
+                    "TL Real.": p["tl_r"],
+
+                    "TL %": f"{_fmt_pct(p['tl_r'], p['tl_t'])}%" if p["tl_t"] > 0 else "—",
+
+                }
+
+            )
+
+    if not rows:
+
+        return pd.DataFrame()
+
+    df = pd.DataFrame(rows).sort_values(by=["PTS Tot", "PTS/G", "High"], ascending=[False, False, False]).reset_index(drop=True)
+
+    df.insert(0, "Pos", df.index + 1)
+
+    return df
+
+
+
+
+
+def render_players_leaderboard(girone: str, games_df: pd.DataFrame) -> None:
+
+    st.subheader(f"Classifica Marcatori & Statistiche Giocatori — {girone}")
+
+    st.caption("Dati aggregati automaticamente da tutti i tabellini caricati nel girone.")
+
+
+
+    df_leaders = _compute_girone_player_leaders(girone, games_df)
+
+    if df_leaders.empty:
+
+        st.info("Nessun tabellino giocatori ancora registrato per questo girone.")
+
+        return
+
+
+
+    c1, c2 = st.columns([1.2, 1.8])
+
+    sort_mode = c1.selectbox(
+
+        "Ordina classifica per",
+
+        ["Punti Totali (PTS Tot)", "Media Punti (PTS/G)", "Massimo in una Gara (High)", "Triple Realizzate (3PT Real.)"],
+
+        key=f"ldr_sort_{girone}",
+
     )
-    girone_selezionato = st.selectbox(
-        "Girone",
-        ("Girone A", "Girone B", "Girone C"),
-        index=0,
-    )
-    st.markdown("---")
 
-    if st.session_state["staff_authenticated"]:
-        st.success("Modalità Staff attiva")
-        if st.button("Esci da Staff", use_container_width=True):
-            st.session_state["staff_authenticated"] = False
-            st.rerun()
+    team_opts = ["Tutte le squadre"] + sorted(df_leaders["Squadra"].unique().tolist())
+
+    sel_sq = c2.selectbox("Filtra per squadra", team_opts, key=f"ldr_team_{girone}")
+
+
+
+    view_df = df_leaders.copy()
+
+    if sel_sq != "Tutte le squadre":
+
+        view_df = view_df[view_df["Squadra"] == sel_sq].copy()
+
+
+
+    if sort_mode.startswith("Media"):
+
+        view_df = view_df.sort_values(by=["PTS/G", "PTS Tot"], ascending=[False, False])
+
+    elif sort_mode.startswith("Massimo"):
+
+        view_df = view_df.sort_values(by=["High", "PTS Tot"], ascending=[False, False])
+
+    elif sort_mode.startswith("Triple"):
+
+        view_df = view_df.sort_values(by=["3PT Real.", "PTS Tot"], ascending=[False, False])
+
     else:
-        with st.expander("Area Staff (opzionale)", expanded=False):
-            pwd = st.text_input("Password staff", type="password", key="staff_pwd_input")
-            if st.button("Attiva Staff", use_container_width=True):
+
+        view_df = view_df.sort_values(by=["PTS Tot", "PTS/G"], ascending=[False, False])
+
+
+
+    view_df = view_df.drop(columns=["Pos"]).reset_index(drop=True)
+
+    view_df.insert(0, "#", view_df.index + 1)
+
+
+
+    top3 = view_df.head(3)
+
+    if not top3.empty:
+
+        pcols = st.columns(len(top3))
+
+        medals = ["🥇 Top Scorer", "🥈 2° Posto", "🥉 3° Posto"]
+
+        for idx, (_, prow) in enumerate(top3.iterrows()):
+
+            pcols[idx].metric(
+
+                f"{medals[idx]} — {prow['Giocatore']}",
+
+                f"{prow['PTS Tot']} PT ({prow['PTS/G']:.1f}/G)",
+
+                str(prow["Squadra"]),
+
+            )
+
+
+
+    st.dataframe(view_df, use_container_width=True, hide_index=True)
+
+
+
+
+
+def render_calendar(girone: str, games_df: pd.DataFrame, logo_html_map: dict[str, str]) -> None:
+
+    st.markdown(CALENDAR_CSS, unsafe_allow_html=True)
+
+    st.subheader(f"Calendario & Risultati — {girone}")
+
+
+
+    df_girone = games_df[games_df["Girone"] == girone].copy()
+
+    teams_list = sorted(set(df_girone["Casa"]).union(set(df_girone["Trasferta"])))
+
+
+
+    st.markdown(
+
+        '<div class="cal-filter-banner">'
+
+        '<div>'
+
+        '<div class="cal-filter-title">🔎 Filtra Giornate &amp; Squadre</div>'
+
+        '<div class="cal-filter-sub">Seleziona una o più giornate oppure filtra una o più squadre. Lascia vuoto per mostrare tutto.</div>'
+
+        '</div>'
+
+        '<div class="cal-filter-pills">'
+
+        '<span class="cal-pill">Andata: <span>G1 - G11</span></span>'
+
+        '<span class="cal-pill">Ritorno: <span>G12 - G22</span></span>'
+
+        '</div>'
+
+        '</div>',
+
+        unsafe_allow_html=True,
+
+    )
+
+
+
+    f1, f2 = st.columns([1, 1])
+
+
+
+    round_options = list(range(1, 23))
+
+    round_labels = {
+
+        r: f"{r}ª Giornata (Andata)" if r <= 11 else f"{r - 11}ª Ritorno (G{r})"
+
+        for r in round_options
+
+    }
+
+    selected_rounds = f1.multiselect(
+
+        "Giornate",
+
+        options=round_options,
+
+        default=[],
+
+        format_func=lambda r: round_labels[r],
+
+        placeholder="Tutte le 22 giornate (seleziona una o più giornate)...",
+
+        key=f"cal_rounds_{girone}",
+
+    )
+
+
+
+    selected_teams = f2.multiselect(
+
+        "Squadre",
+
+        options=teams_list,
+
+        default=[],
+
+        placeholder="Tutte le squadre (seleziona una o più squadre)...",
+
+        key=f"cal_teams_{girone}",
+
+    )
+
+
+
+    filtered = df_girone.copy()
+
+    if selected_rounds:
+
+        filtered = filtered[filtered["Giornata"].isin(selected_rounds)]
+
+    if selected_teams:
+
+        team_set = set(selected_teams)
+
+        filtered = filtered[
+
+            filtered["Casa"].isin(team_set) | filtered["Trasferta"].isin(team_set)
+
+        ]
+
+
+
+    rounds_to_show = sorted(selected_rounds) if selected_rounds else list(range(1, 23))
+
+    andata_rounds = [r for r in rounds_to_show if r <= 11]
+
+    ritorno_rounds = [r for r in rounds_to_show if r >= 12]
+
+
+
+    st.caption(f"Partite visualizzate: **{len(filtered)}** • Clicca su qualsiasi riga partita per aprire la scheda con parziali e tabellini.")
+
+
+
+    if andata_rounds:
+
+        st.markdown('<div class="cal-phase-hdr">🏀 Girone di Andata (Giornate 1 - 11)</div>', unsafe_allow_html=True)
+
+        for r_num in andata_rounds:
+
+            rg = filtered[filtered["Giornata"] == r_num].sort_values(by=["ID_Partita"])
+
+            if rg.empty and selected_teams:
+
+                continue
+
+            st.markdown(
+
+                build_round_html(r_num, rg, logo_html_map, is_ritorno=False, girone_label=girone),
+
+                unsafe_allow_html=True,
+
+            )
+
+
+
+    if ritorno_rounds:
+
+        st.markdown('<div class="cal-phase-hdr">🔄 Girone di Ritorno (Giornate 1 - 11)</div>', unsafe_allow_html=True)
+
+        for r_num in ritorno_rounds:
+
+            rg = filtered[filtered["Giornata"] == r_num].sort_values(by=["ID_Partita"])
+
+            if rg.empty and selected_teams:
+
+                continue
+
+            st.markdown(
+
+                build_round_html(r_num, rg, logo_html_map, is_ritorno=True, girone_label=girone),
+
+                unsafe_allow_html=True,
+
+            )
+
+
+
+
+
+def render_admin_editor(girone: str, games_df: pd.DataFrame) -> None:
+
+    st.subheader(f"Area Staff — Aggiornamento Risultati ({girone})")
+
+    st.info("Qualsiasi modifica salvata qui viene scritta su GitHub ed è immediatamente visibile a tutti gli utenti che aprono il link.")
+
+
+
+    df_girone = games_df[games_df["Girone"] == girone].copy().sort_values(by=["Giornata", "ID_Partita"])
+
+    round_choice = st.selectbox(
+
+        "Seleziona Giornata da modificare",
+
+        list(range(1, 23)),
+
+        index=3,
+
+        format_func=lambda r: f"Giornata {r} ({'Andata' if r <= 11 else 'Ritorno'})",
+
+        key=f"adm_round_{girone}",
+
+    )
+
+
+
+    round_games = df_girone[df_girone["Giornata"] == round_choice]
+
+    for g in round_games.itertuples(index=False):
+
+        gid = str(g.ID_Partita)
+
+        with st.container(border=True):
+
+            c1, c2, c3, c4 = st.columns([2.2, 1.3, 1.3, 1.1])
+
+            c1.markdown(f"**{g.Casa}** vs **{g.Trasferta}**")
+
+            new_date = c1.text_input("Data/Ora", value=str(g.Data), key=f"d_{gid}", label_visibility="collapsed")
+
+            p_casa = c2.number_input(
+
+                f"Casa ({g.Casa[:14]})",
+
+                min_value=0,
+
+                max_value=250,
+
+                value=int(g.Punti_Casa),
+
+                step=1,
+
+                key=f"hc_{gid}",
+
+            )
+
+            p_trasf = c3.number_input(
+
+                f"Ospite ({g.Trasferta[:14]})",
+
+                min_value=0,
+
+                max_value=250,
+
+                value=int(g.Punti_Trasferta),
+
+                step=1,
+
+                key=f"ac_{gid}",
+
+            )
+
+            stato_idx = 0 if str(g.Stato).strip().lower() == "giocata" else 1
+
+            new_stato = c4.selectbox("Stato", ["Giocata", "Da giocare"], index=stato_idx, key=f"st_{gid}")
+
+
+
+            if st.button("Salva su GitHub", key=f"btn_{gid}", use_container_width=True):
+
+                final_casa = int(p_casa) if new_stato == "Giocata" else 0
+
+                final_trasf = int(p_trasf) if new_stato == "Giocata" else 0
+
+                ok, msg, updated_overrides = save_game_override_persistent(
+
+                    gid,
+
+                    {
+
+                        "Data": new_date.strip(),
+
+                        "Stato": new_stato,
+
+                        "Punti_Casa": final_casa,
+
+                        "Punti_Trasferta": final_trasf,
+
+                    },
+
+                )
+
+                st.session_state["game_overrides"] = updated_overrides
+
+                if ok:
+
+                    st.success(f"{msg} ({g.Casa} {final_casa}-{final_trasf} {g.Trasferta})")
+
+                else:
+
+                    st.warning(msg)
+
+                st.rerun()
+
+
+
+
+
+def main() -> None:
+
+    st.markdown(GLOBAL_UI_CSS, unsafe_allow_html=True)
+
+
+
+    if "is_admin" not in st.session_state:
+
+        st.session_state["is_admin"] = False
+
+    if "match_details_store" not in st.session_state:
+
+        st.session_state["match_details_store"] = load_match_details_store()
+
+
+
+    games_df = load_full_games_df()
+
+    logo_html_map = build_team_logo_html_map(GITHUB_RAW_BASE)
+
+
+
+    with st.sidebar:
+
+        st.markdown("### 🏀 DR2 Puglia")
+
+        st.caption(f"Squadra in evidenza: **{OUR_TEAM}**")
+
+        st.divider()
+
+        st.markdown("#### 🔐 Area Staff")
+
+        if not st.session_state["is_admin"]:
+
+            pwd = st.text_input("Password Staff", type="password", placeholder="Inserisci password...")
+
+            if st.button("Accedi", use_container_width=True):
+
                 if pwd == STAFF_PASSWORD:
-                    st.session_state["staff_authenticated"] = True
+
+                    st.session_state["is_admin"] = True
+
                     st.rerun()
+
                 else:
-                    st.error("Password non valida.")
 
-    if not gh_cfg["token"]:
-        st.caption("Nota: senza `GITHUB_TOKEN` le modifiche restano nella sessione corrente.")
+                    st.error("Password non corretta.")
 
-
-# ==========================================
-# CORPO PRINCIPALE
-# ==========================================
-st.markdown(
-    '<div class="topbar-card">'
-    '<div class="topbar-title">🏀 DR2 Puglia — Classifiche e Calendario</div>'
-    '<div class="topbar-sub">Stagione 2026/27 • Gironi A, B e C • Risultati, Streak e Dettagli Gare</div>'
-    "</div>",
-    unsafe_allow_html=True,
-)
-
-games_df = st.session_state["games_df"]
-
-if st.session_state["selected_match_id"]:
-    render_match_detail(st.session_state["selected_match_id"], games_df, logo_html_map)
-elif st.session_state["selected_team_name"]:
-    render_team_page(st.session_state["selected_team_name"], games_df, logo_html_map)
-else:
-    if sezione == "Classifiche":
-        standings_rows = compute_standings(girone_selezionato, games_df)
-        thirds_board = compute_thirds_standings(games_df)
-        render_standings(girone_selezionato, standings_rows, thirds_board, logo_html_map, games_df=games_df)
-    elif sezione == "🎯 Scouting Pre-Gara":
-        view_scouting_pre_gara(girone_selezionato, games_df, logo_html_map)
-    elif sezione == "🔥 Top Marcatori & Minacce":
-        view_giocatori_pericolosi(girone_selezionato, games_df)
-    elif sezione == "Squadre":
-        render_teams_grid(girone_selezionato, games_df, logo_html_map)
-    else:
-        st.markdown(CALENDAR_CSS, unsafe_allow_html=True)
-        st.subheader(f"Calendario — {girone_selezionato}")
-        df_g = games_df[games_df["Girone"] == girone_selezionato].copy()
-        giornate_disponibili = sorted(df_g["Giornata"].dropna().astype(int).unique().tolist())
-        squadre_girone = sorted([t["squadra"] for t in GIRONI_TEAMS.get(girone_selezionato, [])])
-
-        def _format_round_option(r_num: int) -> str:
-            if r_num > 11:
-                return f"{r_num - 11}ª Ritorno (G{r_num})"
-            return f"{r_num}ª Andata (G{r_num})"
-
-        st.markdown(
-            '<div class="cal-filter-banner">'
-            '<div>'
-            '<div class="cal-filter-title">🎛️ Filtri Avanzati Calendario</div>'
-            '<div class="cal-filter-sub">Combina più giornate e più squadre per confrontare incroci, scontri diretti e prossimi impegni.</div>'
-            '</div>'
-            '<div class="cal-filter-pills">'
-            f'<div class="cal-pill">Girone: <span>{girone_selezionato}</span></div>'
-            f'<div class="cal-pill">Giornate: <span>{len(giornate_disponibili)}</span></div>'
-            f'<div class="cal-pill">Club: <span>{len(squadre_girone)}</span></div>'
-            '</div>'
-            '</div>',
-            unsafe_allow_html=True,
-        )
-
-        col_f1, col_f2 = st.columns(2, gap="medium")
-        giornate_scelte = col_f1.multiselect(
-            "📅 Giornate (selezione multipla)",
-            options=giornate_disponibili,
-            default=giornate_disponibili,
-            format_func=_format_round_option,
-            placeholder="Tutte le giornate (clicca per filtrare)...",
-        )
-        squadre_scelte = col_f2.multiselect(
-            "🏀 Squadre (selezione multipla — vuoto = tutte)",
-            options=squadre_girone,
-            default=[],
-            placeholder="Tutte le squadre (clicca per selezionare una o più)...",
-        )
-
-        if not giornate_scelte:
-            st.info("Seleziona almeno una giornata nel filtro qui sopra per visualizzare le partite.")
         else:
-            giornate_ordinate = sorted({int(g) for g in giornate_scelte})
-            andata_rounds = [r for r in giornate_ordinate if r <= 11]
-            ritorno_rounds = [r for r in giornate_ordinate if r > 11]
 
-            col_andata, col_ritorno = st.columns(2, gap="large")
-            with col_andata:
-                st.markdown('<div class="cal-phase-hdr">ANDATA</div>', unsafe_allow_html=True)
-                if not andata_rounds:
-                    st.info("Nessuna giornata di Andata selezionata.")
-                else:
-                    for r_num in andata_rounds:
-                        r_df = df_g[df_g["Giornata"] == r_num]
-                        if squadre_scelte:
-                            r_df = r_df[r_df["Casa"].isin(squadre_scelte) | r_df["Trasferta"].isin(squadre_scelte)]
-                        st.markdown(
-                            build_round_html(
-                                round_num=r_num,
-                                round_games=r_df,
-                                logo_html_map=logo_html_map,
-                                is_ritorno=False,
-                                girone_label=girone_selezionato,
-                            ),
-                            unsafe_allow_html=True,
-                        )
+            st.success("Modalità Staff attiva")
 
-            with col_ritorno:
-                st.markdown('<div class="cal-phase-hdr">RITORNO</div>', unsafe_allow_html=True)
-                if not ritorno_rounds:
-                    st.info("Nessuna giornata di Ritorno selezionata.")
-                else:
-                    for r_num in ritorno_rounds:
-                        r_df = df_g[df_g["Giornata"] == r_num]
-                        if squadre_scelte:
-                            r_df = r_df[r_df["Casa"].isin(squadre_scelte) | r_df["Trasferta"].isin(squadre_scelte)]
-                        st.markdown(
-                            build_round_html(
-                                round_num=r_num,
-                                round_games=r_df,
-                                logo_html_map=logo_html_map,
-                                is_ritorno=True,
-                                girone_label=girone_selezionato,
-                            ),
-                            unsafe_allow_html=True,
-                        )
+            if st.button("Esci da Area Staff", use_container_width=True):
+
+                st.session_state["is_admin"] = False
+
+                st.rerun()
+
+
+
+    st.markdown(
+
+        '<div class="topbar-card">'
+
+        '<div class="topbar-title">🏀 FIP Puglia — Divisione Regionale 2 (2026/2027)</div>'
+
+        '<div class="topbar-sub">Classifiche Ufficiali, Formula Promozione / Play-off / Play-out, Calendari e Tabellini</div>'
+
+        '</div>',
+
+        unsafe_allow_html=True,
+
+    )
+
+
+
+    selected_match = str(st.query_params.get("match", "") or "").strip()
+
+    if selected_match:
+
+        render_match_detail_view(
+
+            match_id=selected_match,
+
+            games_df=games_df,
+
+            logo_html_map=logo_html_map,
+
+            is_admin=st.session_state["is_admin"],
+
+        )
+
+        return
+
+
+
+    selected_team = str(st.query_params.get("team", "") or "").strip()
+
+    if selected_team:
+
+        render_team_detail_view(
+
+            team_name=selected_team,
+
+            games_df=games_df,
+
+            logo_html_map=logo_html_map,
+
+        )
+
+        return
+
+
+
+    girone_selected = st.radio(
+
+        "Seleziona Girone",
+
+        ["Girone A", "Girone B", "Girone C"],
+
+        index=0,
+
+        horizontal=True,
+
+        label_visibility="collapsed",
+
+    )
+
+
+
+    thirds_board = compute_thirds_standings(games_df)
+
+    standings_rows = compute_standings(girone_selected, games_df)
+
+
+
+    if st.session_state["is_admin"]:
+
+        tab_cls, tab_sq, tab_cal, tab_plr, tab_adm = st.tabs(
+
+            ["🏆 Classifica", "🛡️ Squadre", "📅 Calendario & Risultati", "📊 Giocatori", "✏️ Aggiorna Risultati (Staff)"]
+
+        )
+
+    else:
+
+        tab_cls, tab_sq, tab_cal, tab_plr = st.tabs(
+
+            ["🏆 Classifica", "🛡️ Squadre", "📅 Calendario & Risultati", "📊 Giocatori"]
+
+        )
+
+        tab_adm = None
+
+
+
+    with tab_cls:
+
+        render_standings(girone_selected, standings_rows, thirds_board, logo_html_map, games_df=games_df)
+
+
+
+    with tab_sq:
+
+        render_teams_grid(girone_selected, games_df, logo_html_map)
+
+
+
+    with tab_cal:
+
+        render_calendar(girone_selected, games_df, logo_html_map)
+
+
+
+    with tab_plr:
+
+        render_players_leaderboard(girone_selected, games_df)
+
+
+
+    if tab_adm is not None:
+
+        with tab_adm:
+
+            render_admin_editor(girone_selected, games_df)
+
+
+
+
+
+if __name__ == "__main__":
+
+    main()
