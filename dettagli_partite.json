@@ -2985,7 +2985,7 @@
     ]
   },
   "A01_1868": {
-    "coach_home": "Giuliani",
+    "coach_home": "Antonio Giuliani",
     "coach_away": "Menduni",
     "quarters_home": [
       15,
@@ -3178,11 +3178,11 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Davide Paolo Pio Sborea Di Gennaro",
+        "Giocatore": "Davide Paolo Pio Sborea-DiGennaro",
         "NUM": 1,
         "PUN": 2,
         "MIN": "18:14",
-        "SF": false,
+        "SF": true,
         "F_C": 0,
         "F_S": 0,
         "2PT_R": 0,
@@ -3207,7 +3207,7 @@
         "NUM": 3,
         "PUN": 2,
         "MIN": "17:24",
-        "SF": false,
+        "SF": true,
         "F_C": 0,
         "F_S": 0,
         "2PT_R": 0,
