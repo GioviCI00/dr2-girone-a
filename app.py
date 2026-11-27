@@ -715,14 +715,19 @@ DEFAULT_ROUND3_DETAILS: dict[str, dict] = {
         "ot_home": 0,
         "ot_away": 0,
         "home_players": [
-            _p_row("Di Gennaro D.", pts=9),
-            _p_row("Ferrara A.", pts=11),
-            _p_row("Guida M.", pts=7),
-            _p_row("Tarantella E.", pts=16),
-            _p_row("De Capua A.", pts=9),
-            _p_row("Tartaglione R.", pts=8),
-            _p_row("Di Santo F.", pts=5),
-            _p_row("Conte A.", pts=4),
+            _p_row("Di Gennaro Davide Paolo Pio Sbo", pts=9),
+            _p_row("Ferrara Ferrara Alessandro Pio", pts=11),
+            _p_row("Guida Michele", pts=7),
+            _p_row("Tarantella Emanuele", pts=16),
+            _p_row("De Capua Alessandro", pts=9),
+            _p_row("Tartaglione Renato", pts=8),
+            _p_row("Di Santo Francesco", pts=5),
+            _p_row("Conte Antonio", pts=4),
+            _p_row("Caratù Guido", pts=0),
+            _p_row("Di Lella Stefano", pts=0),
+            _p_row("Franciosi Davide", pts=0),
+            _p_row("Franciosi Simone", pts=0),
+            _p_row("Rinaldi Cristian", pts=0),
         ],
         "away_players": [
             _p_row("Carlucci A.", pts=9),
@@ -5628,3 +5633,4 @@ else:
                             ),
                             unsafe_allow_html=True,
                         )
+Visualizzazione di app_dr2_aggiornata.py.
