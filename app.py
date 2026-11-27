@@ -4965,18 +4965,56 @@ def view_giocatori_pericolosi(girone: str, games_df: pd.DataFrame) -> None:
         st.info("Nessun tabellino individuale disponibile per questo girone.")
         return
 
-    c1, c2, c3 = st.columns([2, 1.5, 1])
+    c1, c2, c3, c4, c5 = st.columns([1.8, 1.4, 0.9, 1.2, 1.1])
     sq_opts = ["Tutte le squadre"] + sorted(df_p["Squadra"].unique().tolist())
     sel_sq = c1.selectbox("Squadra", sq_opts, key="threat_sq_filter")
     prof_opts = ["Tutti i profili"] + sorted(df_p["Profilo Tattico"].unique().tolist())
     sel_prof = c2.selectbox("Profilo Tattico", prof_opts, key="threat_prof_filter")
     min_g = c3.number_input("Min. partite (G)", min_value=1, max_value=22, value=1, step=1, key="threat_min_g")
+    sort_opts = ["PPG", "PUN", "G", "% PT Sq.", "High", "3PG", "TL%", "G ≥15", "FPG", "Giocatore", "Squadra"]
+    sel_sort_col = c4.selectbox("Ordina per", sort_opts, index=0, key="threat_sort_col")
+    sel_sort_dir = c5.radio(
+        "Ordine",
+        ["Decrescente ↓", "Crescente ↑"],
+        index=0,
+        horizontal=True,
+        key="threat_sort_dir",
+    )
 
     filtered = df_p[df_p["G"] >= min_g].copy()
     if sel_sq != "Tutte le squadre":
         filtered = filtered[filtered["Squadra"] == sel_sq]
     if sel_prof != "Tutti i profili":
         filtered = filtered[filtered["Profilo Tattico"] == sel_prof]
+
+    asc = sel_sort_dir == "Crescente ↑"
+    if not filtered.empty:
+        if sel_sort_col == "TL%":
+            filtered["_tl_num"] = (
+                filtered["TL%"]
+                .astype(str)
+                .str.replace("%", "", regex=False)
+                .replace("—", "-1")
+                .astype(float)
+            )
+            filtered = filtered.sort_values(
+                by=["_tl_num", "PPG"],
+                ascending=[asc, False],
+                kind="mergesort",
+            ).drop(columns=["_tl_num"])
+        elif sel_sort_col in ("Giocatore", "Squadra"):
+            filtered = filtered.sort_values(
+                by=[sel_sort_col, "PPG"],
+                ascending=[asc, False],
+                kind="mergesort",
+            )
+        else:
+            secondary_col = "PUN" if sel_sort_col != "PUN" else "PPG"
+            filtered = filtered.sort_values(
+                by=[sel_sort_col, secondary_col],
+                ascending=[asc, False],
+                kind="mergesort",
+            )
 
     # Top 3 highlight cards del filtro corrente
     if not filtered.empty:
@@ -5046,7 +5084,7 @@ def view_giocatori_pericolosi(girone: str, games_df: pd.DataFrame) -> None:
         '<div class="tp-stats-card">'
         '<div class="tp-stats-head">'
         f"<span>CLASSIFICA MINACCE & MARCATORI — {html_lib.escape(str(girone))}</span>"
-        f'<span style="color:#fbbf24;font-size:11px;">{len(filtered)} GIOCATORI • ORDINATO PER PPG</span>'
+        f'<span style="color:#fbbf24;font-size:11px;">{len(filtered)} GIOCATORI • ORDINATO PER {html_lib.escape(sel_sort_col.upper())} ({ "CRESC." if asc else "DECR." })</span>'
         "</div>"
         '<div class="tp-table-wrap"><table class="tp-stats-table" style="min-width:960px;"><thead><tr>'
         "<th>#</th>"
