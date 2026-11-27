@@ -3362,56 +3362,116 @@ def _editor_df_to_players(df: pd.DataFrame, existing_players: list[dict] | None 
         for p in _normalize_player_rows(existing_players)
     }
     out: list[dict] = []
-    for r in df.itertuples(index=False):
-        name = str(getattr(r, "Giocatore", "") or "").strip()
+    for row_dict in df.to_dict(orient="records"):
+        name = str(row_dict.get("Giocatore", "") or "").strip()
         if not name:
             continue
         prev = existing_by_name.get(name.lower(), {})
-        r2_val = int(pd.to_numeric(getattr(r, "2PT_R", prev.get("2PT_R", 0)), errors="coerce") or 0)
-        t2_val = int(pd.to_numeric(getattr(r, "2PT_T", prev.get("2PT_T", r2_val)), errors="coerce") or 0)
+
+        def _val(col: str, default=0):
+            if col in row_dict and row_dict[col] is not None and not (isinstance(row_dict[col], float) and pd.isna(row_dict[col])):
+                return row_dict[col]
+            return prev.get(col, default)
+
+        r2_val = int(pd.to_numeric(_val("2PT_R", 0), errors="coerce") or 0)
+        t2_val = int(pd.to_numeric(_val("2PT_T", r2_val), errors="coerce") or 0)
         if t2_val < r2_val:
             t2_val = r2_val
-        r3_val = int(pd.to_numeric(getattr(r, "3PT_R", prev.get("3PT_R", 0)), errors="coerce") or 0)
-        t3_val = int(pd.to_numeric(getattr(r, "3PT_T", prev.get("3PT_T", r3_val)), errors="coerce") or 0)
+        r3_val = int(pd.to_numeric(_val("3PT_R", 0), errors="coerce") or 0)
+        t3_val = int(pd.to_numeric(_val("3PT_T", r3_val), errors="coerce") or 0)
         if t3_val < r3_val:
             t3_val = r3_val
-        tl_r_val = int(pd.to_numeric(getattr(r, "TL_R", prev.get("TL_R", 0)), errors="coerce") or 0)
-        tl_t_val = int(pd.to_numeric(getattr(r, "TL_T", prev.get("TL_T", tl_r_val)), errors="coerce") or 0)
+        tl_r_val = int(pd.to_numeric(_val("TL_R", 0), errors="coerce") or 0)
+        tl_t_val = int(pd.to_numeric(_val("TL_T", tl_r_val), errors="coerce") or 0)
         if tl_t_val < tl_r_val:
             tl_t_val = tl_r_val
 
-        raw_num = getattr(r, "NUM", None)
+        raw_num = row_dict.get("NUM", None)
         if raw_num is None or (isinstance(raw_num, float) and pd.isna(raw_num)):
             raw_num = prev.get("NUM", None)
+
+        sf_raw = _val("SF", False)
+        sf_bool = False if (sf_raw is None or (isinstance(sf_raw, float) and pd.isna(sf_raw))) else bool(sf_raw)
 
         out.append(
             _p_row(
                 giocatore=name,
                 numero=raw_num,
-                pts=int(pd.to_numeric(getattr(r, "PUN", prev.get("PUN", 0)), errors="coerce") or 0),
-                minuti=str(getattr(r, "MIN", prev.get("MIN", "0")) or "0").strip(),
-                sf=bool(getattr(r, "SF", prev.get("SF", False))),
-                falli_c=int(pd.to_numeric(getattr(r, "F_C", prev.get("F_C", 0)), errors="coerce") or 0),
-                falli_s=int(pd.to_numeric(getattr(r, "F_S", prev.get("F_S", 0)), errors="coerce") or 0),
+                pts=int(pd.to_numeric(_val("PUN", 0), errors="coerce") or 0),
+                minuti=str(_val("MIN", "0") or "0").strip(),
+                sf=sf_bool,
+                falli_c=int(pd.to_numeric(_val("F_C", 0), errors="coerce") or 0),
+                falli_s=int(pd.to_numeric(_val("F_S", 0), errors="coerce") or 0),
                 t2_r=r2_val,
                 t2_t=t2_val,
-                sc=int(pd.to_numeric(getattr(r, "SC", prev.get("SC", 0)), errors="coerce") or 0),
+                sc=int(pd.to_numeric(_val("SC", 0), errors="coerce") or 0),
                 t3_r=r3_val,
                 t3_t=t3_val,
                 tl_r=tl_r_val,
                 tl_t=tl_t_val,
-                rim_o=int(pd.to_numeric(getattr(r, "RIM_O", prev.get("RIM_O", 0)), errors="coerce") or 0),
-                rim_d=int(pd.to_numeric(getattr(r, "RIM_D", prev.get("RIM_D", 0)), errors="coerce") or 0),
-                st_d=int(pd.to_numeric(getattr(r, "ST_D", prev.get("ST_D", 0)), errors="coerce") or 0),
-                st_s=int(pd.to_numeric(getattr(r, "ST_S", prev.get("ST_S", 0)), errors="coerce") or 0),
-                pal_p=int(pd.to_numeric(getattr(r, "PAL_P", prev.get("PAL_P", 0)), errors="coerce") or 0),
-                pal_r=int(pd.to_numeric(getattr(r, "PAL_R", prev.get("PAL_R", 0)), errors="coerce") or 0),
-                ass=int(pd.to_numeric(getattr(r, "ASS", prev.get("ASS", 0)), errors="coerce") or 0),
-                val_lega=int(pd.to_numeric(getattr(r, "VAL", prev.get("VAL", 0)), errors="coerce") or 0),
-                oer=float(pd.to_numeric(getattr(r, "OER", prev.get("OER", 0.0)), errors="coerce") or 0.0),
+                rim_o=int(pd.to_numeric(_val("RIM_O", 0), errors="coerce") or 0),
+                rim_d=int(pd.to_numeric(_val("RIM_D", 0), errors="coerce") or 0),
+                st_d=int(pd.to_numeric(_val("ST_D", 0), errors="coerce") or 0),
+                st_s=int(pd.to_numeric(_val("ST_S", 0), errors="coerce") or 0),
+                pal_p=int(pd.to_numeric(_val("PAL_P", 0), errors="coerce") or 0),
+                pal_r=int(pd.to_numeric(_val("PAL_R", 0), errors="coerce") or 0),
+                ass=int(pd.to_numeric(_val("ASS", 0), errors="coerce") or 0),
+                val_lega=int(pd.to_numeric(_val("VAL", 0), errors="coerce") or 0),
+                oer=float(pd.to_numeric(_val("OER", 0.0), errors="coerce") or 0.0),
             )
         )
     return out
+
+
+def _sort_boxscore_players(players: list[dict], sort_stat: str = "Ordine originale", descending: bool = True) -> list[dict]:
+    if not players or sort_stat == "Ordine originale":
+        return players
+
+    def _num_sort_val(p: dict) -> float:
+        num = p.get("NUM")
+        if num is None or str(num).strip() == "":
+            return -1.0 if descending else 999999.0
+        s = str(num).strip()
+        if s == "00":
+            return 0.5
+        try:
+            return float(int(s))
+        except ValueError:
+            return -1.0 if descending else 999999.0
+
+    def _pct_val(made: int, att: int) -> float:
+        return (made / att * 100.0) if att > 0 else -1.0
+
+    key_map = {
+        "Numero maglia (NUM)": _num_sort_val,
+        "Giocatore (A-Z)": lambda p: str(p.get("Giocatore", "")).lower(),
+        "Punti (PUN)": lambda p: int(p.get("PUN", 0)),
+        "Minuti (MIN)": lambda p: _parse_minutes_to_int(str(p.get("MIN", "0"))),
+        "Falli commessi (F_C)": lambda p: int(p.get("F_C", 0)),
+        "Falli subiti (F_S)": lambda p: int(p.get("F_S", 0)),
+        "Tiri da 2 segnati (2PT R)": lambda p: int(p.get("2PT_R", 0)),
+        "Tiri da 2 tentati (2PT T)": lambda p: int(p.get("2PT_T", 0)),
+        "Tiri da 2 % (2PT %)": lambda p: _pct_val(int(p.get("2PT_R", 0)), int(p.get("2PT_T", 0))),
+        "Tiri da 3 segnati (3PT R)": lambda p: int(p.get("3PT_R", 0)),
+        "Tiri da 3 tentati (3PT T)": lambda p: int(p.get("3PT_T", 0)),
+        "Tiri da 3 % (3PT %)": lambda p: _pct_val(int(p.get("3PT_R", 0)), int(p.get("3PT_T", 0))),
+        "Tiri liberi segnati (TL R)": lambda p: int(p.get("TL_R", 0)),
+        "Tiri liberi tentati (TL T)": lambda p: int(p.get("TL_T", 0)),
+        "Tiri liberi % (TL %)": lambda p: _pct_val(int(p.get("TL_R", 0)), int(p.get("TL_T", 0))),
+        "Rimbalzi offensivi (RIM O)": lambda p: int(p.get("RIM_O", 0)),
+        "Rimbalzi difensivi (RIM D)": lambda p: int(p.get("RIM_D", 0)),
+        "Rimbalzi totali (RIM TOT)": lambda p: int(p.get("RIM_O", 0)) + int(p.get("RIM_D", 0)),
+        "Stoppate date (ST D)": lambda p: int(p.get("ST_D", 0)),
+        "Stoppate subite (ST S)": lambda p: int(p.get("ST_S", 0)),
+        "Palle perse (PAL P)": lambda p: int(p.get("PAL_P", 0)),
+        "Palle recuperate (PAL R)": lambda p: int(p.get("PAL_R", 0)),
+        "Valutazione Lega (VAL)": lambda p: int(p.get("VAL", 0)),
+        "OER": lambda p: float(p.get("OER", 0.0)),
+    }
+    key_fn = key_map.get(sort_stat)
+    if key_fn is None:
+        return players
+    return sorted(players, key=key_fn, reverse=descending)
 
 
 def render_lba_boxscore(
@@ -3420,8 +3480,10 @@ def render_lba_boxscore(
     players: list[dict],
     logo_html_map: dict[str, str],
     full_stats: bool = True,
+    sort_stat: str = "Ordine originale",
+    sort_desc: bool = True,
 ) -> None:
-    norm_players = _normalize_player_rows(players)
+    norm_players = _sort_boxscore_players(_normalize_player_rows(players), sort_stat=sort_stat, descending=sort_desc)
     logo_tag = logo_html_map.get(
         f"lba::{team_name}",
         '<div class="lba-team-logo" style="display:flex;align-items:center;justify-content:center;font-size:22px;">🏀</div>',
@@ -4834,8 +4896,84 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
                 f"Tabellino essenziale per le gare senza {OUR_TEAM} (mantenuta solo la % dei tiri liberi; "
                 "nascoste falli subiti, tentativi 2PT/3PT, % da 2, rimbalzi, stoppate, palle perse/recuperate e valutazione)."
             )
-        render_lba_boxscore(home_name, detail["coach_home"], detail["home_players"], logo_html_map, full_stats=is_our_game)
-        render_lba_boxscore(away_name, detail["coach_away"], detail["away_players"], logo_html_map, full_stats=is_our_game)
+        if is_our_game:
+            sort_options = [
+                "Ordine originale",
+                "Punti (PUN)",
+                "Valutazione Lega (VAL)",
+                "OER",
+                "Minuti (MIN)",
+                "Tiri da 2 segnati (2PT R)",
+                "Tiri da 2 tentati (2PT T)",
+                "Tiri da 2 % (2PT %)",
+                "Tiri da 3 segnati (3PT R)",
+                "Tiri da 3 tentati (3PT T)",
+                "Tiri da 3 % (3PT %)",
+                "Tiri liberi segnati (TL R)",
+                "Tiri liberi tentati (TL T)",
+                "Tiri liberi % (TL %)",
+                "Rimbalzi totali (RIM TOT)",
+                "Rimbalzi offensivi (RIM O)",
+                "Rimbalzi difensivi (RIM D)",
+                "Palle recuperate (PAL R)",
+                "Palle perse (PAL P)",
+                "Stoppate date (ST D)",
+                "Stoppate subite (ST S)",
+                "Falli commessi (F_C)",
+                "Falli subiti (F_S)",
+                "Numero maglia (NUM)",
+                "Giocatore (A-Z)",
+            ]
+        else:
+            sort_options = [
+                "Ordine originale",
+                "Punti (PUN)",
+                "Minuti (MIN)",
+                "Tiri da 2 segnati (2PT R)",
+                "Tiri da 3 segnati (3PT R)",
+                "Tiri liberi segnati (TL R)",
+                "Tiri liberi tentati (TL T)",
+                "Tiri liberi % (TL %)",
+                "Falli commessi (F_C)",
+                "Numero maglia (NUM)",
+                "Giocatore (A-Z)",
+            ]
+
+        c_sort1, c_sort2 = st.columns([2, 1])
+        chosen_sort_stat = c_sort1.selectbox(
+            "📊 Ordina tabellini per statistica",
+            options=sort_options,
+            index=0,
+            key=f"box_sort_stat_{match_id}",
+        )
+        chosen_sort_dir = c_sort2.radio(
+            "Direzione ordinamento",
+            options=("Decrescente ↓", "Crescente ↑"),
+            index=0,
+            horizontal=True,
+            disabled=(chosen_sort_stat == "Ordine originale"),
+            key=f"box_sort_dir_{match_id}",
+        )
+        is_sort_desc = (chosen_sort_dir == "Decrescente ↓")
+
+        render_lba_boxscore(
+            home_name,
+            detail["coach_home"],
+            detail["home_players"],
+            logo_html_map,
+            full_stats=is_our_game,
+            sort_stat=chosen_sort_stat,
+            sort_desc=is_sort_desc,
+        )
+        render_lba_boxscore(
+            away_name,
+            detail["coach_away"],
+            detail["away_players"],
+            logo_html_map,
+            full_stats=is_our_game,
+            sort_stat=chosen_sort_stat,
+            sort_desc=is_sort_desc,
+        )
 
         with st.expander("✏️ Modifica tabellini giocatori e allenatori (salvataggio permanente)", expanded=False):
             c_ch, c_ca = st.columns(2)
