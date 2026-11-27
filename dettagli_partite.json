@@ -1412,8 +1412,8 @@
     "ot_away": 0,
     "home_players": [
       {
-        "Giocatore": "Di Gennaro D.",
-        "NUM": 0,
+        "Giocatore": "Davide Paolo Pio Sborea Di Gennaro",
+        "NUM": 1,
         "PUN": 9,
         "MIN": "0",
         "SF": false,
@@ -1437,8 +1437,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Ferrara A.",
-        "NUM": 0,
+        "Giocatore": "Alessandro Ferrara Ferrara",
+        "NUM": 3,
         "PUN": 11,
         "MIN": "0",
         "SF": false,
@@ -1462,8 +1462,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Guida M.",
-        "NUM": 0,
+        "Giocatore": "Michele Guida",
+        "NUM": 8,
         "PUN": 7,
         "MIN": "0",
         "SF": false,
@@ -1487,8 +1487,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Tarantella E.",
-        "NUM": 0,
+        "Giocatore": "Emanuele Tarantella",
+        "NUM": 9,
         "PUN": 16,
         "MIN": "0",
         "SF": false,
@@ -1512,8 +1512,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "De Capua A.",
-        "NUM": 0,
+        "Giocatore": "Alessandro De Capua",
+        "NUM": 17,
         "PUN": 9,
         "MIN": "0",
         "SF": false,
@@ -1537,8 +1537,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Tartaglione R.",
-        "NUM": 0,
+        "Giocatore": "Renato Tartaglione",
+        "NUM": 23,
         "PUN": 8,
         "MIN": "0",
         "SF": false,
@@ -1562,8 +1562,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Di Santo F.",
-        "NUM": 0,
+        "Giocatore": "Francesco Di Santo",
+        "NUM": 24,
         "PUN": 5,
         "MIN": "0",
         "SF": false,
@@ -1587,8 +1587,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Conte A.",
-        "NUM": 0,
+        "Giocatore": "Antonio Conte",
+        "NUM": 30,
         "PUN": 4,
         "MIN": "0",
         "SF": false,
