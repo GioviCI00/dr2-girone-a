@@ -1,7 +1,3 @@
-# app.py — DR2 Puglia: Classifiche, Calendario e Scouting
-
-
-
 import streamlit as st
 
 import pandas as pd
