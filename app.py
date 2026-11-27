@@ -4954,6 +4954,7 @@ def compute_girone_players_leaderboard(girone: str, games_df: pd.DataFrame) -> p
 
 
 def view_giocatori_pericolosi(girone: str, games_df: pd.DataFrame) -> None:
+    st.markdown(TEAM_PAGE_CSS, unsafe_allow_html=True)
     st.subheader(f"🔥 Top Marcatori & Minacce — {girone}")
     st.caption(
         "Classifica individuale del girone con incidenza sui punti squadra (% PT Sq.), High stagionale, "
@@ -4996,9 +4997,76 @@ def view_giocatori_pericolosi(girone: str, games_df: pd.DataFrame) -> None:
                     unsafe_allow_html=True,
                 )
 
-    disp_df = filtered.copy()
-    disp_df["% PT Sq."] = disp_df["% PT Sq."].apply(lambda x: f"{float(x):.1f}%")
-    st.dataframe(disp_df, use_container_width=True, hide_index=True)
+    if filtered.empty:
+        st.info("Nessun giocatore corrisponde ai filtri selezionati.")
+        return
+
+    rows_html = []
+    for rank_idx, (_, r) in enumerate(filtered.iterrows(), start=1):
+        giocatore_esc = html_lib.escape(str(r["Giocatore"]))
+        squadra_esc = html_lib.escape(str(r["Squadra"]))
+        profilo_txt = str(r["Profilo Tattico"])
+        profilo_esc = html_lib.escape(profilo_txt)
+
+        if "3PT" in profilo_txt or "Tiratore" in profilo_txt:
+            badge_bg, badge_fg, badge_bd = "#fef3c7", "#92400e", "#f59e0b"
+        elif "Penetratore" in profilo_txt or "Falli" in profilo_txt:
+            badge_bg, badge_fg, badge_bd = "#dbeafe", "#1e40af", "#3b82f6"
+        elif "Area" in profilo_txt or "Finalizzatore" in profilo_txt:
+            badge_bg, badge_fg, badge_bd = "#dcfce7", "#166534", "#22c55e"
+        else:
+            badge_bg, badge_fg, badge_bd = "#f3e8ff", "#6b21a8", "#a855f7"
+
+        rank_style = (
+            "background:#fef3c7;color:#92400e;font-weight:900;"
+            if rank_idx <= 3
+            else ""
+        )
+        rows_html.append(
+            "<tr>"
+            f'<td class="num-col" style="{rank_style}">{rank_idx}</td>'
+            f'<td class="name-col">{giocatore_esc}</td>'
+            f'<td style="text-align:left;padding-left:10px;color:#334155;font-weight:700;">{squadra_esc}</td>'
+            f"<td>{int(r['G'])}</td>"
+            f"<td>{int(r['PUN'])}</td>"
+            f'<td class="pts-col">{float(r["PPG"]):.1f}</td>'
+            f'<td style="font-weight:800;color:#0f172a;">{float(r["% PT Sq."]):.1f}%</td>'
+            f'<td style="font-weight:800;color:#1d4ed8;">{int(r["High"])}</td>'
+            f"<td>{float(r['3PG']):.2f}</td>"
+            f"<td>{html_lib.escape(str(r['TL%']))}</td>"
+            f"<td>{int(r['G ≥15'])}</td>"
+            f"<td>{float(r['FPG']):.1f}</td>"
+            f'<td><span style="display:inline-block;padding:3px 9px;border-radius:999px;'
+            f"background:{badge_bg};color:{badge_fg};border:1px solid {badge_bd};"
+            f'font-size:10.5px;font-weight:800;white-space:nowrap;">{profilo_esc}</span></td>'
+            "</tr>"
+        )
+
+    table_html = (
+        '<div class="tp-stats-card">'
+        '<div class="tp-stats-head">'
+        f"<span>CLASSIFICA MINACCE & MARCATORI — {html_lib.escape(str(girone))}</span>"
+        f'<span style="color:#fbbf24;font-size:11px;">{len(filtered)} GIOCATORI • ORDINATO PER PPG</span>'
+        "</div>"
+        '<div class="tp-table-wrap"><table class="tp-stats-table" style="min-width:960px;"><thead><tr>'
+        "<th>#</th>"
+        '<th class="left-col">GIOCATORE</th>'
+        '<th class="left-col">SQUADRA</th>'
+        "<th>G</th>"
+        "<th>PUN</th>"
+        '<th class="hi-col">PPG</th>'
+        '<th class="hi-col">% PT SQ.</th>'
+        "<th>HIGH</th>"
+        "<th>3PG</th>"
+        "<th>TL%</th>"
+        "<th>G ≥15</th>"
+        "<th>FPG</th>"
+        "<th>PROFILO TATTICO</th>"
+        "</tr></thead><tbody>"
+        + "".join(rows_html)
+        + "</tbody></table></div></div>"
+    )
+    st.markdown(table_html, unsafe_allow_html=True)
 
 
 def view_scouting_pre_gara(girone: str, games_df: pd.DataFrame, logo_html_map: dict[str, str]) -> None:
@@ -5034,22 +5102,37 @@ def view_scouting_pre_gara(girone: str, games_df: pd.DataFrame, logo_html_map: d
         key="scout_opp_team",
     )
 
-    my_logo = logo_html_map.get(f"hero::{my_team}", "🏀")
-    opp_logo = logo_html_map.get(f"hero::{opp_team}", "🏀")
+    def _scout_logo_badge(team_name: str) -> str:
+        src = logo_html_map.get(f"raw_src::{team_name}", "")
+        inner = (
+            f'<img src="{src}" alt="{html_lib.escape(team_name)}" '
+            f'style="max-width:100%;max-height:100%;object-fit:contain;" loading="lazy" />'
+            if src
+            else '<span style="font-size:20px;line-height:1;">🏀</span>'
+        )
+        return (
+            '<div style="width:46px;height:46px;background:#ffffff;border-radius:11px;'
+            "padding:5px;display:flex;align-items:center;justify-content:center;"
+            'box-shadow:0 4px 12px rgba(0,0,0,0.3);flex-shrink:0;">'
+            f"{inner}</div>"
+        )
+
+    my_logo = _scout_logo_badge(my_team)
+    opp_logo = _scout_logo_badge(opp_team)
     st.markdown(
         f'<div style="background:linear-gradient(120deg,#0d2240 0%,#132746 100%);'
-        f'border:1px solid rgba(251,191,36,0.45);border-radius:14px;padding:16px 20px;margin-bottom:16px;'
+        f'border:1px solid rgba(251,191,36,0.45);border-radius:14px;padding:14px 18px;margin-bottom:16px;'
         f'display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">'
         f'<div style="display:flex;align-items:center;gap:12px;">{my_logo}'
         f'<div><div style="font-size:11px;font-weight:800;color:#93c5fd;">NOSTRA SQUADRA</div>'
-        f'<div style="font-size:16px;font-weight:900;color:#ffffff;">{html_lib.escape(my_team)}</div></div></div>'
+        f'<div style="font-size:15.5px;font-weight:900;color:#ffffff;">{html_lib.escape(my_team)}</div></div></div>'
         f'<div style="text-align:center;">'
-        f'<div style="font-size:12px;font-weight:900;color:#fbbf24;text-transform:uppercase;">Prossimo Impegno</div>'
-        f'<div style="font-size:13.5px;font-weight:800;color:#f8fafc;margin-top:3px;">{html_lib.escape(next_badge)}</div>'
+        f'<div style="font-size:11.5px;font-weight:900;color:#fbbf24;text-transform:uppercase;">Prossimo Impegno</div>'
+        f'<div style="font-size:13px;font-weight:800;color:#f8fafc;margin-top:3px;">{html_lib.escape(next_badge)}</div>'
         f'</div>'
         f'<div style="display:flex;align-items:center;gap:12px;">'
         f'<div style="text-align:right;"><div style="font-size:11px;font-weight:800;color:#fca5a5;">AVVERSARIA</div>'
-        f'<div style="font-size:16px;font-weight:900;color:#ffffff;">{html_lib.escape(opp_team)}</div></div>'
+        f'<div style="font-size:15.5px;font-weight:900;color:#ffffff;">{html_lib.escape(opp_team)}</div></div>'
         f'{opp_logo}</div>'
         f'</div>',
         unsafe_allow_html=True,
@@ -5143,7 +5226,7 @@ def view_scouting_pre_gara(girone: str, games_df: pd.DataFrame, logo_html_map: d
     ].sort_values(by=["Giornata", "ID_Partita"])
 
     if not opp_played.empty:
-        trend_rows = []
+        trend_rows_html = []
         for g in opp_played.itertuples(index=False):
             is_h = str(g.Casa) == opp_team
             pf = int(g.Punti_Casa) if is_h else int(g.Punti_Trasferta)
@@ -5158,19 +5241,52 @@ def view_scouting_pre_gara(girone: str, games_df: pd.DataFrame, logo_html_map: d
                 parz_str = " | ".join(f"{my_q[idx]}-{opp_q_g[idx]}" for idx in range(4))
             else:
                 parz_str = "—"
-            trend_rows.append(
-                {
-                    "Giornata": int(g.Giornata),
-                    "Sede": "Casa" if is_h else "Trasferta",
-                    "Avversaria": avv,
-                    "Esito": "W" if pf > ps else "L",
-                    "Punti Fatti": pf,
-                    "Punti Subiti": ps,
-                    "Diff": f"{pf - ps:+d}",
-                    "Parziali Quarti": parz_str,
-                }
+
+            diff_val = pf - ps
+            is_win = pf > ps
+            esito_badge = (
+                '<span style="display:inline-block;padding:2px 8px;border-radius:999px;'
+                'background:#dcfce7;color:#166534;border:1px solid #22c55e;font-weight:900;font-size:10.5px;">W</span>'
+                if is_win
+                else '<span style="display:inline-block;padding:2px 8px;border-radius:999px;'
+                'background:#fee2e2;color:#991b1b;border:1px solid #ef4444;font-weight:900;font-size:10.5px;">L</span>'
             )
-        st.dataframe(pd.DataFrame(trend_rows), use_container_width=True, hide_index=True)
+            sede_txt = "🏠 Casa" if is_h else "✈️ Trasferta"
+            diff_color = "#15803d" if diff_val > 0 else ("#b91c1c" if diff_val < 0 else "#475569")
+
+            trend_rows_html.append(
+                "<tr>"
+                f'<td class="num-col">G{int(g.Giornata)}</td>'
+                f'<td style="font-weight:700;color:#334155;">{sede_txt}</td>'
+                f'<td class="name-col">{html_lib.escape(avv)}</td>'
+                f"<td>{esito_badge}</td>"
+                f'<td style="font-weight:800;color:#0f172a;">{pf}</td>'
+                f'<td style="font-weight:700;color:#475569;">{ps}</td>'
+                f'<td style="font-weight:900;color:{diff_color};">{diff_val:+d}</td>'
+                f'<td style="font-family:monospace;font-size:11.5px;font-weight:700;color:#0f172a;">{html_lib.escape(parz_str)}</td>'
+                "</tr>"
+            )
+
+        trend_table_html = (
+            '<div class="tp-stats-card" style="margin-top:10px;">'
+            '<div class="tp-stats-head">'
+            f"<span>TREND GARA PER GARA & PARZIALI QUARTI — {html_lib.escape(str(opp_team))}</span>"
+            f'<span style="color:#fbbf24;font-size:11px;">{len(opp_played)} GARE GIOCATE</span>'
+            "</div>"
+            '<div class="tp-table-wrap"><table class="tp-stats-table" style="min-width:780px;"><thead><tr>'
+            "<th>GIORN.</th>"
+            "<th>SEDE</th>"
+            '<th class="left-col">AVVERSARIA</th>'
+            "<th>ESITO</th>"
+            '<th class="hi-col">PF</th>'
+            "<th>PS</th>"
+            "<th>DIFF</th>"
+            "<th>PARZIALI QUARTI (Q1 | Q2 | Q3 | Q4)</th>"
+            "</tr></thead><tbody>"
+            + "".join(trend_rows_html)
+            + "</tbody></table></div></div>"
+        )
+        st.markdown(trend_table_html, unsafe_allow_html=True)
 
     st.markdown(f"### 🔥 Principali Minacce Offensive (Top 3) — {opp_team}")
     opp_players_df = compute_team_player_stats(opp_team, games_df)
