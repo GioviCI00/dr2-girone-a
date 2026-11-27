@@ -6691,7 +6691,7 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Caratù G N.E.",
+        "Giocatore": "Guido Caratù",
         "NUM": 10,
         "PUN": 0,
         "MIN": "0",
@@ -6715,7 +6715,8 @@
         "VAL": 0,
         "OER": 0.0
       }
-    ]
+    ],
+    "notes": ""
   },
   "A02_1874": {
     "coach_home": "",
