@@ -22,6 +22,7 @@ st.set_page_config(
 # ==========================================
 DATA_VERSION = "2026-11-26-v21-player-modal-fixed"
 OUR_TEAM = "New Virtus Basket Toritto"
+HIGHLIGHT_TEAM = "AGS DIL. TORITTO"
 STAFF_PASSWORD = os.environ.get("DR2_STAFF_PASSWORD", "dr2puglia")
 
 DEFAULT_GITHUB_OWNER = "GioviCI00"
@@ -1035,7 +1036,7 @@ STANDINGS_CSS = """
 }
 .board-head {
     display: grid;
-    grid-template-columns: 52px 52px 1fr 50px 50px 50px 66px 156px 62px;
+    grid-template-columns: 44px 44px minmax(170px, 1.35fr) 36px 36px 36px 52px 52px 54px 54px 54px 60px 134px 48px;
     gap: 8px;
     padding: 0 10px 10px 10px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.12);
@@ -1063,7 +1064,7 @@ STANDINGS_CSS = """
 
 .board-row {
     display: grid;
-    grid-template-columns: 52px 52px 1fr 50px 50px 50px 66px 156px 62px;
+    grid-template-columns: 44px 44px minmax(170px, 1.35fr) 36px 36px 36px 52px 52px 54px 54px 54px 60px 134px 48px;
     gap: 8px;
     align-items: center;
     background: rgba(15, 28, 48, 0.88);
@@ -1274,6 +1275,15 @@ a.streak-link {
     padding: 2px 7px;
     border-radius: 5px;
     margin-left: 6px;
+}
+
+.board-head-thirds, .board-row-thirds {
+    grid-template-columns: 52px 52px 1fr 50px 50px 50px 66px 156px 62px !important;
+}
+.board-row.row-highlight-team {
+    background: linear-gradient(90deg, rgba(29, 78, 216, 0.34) 0%, rgba(15, 28, 48, 0.94) 100%);
+    border-color: rgba(96, 165, 250, 0.75);
+    box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.35);
 }
 </style>
 """
@@ -2683,6 +2693,48 @@ def _rank_tied_group(group_rows: list[dict], played_games: list[tuple]) -> list[
     )
 
 
+def _compute_quarter_differentials_by_team(girone: str, games_df: pd.DataFrame) -> dict[str, dict]:
+    teams = [t["squadra"] for t in GIRONI_TEAMS.get(girone, [])]
+    q_stats = {
+        sq: {
+            "games_with_q": 0,
+            "q_pf": [0, 0, 0, 0],
+            "q_ps": [0, 0, 0, 0],
+            "q_diff_avg": [0.0, 0.0, 0.0, 0.0],
+        }
+        for sq in teams
+    }
+    played = games_df[
+        (games_df["Girone"] == girone)
+        & (games_df["Stato"].astype(str).str.strip().str.lower() == "giocata")
+    ]
+    for g in played.itertuples(index=False):
+        gid = str(g.ID_Partita)
+        home = str(g.Casa)
+        away = str(g.Trasferta)
+        det = _get_match_detail(gid)
+        qh = det.get("quarters_home", [0, 0, 0, 0])
+        qa = det.get("quarters_away", [0, 0, 0, 0])
+        if sum(qh) == 0 and sum(qa) == 0:
+            continue
+        if home in q_stats:
+            q_stats[home]["games_with_q"] += 1
+            for i in range(4):
+                q_stats[home]["q_pf"][i] += int(qh[i])
+                q_stats[home]["q_ps"][i] += int(qa[i])
+        if away in q_stats:
+            q_stats[away]["games_with_q"] += 1
+            for i in range(4):
+                q_stats[away]["q_pf"][i] += int(qa[i])
+                q_stats[away]["q_ps"][i] += int(qh[i])
+
+    for sq, d in q_stats.items():
+        n = d["games_with_q"]
+        if n > 0:
+            d["q_diff_avg"] = [round((d["q_pf"][i] - d["q_ps"][i]) / n, 1) for i in range(4)]
+    return q_stats
+
+
 def compute_standings(girone: str, games_df: pd.DataFrame) -> list[dict]:
     teams = GIRONI_TEAMS.get(girone, [])
     stats: dict[str, dict] = {
@@ -2695,6 +2747,14 @@ def compute_standings(girone: str, games_df: pd.DataFrame) -> list[dict]:
             "pf": 0,
             "ps": 0,
             "diff": 0,
+            "pf_g": 0.0,
+            "ps_g": 0.0,
+            "home_w": 0,
+            "home_l": 0,
+            "away_w": 0,
+            "away_l": 0,
+            "vs50_w": 0,
+            "vs50_l": 0,
             "streak_events": [],
             "pts": 0,
         }
@@ -2728,19 +2788,47 @@ def compute_standings(girone: str, games_df: pd.DataFrame) -> list[dict]:
 
         if p_home > p_away:
             stats[home]["w"] += 1
+            stats[home]["home_w"] += 1
             stats[away]["l"] += 1
+            stats[away]["away_l"] += 1
             stats[home]["pts"] += 2
             stats[home]["streak_events"].append({"res": "W", "game_id": gid, "tooltip_data": tip_data})
             stats[away]["streak_events"].append({"res": "L", "game_id": gid, "tooltip_data": tip_data})
         elif p_away > p_home:
             stats[away]["w"] += 1
+            stats[away]["away_w"] += 1
             stats[home]["l"] += 1
+            stats[home]["home_l"] += 1
             stats[away]["pts"] += 2
             stats[away]["streak_events"].append({"res": "W", "game_id": gid, "tooltip_data": tip_data})
             stats[home]["streak_events"].append({"res": "L", "game_id": gid, "tooltip_data": tip_data})
 
+    above_50_teams = {
+        sq for sq, r in stats.items() if r["p"] > 0 and (r["w"] / r["p"]) >= 0.5
+    }
+
+    for g in played_tuples:
+        home = str(g.Casa)
+        away = str(g.Trasferta)
+        p_home = int(g.Punti_Casa)
+        p_away = int(g.Punti_Trasferta)
+        if home not in stats or away not in stats:
+            continue
+        if away in above_50_teams:
+            if p_home > p_away:
+                stats[home]["vs50_w"] += 1
+            elif p_away > p_home:
+                stats[home]["vs50_l"] += 1
+        if home in above_50_teams:
+            if p_away > p_home:
+                stats[away]["vs50_w"] += 1
+            elif p_home > p_away:
+                stats[away]["vs50_l"] += 1
+
     for r in stats.values():
         r["diff"] = r["pf"] - r["ps"]
+        r["pf_g"] = round(r["pf"] / r["p"], 1) if r["p"] > 0 else 0.0
+        r["ps_g"] = round(r["ps"] / r["p"], 1) if r["p"] > 0 else 0.0
 
     by_pts: dict[int, list[dict]] = {}
     for r in stats.values():
@@ -2762,7 +2850,13 @@ def compute_thirds_standings(games_df: pd.DataFrame) -> list[dict]:
     return sorted(thirds, key=lambda r: (-r["pts"], -r["diff"], r["squadra"]))
 
 
-def render_standings(girone: str, rows: list[dict], thirds_board: list[dict], logo_html_map: dict[str, str]) -> None:
+def render_standings(
+    girone: str,
+    rows: list[dict],
+    thirds_board: list[dict],
+    logo_html_map: dict[str, str],
+    games_df: pd.DataFrame | None = None,
+) -> None:
     st.markdown(STANDINGS_CSS, unsafe_allow_html=True)
     playout_start = max(len(rows) - 3, 5)
     best_third = thirds_board[0] if thirds_board else None
@@ -2771,10 +2865,12 @@ def render_standings(girone: str, rows: list[dict], thirds_board: list[dict], lo
     st.caption("Clicca sul nome di una squadra per aprire la scheda squadra oppure passa sul quadratino W/L per i dettagli gara.")
 
     html = [
-        '<div class="board-box">',
-        '<div class="board-head">'
+        '<div class="board-box" style="overflow-x:auto;">',
+        '<div class="board-head" style="min-width:960px;">'
         '<div>POS</div><div>LOGO</div><div class="left">SQUADRA</div>'
-        '<div>P</div><div>W</div><div>L</div><div>DIFF</div><div>STREAK</div><div>PTS</div>'
+        '<div>P</div><div>W</div><div>L</div>'
+        '<div>PF/G</div><div>PS/G</div><div>CASA</div><div>TRASF</div><div>vs ≥50%</div>'
+        '<div>DIFF</div><div>STREAK</div><div>PTS</div>'
         '</div>',
     ]
 
@@ -2800,20 +2896,32 @@ def render_standings(girone: str, rows: list[dict], thirds_board: list[dict], lo
         if pos >= playout_start:
             row_cls = "row-pout"
 
+        if str(r["squadra"]).strip().upper() == HIGHLIGHT_TEAM.upper():
+            row_cls = f"{row_cls} row-highlight-team".strip()
+
         diff_val = r["diff"]
         diff_str = f"+{diff_val}" if diff_val > 0 else str(diff_val)
         streak_html = _render_streak_html(r.get("streak_events", []))
         team_encoded = quote(str(r["squadra"]), safe="")
         logo_tag = logo_html_map.get(f"board::{r['squadra']}", '<div class="b-pos">🏀</div>')
 
+        casa_rec = f"{r.get('home_w', 0)}-{r.get('home_l', 0)}"
+        trasf_rec = f"{r.get('away_w', 0)}-{r.get('away_l', 0)}"
+        vs50_rec = f"{r.get('vs50_w', 0)}-{r.get('vs50_l', 0)}"
+
         html.append(
-            f'<div class="board-row {row_cls}">'
+            f'<div class="board-row {row_cls}" style="min-width:960px;">'
             f'<div class="b-pos">{pos}</div>'
             f'<div><a href="?team={team_encoded}" target="_self">{logo_tag}</a></div>'
             f'<div><a class="team-link" href="?team={team_encoded}" target="_self">{r["squadra"]}</a></div>'
             f'<div class="b-val">{r["p"]}</div>'
             f'<div class="b-val">{r["w"]}</div>'
             f'<div class="b-val">{r["l"]}</div>'
+            f'<div class="b-val" style="color:#4ade80;">{r.get("pf_g", 0.0):.1f}</div>'
+            f'<div class="b-val" style="color:#fca5a5;">{r.get("ps_g", 0.0):.1f}</div>'
+            f'<div class="b-val">{casa_rec}</div>'
+            f'<div class="b-val">{trasf_rec}</div>'
+            f'<div class="b-val" style="color:#93c5fd;">{vs50_rec}</div>'
             f'<div class="b-val">{diff_str}</div>'
             f'<div style="text-align:center;">{streak_html}</div>'
             f'<div class="b-pts">{r["pts"]}</div>'
@@ -2823,11 +2931,66 @@ def render_standings(girone: str, rows: list[dict], thirds_board: list[dict], lo
     html.append("</div>")
     st.markdown("".join(html), unsafe_allow_html=True)
 
+    # Pannello espandibile: Livello del Girone (Attacco vs Difesa, Fattore Campo, Differenziale Quarti)
+    with st.expander(f"📊 Livello del Girone & Analisi Tecnica — {girone}", expanded=False):
+        if not rows or sum(r["p"] for r in rows) == 0:
+            st.info("Dati insufficienti per elaborare l'analisi tecnica del girone.")
+        else:
+            df_lvl = pd.DataFrame(rows)
+            tot_games = int(df_lvl["p"].sum() // 2)
+            tot_home_w = int(df_lvl["home_w"].sum())
+            tot_away_w = int(df_lvl["away_w"].sum())
+            home_win_pct = round((tot_home_w / tot_games) * 100, 1) if tot_games > 0 else 0.0
+            away_win_pct = round(100.0 - home_win_pct, 1) if tot_games > 0 else 0.0
+            active_df = df_lvl[df_lvl["p"] > 0].copy()
+            avg_league_pts = round(active_df["pf_g"].mean(), 1) if not active_df.empty else 0.0
+
+            m1, m2, m3, m4 = st.columns(4)
+            m1.metric("Media Punti / Squadra", f"{avg_league_pts:.1f} PT/G")
+            m2.metric("Impatto Fattore Campo (Casa)", f"{home_win_pct}%", f"{tot_home_w}W su {tot_games} gare")
+            m3.metric("Colpi Esterni (Trasferta)", f"{away_win_pct}%", f"{tot_away_w}W su {tot_games} gare")
+            best_off = active_df.sort_values(by="pf_g", ascending=False).iloc[0]
+            m4.metric("Miglior Attacco", f"{best_off['pf_g']:.1f} PF/G", str(best_off["squadra"]))
+
+            st.markdown("#### ⚔️ Grafico Attacco vs Difesa (PF/G vs PS/G)")
+            st.caption("In basso a destra: squadre con attacco prolifico e difesa solida.")
+            chart_df = active_df[["squadra", "pf_g", "ps_g"]].rename(
+                columns={"squadra": "Squadra", "pf_g": "Attacco (PF/G)", "ps_g": "Difesa (PS/G)"}
+            )
+            st.scatter_chart(
+                chart_df,
+                x="Attacco (PF/G)",
+                y="Difesa (PS/G)",
+                color="Squadra",
+                use_container_width=True,
+            )
+
+            if games_df is not None:
+                st.markdown("#### ⏱️ Differenziale Medio per Quarto (da tabellini con parziali)")
+                q_map = _compute_quarter_differentials_by_team(girone, games_df)
+                q_rows = []
+                for r in rows:
+                    sq = r["squadra"]
+                    qd = q_map.get(sq, {})
+                    n_q = qd.get("games_with_q", 0)
+                    avgs = qd.get("q_diff_avg", [0.0, 0.0, 0.0, 0.0])
+                    q_rows.append(
+                        {
+                            "Squadra": sq,
+                            "Gare con Parziali": n_q,
+                            "Q1 Diff/G": f"{avgs[0]:+.1f}" if n_q else "—",
+                            "Q2 Diff/G": f"{avgs[1]:+.1f}" if n_q else "—",
+                            "Q3 Diff/G": f"{avgs[2]:+.1f}" if n_q else "—",
+                            "Q4 Diff/G": f"{avgs[3]:+.1f}" if n_q else "—",
+                        }
+                    )
+                st.dataframe(pd.DataFrame(q_rows), use_container_width=True, hide_index=True)
+
     if thirds_board:
         st.subheader("Mini-Classifica Terze Classificate (Migliore Terza ai Play-off)")
         t_html = [
             '<div class="board-box">',
-            '<div class="board-head">'
+            '<div class="board-head board-head-thirds">'
             '<div>#</div><div>LOGO</div><div class="left">TERZA CLASSIFICATA</div>'
             '<div>P</div><div>W</div><div>L</div><div>DIFF</div><div>STREAK</div><div>PTS</div>'
             '</div>',
@@ -2843,7 +3006,7 @@ def render_standings(girone: str, rows: list[dict], thirds_board: list[dict], lo
             logo_tag = logo_html_map.get(f"board::{t['squadra']}", '<div class="b-pos">🏀</div>')
 
             t_html.append(
-                f'<div class="board-row {r_cls}">'
+                f'<div class="board-row board-row-thirds {r_cls}">'
                 f'<div class="b-pos">{idx}</div>'
                 f'<div><a href="?team={team_encoded}" target="_self">{logo_tag}</a></div>'
                 f'<div>'
@@ -4675,6 +4838,389 @@ def render_match_detail(match_id: str, games_df: pd.DataFrame, logo_html_map: di
 
 
 # ==========================================
+# TOP MARCATORI & SCOUTING PRE-GARA
+# ==========================================
+def _classify_tactical_profile(
+    ppg: float,
+    t3_pg: float,
+    f_pg: float,
+    t2_r: int,
+    t3_r: int,
+    tl_t: int,
+    games: int,
+) -> str:
+    g = max(games, 1)
+    pts_from_3 = (t3_r * 3) / g
+    pts_from_2 = (t2_r * 2) / g
+    tl_pg = tl_t / g
+    if t3_pg >= 1.8 or (ppg > 0 and (pts_from_3 / ppg) >= 0.42):
+        return "Tiratore 3PT"
+    if tl_pg >= 3.5 or f_pg >= 3.2:
+        return "Penetratore / Falli"
+    if ppg >= 14.0 and t3_pg >= 1.0 and pts_from_2 >= 6.0:
+        return "Realizzatore Completo"
+    return "Finalizzatore Area"
+
+
+def compute_girone_players_leaderboard(girone: str, games_df: pd.DataFrame) -> pd.DataFrame:
+    played_g = games_df[
+        (games_df["Girone"] == girone)
+        & (games_df["Stato"].astype(str).str.strip().str.lower() == "giocata")
+    ].sort_values(by=["Giornata", "ID_Partita"])
+
+    team_tot_pts: dict[str, int] = {}
+    for g in played_g.itertuples(index=False):
+        h, a = str(g.Casa), str(g.Trasferta)
+        team_tot_pts[h] = team_tot_pts.get(h, 0) + int(g.Punti_Casa)
+        team_tot_pts[a] = team_tot_pts.get(a, 0) + int(g.Punti_Trasferta)
+
+    players_agg: dict[tuple[str, str], dict] = {}
+    for g in played_g.itertuples(index=False):
+        gid = str(g.ID_Partita)
+        det = _get_match_detail(gid)
+        for side_team, plist in ((str(g.Casa), det["home_players"]), (str(g.Trasferta), det["away_players"])):
+            for p in plist:
+                pname = str(p.get("Giocatore", "")).strip()
+                if not pname or "(N.E.)" in pname.upper():
+                    continue
+                key = (side_team, pname.lower())
+                pts = int(p.get("PUN", 0))
+                if key not in players_agg:
+                    players_agg[key] = {
+                        "Squadra": side_team,
+                        "Giocatore": pname,
+                        "NUM": _extract_jersey_number(pname, p.get("NUM")),
+                        "G": 0,
+                        "PUN": 0,
+                        "HIGH": 0,
+                        "G15": 0,
+                        "2PT_R": 0,
+                        "3PT_R": 0,
+                        "TL_R": 0,
+                        "TL_T": 0,
+                        "F_C": 0,
+                    }
+                rec = players_agg[key]
+                rec["G"] += 1
+                rec["PUN"] += pts
+                rec["HIGH"] = max(rec["HIGH"], pts)
+                if pts >= 15:
+                    rec["G15"] += 1
+                rec["2PT_R"] += int(p.get("2PT_R", 0))
+                rec["3PT_R"] += int(p.get("3PT_R", 0))
+                rec["TL_R"] += int(p.get("TL_R", 0))
+                rec["TL_T"] += int(p.get("TL_T", 0))
+                rec["F_C"] += int(p.get("F_C", 0))
+
+    if not players_agg:
+        return pd.DataFrame()
+
+    rows = []
+    for rec in players_agg.values():
+        g_cnt = max(rec["G"], 1)
+        ppg = round(rec["PUN"] / g_cnt, 1)
+        t3_pg = round(rec["3PT_R"] / g_cnt, 2)
+        f_pg = round(rec["F_C"] / g_cnt, 1)
+        sq_pts = max(team_tot_pts.get(rec["Squadra"], 0), 1)
+        incidenza = round((rec["PUN"] / sq_pts) * 100, 1)
+        tl_pct = f"{round((rec['TL_R'] / rec['TL_T']) * 100)}%" if rec["TL_T"] > 0 else "—"
+        profilo = _classify_tactical_profile(
+            ppg=ppg,
+            t3_pg=t3_pg,
+            f_pg=f_pg,
+            t2_r=rec["2PT_R"],
+            t3_r=rec["3PT_R"],
+            tl_t=rec["TL_T"],
+            games=g_cnt,
+        )
+        rows.append(
+            {
+                "Giocatore": rec["Giocatore"],
+                "Squadra": rec["Squadra"],
+                "G": rec["G"],
+                "PUN": rec["PUN"],
+                "PPG": ppg,
+                "% PT Sq.": round(incidenza, 1),
+                "High": rec["HIGH"],
+                "3PG": t3_pg,
+                "TL%": tl_pct,
+                "G ≥15": rec["G15"],
+                "FPG": f_pg,
+                "Profilo Tattico": profilo,
+            }
+        )
+
+    return pd.DataFrame(rows).sort_values(by=["PPG", "PUN"], ascending=[False, False]).reset_index(drop=True)
+
+
+def view_giocatori_pericolosi(girone: str, games_df: pd.DataFrame) -> None:
+    st.subheader(f"🔥 Top Marcatori & Minacce — {girone}")
+    st.caption(
+        "Classifica individuale del girone con incidenza sui punti squadra (% PT Sq.), High stagionale, "
+        "triple/gara (3PG), % ai liberi, gare da ≥15 punti, falli/gara (FPG) e profilo tattico automatico."
+    )
+    df_p = compute_girone_players_leaderboard(girone, games_df)
+    if df_p.empty:
+        st.info("Nessun tabellino individuale disponibile per questo girone.")
+        return
+
+    c1, c2, c3 = st.columns([2, 1.5, 1])
+    sq_opts = ["Tutte le squadre"] + sorted(df_p["Squadra"].unique().tolist())
+    sel_sq = c1.selectbox("Squadra", sq_opts, key="threat_sq_filter")
+    prof_opts = ["Tutti i profili"] + sorted(df_p["Profilo Tattico"].unique().tolist())
+    sel_prof = c2.selectbox("Profilo Tattico", prof_opts, key="threat_prof_filter")
+    min_g = c3.number_input("Min. partite (G)", min_value=1, max_value=22, value=1, step=1, key="threat_min_g")
+
+    filtered = df_p[df_p["G"] >= min_g].copy()
+    if sel_sq != "Tutte le squadre":
+        filtered = filtered[filtered["Squadra"] == sel_sq]
+    if sel_prof != "Tutti i profili":
+        filtered = filtered[filtered["Profilo Tattico"] == sel_prof]
+
+    # Top 3 highlight cards del filtro corrente
+    if not filtered.empty:
+        top_cards = filtered.head(3)
+        cols_top = st.columns(len(top_cards))
+        for idx_t, (_, r_t) in enumerate(top_cards.iterrows()):
+            with cols_top[idx_t]:
+                st.markdown(
+                    f'<div style="background:linear-gradient(135deg,#0f2440 0%,#0b1320 100%);'
+                    f'border:1px solid rgba(251,191,36,0.4);border-left:4px solid #fbbf24;'
+                    f'border-radius:12px;padding:12px 14px;margin-bottom:12px;">'
+                    f'<div style="font-size:11px;font-weight:800;color:#fbbf24;">#{idx_t + 1} • {html_lib.escape(str(r_t["Profilo Tattico"]))}</div>'
+                    f'<div style="font-size:16px;font-weight:900;color:#ffffff;margin-top:2px;">{html_lib.escape(str(r_t["Giocatore"]))}</div>'
+                    f'<div style="font-size:11.5px;color:#93c5fd;margin-bottom:6px;">{html_lib.escape(str(r_t["Squadra"]))}</div>'
+                    f'<div style="font-size:20px;font-weight:900;color:#4ade80;">{float(r_t["PPG"]):.1f} PPG '
+                    f'<span style="font-size:12px;color:#cbd5e1;">({float(r_t["% PT Sq."]):.1f}% PT Sq. • High {int(r_t["High"])})</span></div>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+
+    disp_df = filtered.copy()
+    disp_df["% PT Sq."] = disp_df["% PT Sq."].apply(lambda x: f"{float(x):.1f}%")
+    st.dataframe(disp_df, use_container_width=True, hide_index=True)
+
+
+def view_scouting_pre_gara(girone: str, games_df: pd.DataFrame, logo_html_map: dict[str, str]) -> None:
+    st.markdown(TEAM_PAGE_CSS, unsafe_allow_html=True)
+    st.subheader("🎯 Scouting Pre-Gara")
+    squadre_girone = sorted([t["squadra"] for t in GIRONI_TEAMS.get(girone, [])])
+    default_idx = squadre_girone.index(HIGHLIGHT_TEAM) if HIGHLIGHT_TEAM in squadre_girone else 0
+
+    col_sel1, col_sel2 = st.columns([2, 2])
+    my_team = col_sel1.selectbox("Squadra di riferimento", squadre_girone, index=default_idx, key="scout_my_team")
+
+    upcoming = games_df[
+        (games_df["Girone"] == girone)
+        & ((games_df["Casa"] == my_team) | (games_df["Trasferta"] == my_team))
+        & (games_df["Stato"].astype(str).str.strip().str.lower() != "giocata")
+    ].sort_values(by=["Giornata", "ID_Partita"])
+
+    auto_opp = None
+    next_badge = "Nessuna gara futura in calendario"
+    if not upcoming.empty:
+        nxt = upcoming.iloc[0]
+        is_home = str(nxt["Casa"]) == my_team
+        auto_opp = str(nxt["Trasferta"]) if is_home else str(nxt["Casa"])
+        dove_txt = "🏠 IN CASA" if is_home else "✈️ IN TRASFERTA"
+        next_badge = f"Giornata {int(nxt['Giornata'])} • {nxt['Data']} • {dove_txt}"
+
+    opp_candidates = [s for s in squadre_girone if s != my_team]
+    opp_default_idx = opp_candidates.index(auto_opp) if auto_opp in opp_candidates else 0
+    opp_team = col_sel2.selectbox(
+        "Avversaria (rilevata in automatico dal calendario)",
+        opp_candidates,
+        index=opp_default_idx,
+        key="scout_opp_team",
+    )
+
+    my_logo = logo_html_map.get(f"hero::{my_team}", "🏀")
+    opp_logo = logo_html_map.get(f"hero::{opp_team}", "🏀")
+    st.markdown(
+        f'<div style="background:linear-gradient(120deg,#0d2240 0%,#132746 100%);'
+        f'border:1px solid rgba(251,191,36,0.45);border-radius:14px;padding:16px 20px;margin-bottom:16px;'
+        f'display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">'
+        f'<div style="display:flex;align-items:center;gap:12px;">{my_logo}'
+        f'<div><div style="font-size:11px;font-weight:800;color:#93c5fd;">NOSTRA SQUADRA</div>'
+        f'<div style="font-size:16px;font-weight:900;color:#ffffff;">{html_lib.escape(my_team)}</div></div></div>'
+        f'<div style="text-align:center;">'
+        f'<div style="font-size:12px;font-weight:900;color:#fbbf24;text-transform:uppercase;">Prossimo Impegno</div>'
+        f'<div style="font-size:13.5px;font-weight:800;color:#f8fafc;margin-top:3px;">{html_lib.escape(next_badge)}</div>'
+        f'</div>'
+        f'<div style="display:flex;align-items:center;gap:12px;">'
+        f'<div style="text-align:right;"><div style="font-size:11px;font-weight:800;color:#fca5a5;">AVVERSARIA</div>'
+        f'<div style="font-size:16px;font-weight:900;color:#ffffff;">{html_lib.escape(opp_team)}</div></div>'
+        f'{opp_logo}</div>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+
+    board = compute_standings(girone, games_df)
+    st_my = next((r for r in board if r["squadra"] == my_team), None)
+    st_opp = next((r for r in board if r["squadra"] == opp_team), None)
+
+    if st_my and st_opp:
+        st.markdown("### ⚖️ Confronto Statistico Diretto")
+
+        def _comp_bar(label: str, v_my: float, v_opp: float, higher_is_better: bool = True) -> str:
+            tot = max(abs(v_my) + abs(v_opp), 0.1)
+            w_my = min(max((abs(v_my) / tot) * 100, 12), 88)
+            w_opp = 100 - w_my
+            my_better = (v_my >= v_opp) if higher_is_better else (v_my <= v_opp)
+            my_col = "#22c55e" if my_better else "#3b82f6"
+            opp_col = "#ef4444" if my_better else "#f59e0b"
+            return (
+                f'<div style="margin-bottom:10px;background:#0f1c30;padding:10px 14px;border-radius:10px;'
+                f'border:1px solid rgba(255,255,255,0.1);">'
+                f'<div style="display:flex;justify-content:space-between;font-weight:800;font-size:13px;margin-bottom:6px;">'
+                f'<span style="color:#93c5fd;">{html_lib.escape(my_team)}: {v_my}</span>'
+                f'<span style="color:#fbbf24;">{html_lib.escape(label)}</span>'
+                f'<span style="color:#fca5a5;">{html_lib.escape(opp_team)}: {v_opp}</span>'
+                f'</div>'
+                f'<div style="display:flex;height:10px;border-radius:6px;overflow:hidden;background:#1e293b;">'
+                f'<div style="width:{w_my:.1f}%;background:{my_col};"></div>'
+                f'<div style="width:{w_opp:.1f}%;background:{opp_col};"></div>'
+                f'</div></div>'
+            )
+
+        diff_my = round(st_my["diff"] / max(st_my["p"], 1), 1)
+        diff_opp = round(st_opp["diff"] / max(st_opp["p"], 1), 1)
+        bars_html = (
+            _comp_bar("Attacco Medio (PF/G)", st_my["pf_g"], st_opp["pf_g"], True)
+            + _comp_bar("Difesa Media (PS/G)", st_my["ps_g"], st_opp["ps_g"], False)
+            + _comp_bar("Differenza Canestri Media", diff_my, diff_opp, True)
+        )
+        st.markdown(bars_html, unsafe_allow_html=True)
+
+        c_r1, c_r2 = st.columns(2)
+        with c_r1:
+            st.markdown(
+                f'<div style="background:#0b1320;border:1px solid rgba(147,197,253,0.3);border-radius:10px;padding:10px 14px;">'
+                f'<div style="font-weight:900;color:#93c5fd;margin-bottom:4px;">{html_lib.escape(my_team)}</div>'
+                f'<div style="font-size:13px;color:#e2e8f0;">Record: <b>{st_my["w"]}-{st_my["l"]}</b> • '
+                f'Casa: <b>{st_my["home_w"]}-{st_my["home_l"]}</b> • '
+                f'Trasferta: <b>{st_my["away_w"]}-{st_my["away_l"]}</b> • '
+                f'vs ≥50%: <b>{st_my["vs50_w"]}-{st_my["vs50_l"]}</b></div></div>',
+                unsafe_allow_html=True,
+            )
+        with c_r2:
+            st.markdown(
+                f'<div style="background:#0b1320;border:1px solid rgba(252,165,165,0.3);border-radius:10px;padding:10px 14px;">'
+                f'<div style="font-weight:900;color:#fca5a5;margin-bottom:4px;">{html_lib.escape(opp_team)}</div>'
+                f'<div style="font-size:13px;color:#e2e8f0;">Record: <b>{st_opp["w"]}-{st_opp["l"]}</b> • '
+                f'Casa: <b>{st_opp["home_w"]}-{st_opp["home_l"]}</b> • '
+                f'Trasferta: <b>{st_opp["away_w"]}-{st_opp["away_l"]}</b> • '
+                f'vs ≥50%: <b>{st_opp["vs50_w"]}-{st_opp["vs50_l"]}</b></div></div>',
+                unsafe_allow_html=True,
+            )
+
+    st.markdown(f"### ⏱️ Analisi Quarti & Trend Gara per Gara — {opp_team}")
+    q_map = _compute_quarter_differentials_by_team(girone, games_df)
+    opp_q = q_map.get(opp_team, {})
+    if opp_q.get("games_with_q", 0) > 0:
+        avgs = opp_q["q_diff_avg"]
+        best_q = int(pd.Series(avgs).idxmax()) + 1
+        worst_q = int(pd.Series(avgs).idxmin()) + 1
+        q_cols = st.columns(4)
+        for i in range(4):
+            q_num = i + 1
+            badge_q = ""
+            if q_num == best_q:
+                badge_q = " 🟢 PIÙ FORTE"
+            elif q_num == worst_q:
+                badge_q = " 🔴 PIÙ DEBOLE"
+            q_cols[i].metric(
+                f"Quarto {q_num}{badge_q}",
+                f"{avgs[i]:+.1f} diff/g",
+                f"PF {opp_q['q_pf'][i]} / PS {opp_q['q_ps'][i]}",
+            )
+    else:
+        st.caption("Nessun parziale per quarto ancora registrato nei tabellini di questa avversaria.")
+
+    opp_played = games_df[
+        ((games_df["Casa"] == opp_team) | (games_df["Trasferta"] == opp_team))
+        & (games_df["Stato"].astype(str).str.strip().str.lower() == "giocata")
+    ].sort_values(by=["Giornata", "ID_Partita"])
+
+    if not opp_played.empty:
+        trend_rows = []
+        for g in opp_played.itertuples(index=False):
+            is_h = str(g.Casa) == opp_team
+            pf = int(g.Punti_Casa) if is_h else int(g.Punti_Trasferta)
+            ps = int(g.Punti_Trasferta) if is_h else int(g.Punti_Casa)
+            avv = str(g.Trasferta) if is_h else str(g.Casa)
+            det = _get_match_detail(str(g.ID_Partita))
+            qh = det.get("quarters_home", [0, 0, 0, 0])
+            qa = det.get("quarters_away", [0, 0, 0, 0])
+            if sum(qh) > 0 or sum(qa) > 0:
+                my_q = qh if is_h else qa
+                opp_q_g = qa if is_h else qh
+                parz_str = " | ".join(f"{my_q[idx]}-{opp_q_g[idx]}" for idx in range(4))
+            else:
+                parz_str = "—"
+            trend_rows.append(
+                {
+                    "Giornata": int(g.Giornata),
+                    "Sede": "Casa" if is_h else "Trasferta",
+                    "Avversaria": avv,
+                    "Esito": "W" if pf > ps else "L",
+                    "Punti Fatti": pf,
+                    "Punti Subiti": ps,
+                    "Diff": f"{pf - ps:+d}",
+                    "Parziali Quarti": parz_str,
+                }
+            )
+        st.dataframe(pd.DataFrame(trend_rows), use_container_width=True, hide_index=True)
+
+    st.markdown(f"### 🔥 Principali Minacce Offensive (Top 3) — {opp_team}")
+    opp_players_df = compute_team_player_stats(opp_team, games_df)
+    if opp_players_df.empty:
+        st.info("Nessun tabellino giocatori ancora inserito per l'avversaria.")
+    else:
+        top3 = opp_players_df.sort_values(by=["PPG", "PUN"], ascending=[False, False]).head(3)
+        cols_t3 = st.columns(len(top3))
+        for idx_c, (_, prow) in enumerate(top3.iterrows()):
+            with cols_t3[idx_c]:
+                num_d = _format_jersey_display(prow.get("NUM"), "—")
+                tl_pct = _fmt_pct(int(prow["TL_R"]), int(prow["TL_T"]))
+                g_cnt = max(int(prow["G"]), 1)
+                t3_pg = round(int(prow["3PT_R"]) / g_cnt, 2)
+                f_pg = round(int(prow["F_C"]) / g_cnt, 1)
+                prof_lbl = _classify_tactical_profile(
+                    ppg=float(prow["PPG"]),
+                    t3_pg=t3_pg,
+                    f_pg=f_pg,
+                    t2_r=int(prow["2PT_R"]),
+                    t3_r=int(prow["3PT_R"]),
+                    tl_t=int(prow["TL_T"]),
+                    games=g_cnt,
+                )
+                st.markdown(
+                    f'<div style="background:linear-gradient(180deg,#132746 0%,#0b1320 100%);'
+                    f'border:1px solid rgba(251,191,36,0.48);border-top:4px solid #fbbf24;'
+                    f'border-radius:12px;padding:14px;">'
+                    f'<div style="display:flex;justify-content:space-between;align-items:center;">'
+                    f'<span style="font-size:11px;font-weight:800;color:#fbbf24;">MINACCIA #{idx_c + 1} • {num_d}</span>'
+                    f'<span style="font-size:10.5px;font-weight:800;background:rgba(251,191,36,0.16);color:#fde68a;padding:2px 7px;border-radius:6px;">{html_lib.escape(prof_lbl)}</span>'
+                    f'</div>'
+                    f'<div style="font-size:17px;font-weight:900;color:#ffffff;margin:6px 0 4px 0;">{html_lib.escape(str(prow["Giocatore"]))}</div>'
+                    f'<div style="font-size:22px;font-weight:900;color:#4ade80;">{float(prow["PPG"]):.1f} '
+                    f'<span style="font-size:12px;color:#cbd5e1;">PPG ({int(prow["PUN"])} PT in {int(prow["G"])}G)</span></div>'
+                    f'<div style="font-size:12px;color:#94a3b8;margin-top:8px;line-height:1.5;">'
+                    f'2PT: <b style="color:#f8fafc;">{int(prow["2PT_R"])}/{int(prow["2PT_T"])}</b> • '
+                    f'3PT: <b style="color:#f8fafc;">{int(prow["3PT_R"])}/{int(prow["3PT_T"])}</b> ({t3_pg}/g)<br>'
+                    f'TL: <b style="color:#f8fafc;">{int(prow["TL_R"])}/{int(prow["TL_T"])}</b> ({tl_pct}%) • '
+                    f'Falli: <b style="color:#f8fafc;">{int(prow["F_C"])}</b> ({f_pg}/g)'
+                    f'</div>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+
+        st.markdown(f"#### 📋 Tabellino Completo Giocatori — {opp_team}")
+        st.markdown(_render_team_player_stats_html(opp_team, opp_players_df), unsafe_allow_html=True)
+
+
+# ==========================================
 # INIZIALIZZAZIONE STATO
 # ==========================================
 if "match_details_store" not in st.session_state:
@@ -4722,7 +5268,7 @@ with st.sidebar:
     st.markdown("---")
     sezione = st.radio(
         "Sezione",
-        ("Classifiche", "Calendario", "Squadre"),
+        ("Classifiche", "🎯 Scouting Pre-Gara", "🔥 Top Marcatori & Minacce", "Calendario", "Squadre"),
         index=0,
     )
     girone_selezionato = st.selectbox(
@@ -4772,7 +5318,11 @@ else:
     if sezione == "Classifiche":
         standings_rows = compute_standings(girone_selezionato, games_df)
         thirds_board = compute_thirds_standings(games_df)
-        render_standings(girone_selezionato, standings_rows, thirds_board, logo_html_map)
+        render_standings(girone_selezionato, standings_rows, thirds_board, logo_html_map, games_df=games_df)
+    elif sezione == "🎯 Scouting Pre-Gara":
+        view_scouting_pre_gara(girone_selezionato, games_df, logo_html_map)
+    elif sezione == "🔥 Top Marcatori & Minacce":
+        view_giocatori_pericolosi(girone_selezionato, games_df)
     elif sezione == "Squadre":
         render_teams_grid(girone_selezionato, games_df, logo_html_map)
     else:
