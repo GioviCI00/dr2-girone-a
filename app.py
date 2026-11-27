@@ -3937,18 +3937,24 @@ def compute_team_player_stats(team_name: str, games_df: pd.DataFrame) -> pd.Data
     return pd.DataFrame(rows).sort_values(by=["PUN", "Giocatore"], ascending=[False, True]).reset_index(drop=True)
 
 
-def _render_team_player_stats_html(team_name: str, p_df: pd.DataFrame) -> str:
+def _render_team_player_stats_html(
+    team_name: str,
+    p_df: pd.DataFrame,
+    sort_label: str = "PUNTI",
+    ascending: bool = False,
+) -> str:
     team_enc = quote(str(team_name), safe="")
     pal = _get_team_palette(team_name)
     head_style = (
         f'style="background:linear-gradient(90deg, {_rgba(pal["rich_main"], 0.65)} 0%, #0f172a 75%);'
         f'border-bottom:2.5px solid {pal["visible_accent"]};"'
     )
+    dir_txt = "CRESC." if ascending else "DECR."
     html = [
         '<div class="tp-stats-card">',
         f'<div class="tp-stats-head" {head_style}>'
         f"<span>STATISTICHE GIOCATORI — {html_lib.escape(str(team_name))}</span>"
-        f'<span style="color:{pal["visible_accent"]};font-size:11px;">CLICCA SUL NOME PER PROFILO • ORDINATO PER PUNTI</span>'
+        f'<span style="color:{pal["visible_accent"]};font-size:11px;">CLICCA SUL NOME PER PROFILO • ORDINATO PER {html_lib.escape(sort_label.upper())} ({dir_txt})</span>'
         "</div>",
         '<div class="tp-table-wrap"><table class="tp-stats-table"><thead><tr>'
         "<th>#</th>"
@@ -4489,7 +4495,61 @@ def render_team_page(team_name: str, games_df: pd.DataFrame, logo_html_map: dict
     if p_df.empty:
         st.info("Nessun tabellino inserito ancora per questa squadra.")
     else:
-        st.markdown(_render_team_player_stats_html(team_name, p_df), unsafe_allow_html=True)
+        sort_col_map = {
+            "Punti (PUN)": "PUN",
+            "Media Punti (PPG)": "PPG",
+            "Partite (G)": "G",
+            "Numero Maglia (#)": "NUM",
+            "Giocatore (A-Z)": "Giocatore",
+            "Tiri da 2 Segnati (2PT R)": "2PT_R",
+            "Tiri da 2 Tentati (2PT T)": "2PT_T",
+            "Tiri da 3 Segnati (3PT R)": "3PT_R",
+            "Tiri da 3 Tentati (3PT T)": "3PT_T",
+            "Tiri Liberi Segnati (TL R)": "TL_R",
+            "Tiri Liberi Tentati (TL T)": "TL_T",
+            "Rimbalzi (RIM)": "RIM",
+            "Falli Commessi (FALLI)": "F_C",
+            "Valutazione (VAL)": "VAL",
+        }
+        c_sort1, c_sort2 = st.columns([2, 1.3])
+        sel_stat_label = c_sort1.selectbox(
+            "Ordina statistiche per",
+            list(sort_col_map.keys()),
+            index=0,
+            key=f"team_stats_sort_col_{team_name}",
+        )
+        sel_stat_dir = c_sort2.radio(
+            "Ordine",
+            ["Decrescente ↓", "Crescente ↑"],
+            index=0,
+            horizontal=True,
+            key=f"team_stats_sort_dir_{team_name}",
+        )
+        sort_col = sort_col_map[sel_stat_label]
+        is_asc = sel_stat_dir == "Crescente ↑"
+        if sort_col == "Giocatore":
+            p_df_sorted = p_df.sort_values(
+                by=["Giocatore", "PUN"],
+                ascending=[is_asc, False],
+                kind="mergesort",
+            ).reset_index(drop=True)
+        else:
+            secondary_col = "PUN" if sort_col != "PUN" else "PPG"
+            p_df_sorted = p_df.sort_values(
+                by=[sort_col, secondary_col, "Giocatore"],
+                ascending=[is_asc, False, True],
+                kind="mergesort",
+            ).reset_index(drop=True)
+
+        st.markdown(
+            _render_team_player_stats_html(
+                team_name,
+                p_df_sorted,
+                sort_label=sel_stat_label,
+                ascending=is_asc,
+            ),
+            unsafe_allow_html=True,
+        )
 
     selected_player = st.session_state.get("selected_player_name")
     if selected_player:
