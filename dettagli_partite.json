@@ -3456,8 +3456,8 @@
     ],
     "away_players": [
       {
-        "Giocatore": "Tricarico F.",
-        "NUM": 999,
+        "Giocatore": "Francesco Tricarico",
+        "NUM": 4,
         "PUN": 18,
         "MIN": "28:37",
         "SF": true,
@@ -3481,8 +3481,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Rinaldi P.",
-        "NUM": 999,
+        "Giocatore": "Pietro Rinaldi",
+        "NUM": 8,
         "PUN": 18,
         "MIN": "40:00",
         "SF": true,
@@ -3507,7 +3507,7 @@
       },
       {
         "Giocatore": "Santoro A.",
-        "NUM": 999,
+        "NUM": 0,
         "PUN": 15,
         "MIN": "32:58",
         "SF": true,
@@ -3531,8 +3531,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Marano A.",
-        "NUM": 999,
+        "Giocatore": "Antonio Pio Marano",
+        "NUM": 24,
         "PUN": 11,
         "MIN": "21:53",
         "SF": true,
@@ -3556,8 +3556,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Russo R.",
-        "NUM": 999,
+        "Giocatore": "Ruggero Russo",
+        "NUM": 5,
         "PUN": 4,
         "MIN": "15:11",
         "SF": false,
@@ -3581,8 +3581,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Kharebava N.",
-        "NUM": 999,
+        "Giocatore": "Nikoloz Kharebava",
+        "NUM": 34,
         "PUN": 3,
         "MIN": "03:41",
         "SF": false,
@@ -3606,8 +3606,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Pepe S.",
-        "NUM": 999,
+        "Giocatore": "Simone Pepe",
+        "NUM": 32,
         "PUN": 3,
         "MIN": "07:02",
         "SF": false,
@@ -3631,8 +3631,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Russo W.",
-        "NUM": 999,
+        "Giocatore": "Walter Pasquale Russo",
+        "NUM": 69,
         "PUN": 2,
         "MIN": "12:54",
         "SF": false,
@@ -3657,7 +3657,7 @@
       },
       {
         "Giocatore": "Carpinelli P.",
-        "NUM": 999,
+        "NUM": 0,
         "PUN": 2,
         "MIN": "14:21",
         "SF": true,
@@ -3681,8 +3681,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Khelfat N.",
-        "NUM": 999,
+        "Giocatore": "Nadir Khelfat",
+        "NUM": 7,
         "PUN": 0,
         "MIN": "05:52",
         "SF": false,
@@ -3706,8 +3706,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Pysmenytski M.",
-        "NUM": 999,
+        "Giocatore": "Maksym Pysmenytski",
+        "NUM": 13,
         "PUN": 0,
         "MIN": "07:48",
         "SF": false,
@@ -3731,8 +3731,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Rizzi M.",
-        "NUM": 999,
+        "Giocatore": "Michele Maria Rizzi",
+        "NUM": 20,
         "PUN": 0,
         "MIN": "09:43",
         "SF": false,
