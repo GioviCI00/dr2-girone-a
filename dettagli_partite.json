@@ -6145,7 +6145,7 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Giarrusso A. (N.E.)",
+        "Giocatore": "Giarrusso A.",
         "NUM": 999,
         "PUN": 0,
         "MIN": "0",
@@ -6447,7 +6447,7 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Tredanari L. (N.E.)",
+        "Giocatore": "Tredanari L.",
         "NUM": 999,
         "PUN": 0,
         "MIN": "0",
@@ -6471,7 +6471,8 @@
         "VAL": 0,
         "OER": 0.0
       }
-    ]
+    ],
+    "notes": ""
   },
   "A02_1873": {
     "coach_home": "Vincenzo Piarulli",
