@@ -3631,7 +3631,7 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Santoro A.",
+        "Giocatore": "Antonio Santoro",
         "NUM": 0,
         "PUN": 15,
         "MIN": "32:58",
@@ -3781,8 +3781,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Carpinelli P.",
-        "NUM": 0,
+        "Giocatore": "Pierluigi Carpinelli",
+        "NUM": 31,
         "PUN": 2,
         "MIN": "14:21",
         "SF": true,
