@@ -6172,8 +6172,8 @@
     ],
     "away_players": [
       {
-        "Giocatore": "Chiappinelli G.",
-        "NUM": 999,
+        "Giocatore": "Giovanni Chiappinelli",
+        "NUM": 4,
         "PUN": 18,
         "MIN": "30:29",
         "SF": true,
@@ -6197,8 +6197,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Amadey Verdun J.",
-        "NUM": 999,
+        "Giocatore": "Juan Ignacio Amadey-Verdun",
+        "NUM": 21,
         "PUN": 15,
         "MIN": "25:48",
         "SF": true,
@@ -6222,8 +6222,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Russo R.",
-        "NUM": 999,
+        "Giocatore": "Rocco Alphonse Alfred Russo",
+        "NUM": 77,
         "PUN": 13,
         "MIN": "34:42",
         "SF": true,
@@ -6247,8 +6247,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Di Franco V.",
-        "NUM": 999,
+        "Giocatore": "Vincenzo DiFranco",
+        "NUM": 90,
         "PUN": 9,
         "MIN": "23:26",
         "SF": true,
@@ -6272,8 +6272,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Olivieri D.",
-        "NUM": 999,
+        "Giocatore": "Davide Olivieri",
+        "NUM": 35,
         "PUN": 4,
         "MIN": "23:16",
         "SF": true,
@@ -6297,8 +6297,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Cristiani U.",
-        "NUM": 999,
+        "Giocatore": "Umberto Cristiani",
+        "NUM": 5,
         "PUN": 3,
         "MIN": "24:02",
         "SF": false,
@@ -6322,8 +6322,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Podio K.",
-        "NUM": 999,
+        "Giocatore": "Kevin Pio Podio",
+        "NUM": 8,
         "PUN": 3,
         "MIN": "10:11",
         "SF": false,
@@ -6347,8 +6347,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "De Lillo G.",
-        "NUM": 999,
+        "Giocatore": "Giovanni De Lillo",
+        "NUM": 7,
         "PUN": 0,
         "MIN": "03:24",
         "SF": false,
@@ -6372,8 +6372,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Grosso F.",
-        "NUM": 999,
+        "Giocatore": "Flavio Alessio Grosso",
+        "NUM": 19,
         "PUN": 0,
         "MIN": "20:06",
         "SF": false,
@@ -6397,8 +6397,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Nido A.",
-        "NUM": 999,
+        "Giocatore": "Angelo Nido",
+        "NUM": 14,
         "PUN": 0,
         "MIN": "00:56",
         "SF": false,
@@ -6422,8 +6422,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Nido D.",
-        "NUM": 999,
+        "Giocatore": "Davide Nido",
+        "NUM": 3,
         "PUN": 0,
         "MIN": "03:40",
         "SF": false,
@@ -6447,8 +6447,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Tredanari L.",
-        "NUM": 999,
+        "Giocatore": "Luca Tredanari",
+        "NUM": 12,
         "PUN": 0,
         "MIN": "0",
         "SF": false,
