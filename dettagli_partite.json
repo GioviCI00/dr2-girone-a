@@ -1416,7 +1416,7 @@
     ],
     "away_players": [
       {
-        "Giocatore": "Barletta F.",
+        "Giocatore": "Francesco Barletta",
         "NUM": 0,
         "PUN": 5,
         "MIN": "29:44",
@@ -1441,8 +1441,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Fuiano M.",
-        "NUM": 0,
+        "Giocatore": "Marco Fuiano",
+        "NUM": 4,
         "PUN": 7,
         "MIN": "23:28",
         "SF": true,
@@ -1466,8 +1466,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Miale A. M.",
-        "NUM": 0,
+        "Giocatore": "Antonio Mario Miale",
+        "NUM": 7,
         "PUN": 6,
         "MIN": "16:03",
         "SF": true,
@@ -1516,8 +1516,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Miglio E.",
-        "NUM": 0,
+        "Giocatore": "Ernesto Miglio",
+        "NUM": 10,
         "PUN": 8,
         "MIN": "16:43",
         "SF": false,
@@ -1541,8 +1541,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Cicculli V.",
-        "NUM": 0,
+        "Giocatore": "Vincenzo Cicculli",
+        "NUM": 13,
         "PUN": 2,
         "MIN": "12:03",
         "SF": false,
@@ -1566,8 +1566,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Mazzeo R.",
-        "NUM": 0,
+        "Giocatore": "Raffaele Mazzeo",
+        "NUM": 16,
         "PUN": 22,
         "MIN": "25:35",
         "SF": true,
@@ -1591,8 +1591,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Scarponi I.",
-        "NUM": 0,
+        "Giocatore": "Ivan Scarponi",
+        "NUM": 20,
         "PUN": 23,
         "MIN": "38:12",
         "SF": true,
@@ -1641,8 +1641,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Colucci A.",
-        "NUM": 0,
+        "Giocatore": "Alessio Colucci",
+        "NUM": 32,
         "PUN": 0,
         "MIN": "04:54",
         "SF": false,
