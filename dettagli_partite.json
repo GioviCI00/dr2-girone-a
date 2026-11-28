@@ -2512,8 +2512,8 @@
     ],
     "away_players": [
       {
-        "Giocatore": "De Marco G.",
-        "NUM": 0,
+        "Giocatore": "Gabriele DeMarco",
+        "NUM": 6,
         "PUN": 4,
         "MIN": "0",
         "SF": false,
@@ -2537,8 +2537,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Colonna F.",
-        "NUM": 0,
+        "Giocatore": "Filippo Maria Colonna",
+        "NUM": 9,
         "PUN": 6,
         "MIN": "0",
         "SF": false,
@@ -2562,8 +2562,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Sciscioli P.",
-        "NUM": 0,
+        "Giocatore": "Paolo Sciscioli",
+        "NUM": 10,
         "PUN": 2,
         "MIN": "0",
         "SF": false,
@@ -2587,8 +2587,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Catano K.",
-        "NUM": 0,
+        "Giocatore": "Kristian Catano",
+        "NUM": 20,
         "PUN": 5,
         "MIN": "0",
         "SF": false,
@@ -2612,8 +2612,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Ferrante D.",
-        "NUM": 0,
+        "Giocatore": "Davide Ferrante",
+        "NUM": 22,
         "PUN": 2,
         "MIN": "0",
         "SF": false,
@@ -2637,8 +2637,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Cantatore E.",
-        "NUM": 0,
+        "Giocatore": "Ettore Cantatore",
+        "NUM": 29,
         "PUN": 9,
         "MIN": "0",
         "SF": false,
@@ -2662,8 +2662,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Di Vittorio S.",
-        "NUM": 0,
+        "Giocatore": "Stefano Di Vittorio",
+        "NUM": 30,
         "PUN": 6,
         "MIN": "0",
         "SF": false,
@@ -2687,8 +2687,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Mangione N.",
-        "NUM": 0,
+        "Giocatore": "Nicola Mangione",
+        "NUM": 31,
         "PUN": 7,
         "MIN": "0",
         "SF": false,
@@ -2712,7 +2712,7 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Lasorsa C.",
+        "Giocatore": "Cataldo Lasorsa",
         "NUM": 0,
         "PUN": 9,
         "MIN": "0",
