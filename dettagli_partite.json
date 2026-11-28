@@ -5870,8 +5870,8 @@
     "ot_away": 0,
     "home_players": [
       {
-        "Giocatore": "Scarponi I.",
-        "NUM": 999,
+        "Giocatore": "Ivan Scarponi",
+        "NUM": 20,
         "PUN": 21,
         "MIN": "0",
         "SF": false,
@@ -5895,8 +5895,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Fuiano M.",
-        "NUM": 999,
+        "Giocatore": "Marco Fuiano",
+        "NUM": 4,
         "PUN": 15,
         "MIN": "0",
         "SF": false,
@@ -5920,8 +5920,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Mazzeo R.",
-        "NUM": 999,
+        "Giocatore": "Raffaele Mazzeo",
+        "NUM": 16,
         "PUN": 10,
         "MIN": "0",
         "SF": false,
@@ -5945,8 +5945,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Miale A.",
-        "NUM": 999,
+        "Giocatore": "Miale M.",
+        "NUM": 7,
         "PUN": 8,
         "MIN": "0",
         "SF": false,
@@ -5970,8 +5970,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Cicculli V.",
-        "NUM": 999,
+        "Giocatore": "Vincenzo Cicculli",
+        "NUM": 13,
         "PUN": 5,
         "MIN": "0",
         "SF": false,
@@ -5996,7 +5996,7 @@
       },
       {
         "Giocatore": "D'Orsi A.",
-        "NUM": 999,
+        "NUM": 0,
         "PUN": 5,
         "MIN": "0",
         "SF": false,
@@ -6020,8 +6020,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Miglio E.",
-        "NUM": 999,
+        "Giocatore": "Ernesto Miglio",
+        "NUM": 10,
         "PUN": 2,
         "MIN": "0",
         "SF": false,
@@ -6045,8 +6045,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Colucci A.",
-        "NUM": 999,
+        "Giocatore": "Alessio Colucci",
+        "NUM": 32,
         "PUN": 2,
         "MIN": "0",
         "SF": false,
@@ -6070,8 +6070,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Barletta F.",
-        "NUM": 999,
+        "Giocatore": "Francesco Barletta",
+        "NUM": 0,
         "PUN": 1,
         "MIN": "0",
         "SF": false,
@@ -6096,7 +6096,7 @@
       },
       {
         "Giocatore": "Campagna G.",
-        "NUM": 999,
+        "NUM": 0,
         "PUN": 0,
         "MIN": "0",
         "SF": false,
@@ -6121,7 +6121,7 @@
       },
       {
         "Giocatore": "Cavallo E.",
-        "NUM": 999,
+        "NUM": 0,
         "PUN": 0,
         "MIN": "0",
         "SF": false,
@@ -6146,7 +6146,7 @@
       },
       {
         "Giocatore": "Giarrusso A.",
-        "NUM": 999,
+        "NUM": 0,
         "PUN": 0,
         "MIN": "0",
         "SF": false,
