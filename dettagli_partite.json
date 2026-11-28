@@ -7064,8 +7064,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Daniello M.",
-        "NUM": 0,
+        "Giocatore": "Marco Girolamo Daniello",
+        "NUM": 1,
         "PUN": 3,
         "MIN": "0",
         "SF": false,
@@ -7490,7 +7490,8 @@
         "VAL": 0,
         "OER": 0.0
       }
-    ]
+    ],
+    "notes": ""
   },
   "A02_1875": {
     "coach_home": "Antionello Panzarino",
