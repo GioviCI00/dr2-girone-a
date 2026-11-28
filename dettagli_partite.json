@@ -693,8 +693,8 @@
     ],
     "away_players": [
       {
-        "Giocatore": "Daniello M. G.",
-        "NUM": 0,
+        "Giocatore": "Marco Girolamo Daniello",
+        "NUM": 1,
         "PUN": 2,
         "MIN": "0",
         "SF": false,
@@ -718,8 +718,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Tricarico F.",
-        "NUM": 0,
+        "Giocatore": "Francesco Tricarico",
+        "NUM": 4,
         "PUN": 9,
         "MIN": "0",
         "SF": true,
@@ -743,8 +743,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Russo R.",
-        "NUM": 0,
+        "Giocatore": "Ruggero Russo",
+        "NUM": 5,
         "PUN": 2,
         "MIN": "0",
         "SF": false,
@@ -768,8 +768,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Khelfat N.",
-        "NUM": 0,
+        "Giocatore": "Nadir Khelfat",
+        "NUM": 7,
         "PUN": 8,
         "MIN": "0",
         "SF": false,
@@ -793,8 +793,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Rinaldi P.",
-        "NUM": 0,
+        "Giocatore": "Pietro Rinaldi",
+        "NUM": 8,
         "PUN": 21,
         "MIN": "0",
         "SF": true,
@@ -818,8 +818,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Marano A.",
-        "NUM": 0,
+        "Giocatore": "Antonio Pio Marano",
+        "NUM": 24,
         "PUN": 12,
         "MIN": "0",
         "SF": true,
@@ -843,8 +843,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Pepe S.",
-        "NUM": 0,
+        "Giocatore": "Simone Pepe",
+        "NUM": 32,
         "PUN": 14,
         "MIN": "0",
         "SF": false,
@@ -868,8 +868,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Kharebava N.",
-        "NUM": 0,
+        "Giocatore": "Nikoloz Kharebava",
+        "NUM": 34,
         "PUN": 5,
         "MIN": "0",
         "SF": false,
@@ -893,8 +893,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Russo W.",
-        "NUM": 0,
+        "Giocatore": "Walter Pasquale Russo",
+        "NUM": 69,
         "PUN": 2,
         "MIN": "0",
         "SF": true,
