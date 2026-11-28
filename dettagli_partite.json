@@ -6493,8 +6493,8 @@
     "ot_away": 0,
     "home_players": [
       {
-        "Giocatore": "Catano K.",
-        "NUM": 999,
+        "Giocatore": "Kristian Catano",
+        "NUM": 20,
         "PUN": 15,
         "MIN": "22:43",
         "SF": false,
@@ -6518,8 +6518,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Scaringella F.",
-        "NUM": 999,
+        "Giocatore": "Francesco Scaringella",
+        "NUM": 44,
         "PUN": 11,
         "MIN": "32:28",
         "SF": true,
@@ -6543,8 +6543,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Lorusso M.",
-        "NUM": 999,
+        "Giocatore": "Michele Lorusso",
+        "NUM": 3,
         "PUN": 6,
         "MIN": "12:09",
         "SF": false,
@@ -6568,8 +6568,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Lasorsa C.",
-        "NUM": 999,
+        "Giocatore": "Cataldo Lasorsa",
+        "NUM": 0,
         "PUN": 5,
         "MIN": "23:48",
         "SF": true,
@@ -6593,8 +6593,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Di Vittorio S.",
-        "NUM": 999,
+        "Giocatore": "Stefano Di Vittorio",
+        "NUM": 30,
         "PUN": 4,
         "MIN": "12:33",
         "SF": false,
@@ -6618,8 +6618,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Colonna F.",
-        "NUM": 999,
+        "Giocatore": "Filippo Maria Colonna",
+        "NUM": 9,
         "PUN": 3,
         "MIN": "15:54",
         "SF": false,
@@ -6643,8 +6643,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Ferrara L.",
-        "NUM": 999,
+        "Giocatore": "Luigi Ferrara",
+        "NUM": 0,
         "PUN": 2,
         "MIN": "18:38",
         "SF": true,
@@ -6668,8 +6668,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Piccolo D.",
-        "NUM": 999,
+        "Giocatore": "Domenico Flavio Piccolo",
+        "NUM": 8,
         "PUN": 2,
         "MIN": "13:59",
         "SF": false,
@@ -6693,8 +6693,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Ferrante D.",
-        "NUM": 999,
+        "Giocatore": "Davide Ferrante",
+        "NUM": 22,
         "PUN": 2,
         "MIN": "14:37",
         "SF": true,
@@ -6718,8 +6718,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "De Marco G.",
-        "NUM": 999,
+        "Giocatore": "Gabriele DeMarco",
+        "NUM": 6,
         "PUN": 0,
         "MIN": "06:57",
         "SF": false,
@@ -6743,8 +6743,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Sciscioli P.",
-        "NUM": 999,
+        "Giocatore": "Paolo Sciscioli",
+        "NUM": 10,
         "PUN": 0,
         "MIN": "13:21",
         "SF": false,
@@ -6768,8 +6768,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Mangione N.",
-        "NUM": 999,
+        "Giocatore": "Nicola Mangione",
+        "NUM": 31,
         "PUN": 0,
         "MIN": "12:53",
         "SF": true,
