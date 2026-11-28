@@ -5995,8 +5995,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "D'Orsi A.",
-        "NUM": 0,
+        "Giocatore": "Antonio D'Orsi",
+        "NUM": 11,
         "PUN": 5,
         "MIN": "0",
         "SF": false,
@@ -6095,8 +6095,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Campagna G.",
-        "NUM": 0,
+        "Giocatore": "Gioele Campagna",
+        "NUM": 12,
         "PUN": 0,
         "MIN": "0",
         "SF": false,
@@ -6120,8 +6120,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Cavallo E.",
-        "NUM": 0,
+        "Giocatore": "Ezio Cavallo",
+        "NUM": 18,
         "PUN": 0,
         "MIN": "0",
         "SF": false,
