@@ -6889,8 +6889,8 @@
     "ot_away": 0,
     "home_players": [
       {
-        "Giocatore": "Rinaldi P.",
-        "NUM": 999,
+        "Giocatore": "Pietro Rinaldi",
+        "NUM": 8,
         "PUN": 11,
         "MIN": "0",
         "SF": false,
@@ -6915,7 +6915,7 @@
       },
       {
         "Giocatore": "Santoro A.",
-        "NUM": 999,
+        "NUM": 0,
         "PUN": 8,
         "MIN": "0",
         "SF": false,
@@ -6939,8 +6939,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Pysmenytski M.",
-        "NUM": 999,
+        "Giocatore": "Maksym Pysmenytski",
+        "NUM": 13,
         "PUN": 6,
         "MIN": "0",
         "SF": false,
@@ -6964,8 +6964,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Marano A.",
-        "NUM": 999,
+        "Giocatore": "Antonio Pio Marano",
+        "NUM": 24,
         "PUN": 5,
         "MIN": "0",
         "SF": false,
@@ -6989,8 +6989,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Tricarico F.",
-        "NUM": 999,
+        "Giocatore": "Francesco Tricarico",
+        "NUM": 4,
         "PUN": 4,
         "MIN": "0",
         "SF": false,
@@ -7014,8 +7014,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Khelfat N.",
-        "NUM": 999,
+        "Giocatore": "Nadir Khelfat",
+        "NUM": 7,
         "PUN": 4,
         "MIN": "0",
         "SF": false,
@@ -7040,7 +7040,7 @@
       },
       {
         "Giocatore": "Carpinelli P.",
-        "NUM": 999,
+        "NUM": 0,
         "PUN": 3,
         "MIN": "0",
         "SF": false,
@@ -7065,7 +7065,7 @@
       },
       {
         "Giocatore": "Daniello M.",
-        "NUM": 999,
+        "NUM": 0,
         "PUN": 3,
         "MIN": "0",
         "SF": false,
@@ -7089,8 +7089,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Pepe S.",
-        "NUM": 999,
+        "Giocatore": "Simone Pepe",
+        "NUM": 32,
         "PUN": 3,
         "MIN": "0",
         "SF": false,
@@ -7114,8 +7114,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Rizzi M.",
-        "NUM": 999,
+        "Giocatore": "Michele Maria Rizzi",
+        "NUM": 20,
         "PUN": 2,
         "MIN": "0",
         "SF": false,
@@ -7139,8 +7139,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Russo R.",
-        "NUM": 999,
+        "Giocatore": "Ruggero Russo",
+        "NUM": 5,
         "PUN": 0,
         "MIN": "0",
         "SF": false,
@@ -7164,8 +7164,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Russo W.",
-        "NUM": 999,
+        "Giocatore": "Walter Pasquale Russo",
+        "NUM": 69,
         "PUN": 0,
         "MIN": "0",
         "SF": false,
