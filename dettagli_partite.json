@@ -3062,8 +3062,8 @@
         "Giocatore": "Pietro Volpicella",
         "NUM": 28,
         "PUN": 13,
-        "MIN": "0",
-        "SF": false,
+        "MIN": "29:16",
+        "SF": true,
         "F_C": 0,
         "F_S": 0,
         "2PT_R": 0,
@@ -3259,8 +3259,8 @@
         "OER": 0.0
       },
       {
-        "Giocatore": "Ferrante D. (K)",
-        "NUM": 0,
+        "Giocatore": "Davide Ferrante",
+        "NUM": 22,
         "PUN": 3,
         "MIN": "0",
         "SF": false,
@@ -3358,7 +3358,8 @@
         "VAL": 0,
         "OER": 0.0
       }
-    ]
+    ],
+    "notes": ""
   },
   "A01_1868": {
     "coach_home": "Antonio Giuliani",
